@@ -1,4 +1,5 @@
 #Art Auction Blockchain Application
+Credits: Ratnakar Asara, Nishi Nidamarty, Ramesh Thoomu and Mohan Venkataraman
 
 ##Introduction
 
