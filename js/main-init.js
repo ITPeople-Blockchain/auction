@@ -1,1 +1,1 @@
-var m3sApp = new mainApplication();
+var mainApp = new mainApplication();

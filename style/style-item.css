@@ -1,3 +1,8 @@
+.item-view-container {
+	width: 100%;
+	height: 100%;
+}
+
 .item-view-title {
 	height: 65px;
     font-size: 45px;
@@ -10,27 +15,86 @@
     padding-left: 20px;
 }
 
+.item-view.horizontal {
+	white-space: nowrap;
+	overflow: hidden;
+	z-index: 1;
+}
+
+.item-view.vertical {
+	text-align: center;
+	position: relative;
+	top: -50px;
+}
+
+.item-view.vertical .item {
+	text-align: left;
+}
+
+.item-view-nav {
+	position: absolute;
+	width: 100%;
+	z-index: 2;
+}
+
+.item-view-nav .nav-arrow {
+	height: 100px;
+	width: 100px;
+	background-size: 100% auto;
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: inline-block;
+	position: absolute;
+	top: 100px;
+	cursor: pointer;
+	opacity: 0;
+	-webkit-transition: all .7s;
+}
+
+.item-view-container:hover .nav-arrow {
+	opacity: .6;
+}
+
+.item-view-nav .nav-arrow:hover {
+	opacity: .9;
+}
+
+.item-view-nav .nav-arrow.right {
+	background-image: url('img/arrow-right-white.svg');
+	right: 20px;
+}
+
+.item-view-nav .nav-arrow.left {
+	background-image: url('img/arrow-left-white.svg');
+	left: 20px;
+}
+
 .front-header .item {
 	display: inline-block;
-	width: 20%;
+	width: 25%;
 	vertical-align: top;
 	height: 100%;
 	position: relative;
+	white-space: normal;
 }
 
 .page-category .item {
 	position: relative;
-	height: 800px;
-	width:800px;
-	margin: 80px auto;
+    height: 600px;
+    width: 41%;
+    margin: 80px 25px;
+    display: inline-block;
+    vertical-align: top;
+
 }
 
 .front-header .item-header {
-	height:50%;
+	height:75%;
 }
 
 .page-category .item-header {
 	height: 70%;
+	box-shadow: 0 0 25px rgba(0,0,0,1);
 }
 
 .item-view .item-image {
@@ -52,14 +116,30 @@
 	background-color: rgba(0,0,0,.4);
 	padding: .3em;
 	border-top: 5px solid #0075ff;
+	border-right: 1px solid rgba(255,255,255,.3);
+	border-bottom: 1px solid rgba(255,255,255,.2);
+}
+
+.page-category .item-details {
+	padding-bottom: 15px;
+}
+
+.page-category .item-detail {
+	opacity: .9;
+	padding-left: 15px;
 }
 
 .item-view .item-title {
 	font-size: 1.5em;
 	line-height: 1.1em;
-	margin-bottom: .6em;
+	margin: .3em .3em .5em .3em;
 	font-weight: 100;
 	
+}
+
+.page-category .item-detail.item-title {
+	padding-left: 0px;
+	opacity: 1;
 }
 
 .item-view .item-title .detail-label {
@@ -77,7 +157,7 @@
 
 .front-header .item-footer {
 	position: absolute;
-	top: 50%;
+	top: 75%;
 	height: 20px;
 	width: 100%;
 	margin-top: -1.5em;

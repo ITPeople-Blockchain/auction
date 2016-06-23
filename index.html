@@ -12,6 +12,7 @@
 	<link href="style/style-item.css" media="screen" rel="stylesheet" type="text/css">
 	<link href="style/style-form-list.css" media="screen" rel="stylesheet" type="text/css">
 	<script src="js/jquery-2.2.4.min.js"></script>
+	<script src="js/jquery-mousewheel.js"></script>
 	<script src="js/main.js"></script>
 	<script src="js/main-application.js"></script>
 	<script src="js/main-init.js"></script>
@@ -28,20 +29,20 @@
 	</div>
 	<div class="header-right">
 		<div class="header-menu">
+			<div class="menu-item action-load-form" form-name="user-register">
+				<div class="item-label">Create Account</div>
+			</div>
 			<div class="menu-item">
-				<div class="item-label primary-event">Actions</div>
+				<div class="item-label primary-event" menu-name="actions">Actions</div>
 				<div class="item-content">
 					<div class="sub-menu">
-						<div class="menu-item action-load-form" form-name="user-register">
-							<div class="item-label">Register User</div>
-						</div>
 						<div class="menu-item action-load-form" form-name="item-register">
 							<div class="item-label">Register Item</div>
 						</div>
 						<!--div class="menu-item action-load-form" form-name="item-auction">
 							<div class="item-label">Auction Item</div>
 						</div-->
-						<div class="menu-item action-load-form" form-name="item-bid">
+						<div class="menu-item action-load-form" form-name="list-bidding">
 							<div class="item-label">Bid on Item</div>
 						</div>
 						<div class="menu-item action-load-list" list-name="list-auctions">
@@ -51,16 +52,16 @@
 				</div>
 			</div>
 			<div class="menu-item">
-				<div class="item-label primary-event">Categories</div>
+				<div class="item-label primary-event" menu-name="categories">Categories</div>
 				<div class="item-content">
 					<div class="sub-menu">
-						<div class="menu-item action-load-page" page-name="category-paintings">
-							<div class="item-label">Paintings</div>
+						<div class="menu-item action-load-page" page-name="category-paintings" id="modern">
+							<div class="item-label">Modern</div>
+						</div>
+						<div class="menu-item action-load-page" page-name="category-paintings" id="landscape">
+							<div class="item-label">Landscape</div>
 						</div>
 						<!--div class="menu-item">
-							<div class="item-label">Category Two</div>
-						</div>
-						<div class="menu-item">
 							<div class="item-label">Category Three</div>
 						</div>
 						<div class="menu-item">
@@ -80,179 +81,14 @@
 <div class="site-main">
 	<div class="main-content">
 		<div class="front-header">
-			<div class="item-view-title">Featured Lots</div>
-			<div class="item-view horizontal">
-				<div class="item" item-id="1000">
-					<div class="item-header">
-						<div class="item-image" style="background-image:url('img/item-001.jpg');"></div>
-					</div>
-					<div class="item-content">
-						<div class="item-details">
-							<div class="item-title item-detail">
-								<div class="detail-label"></div>
-								<div class="detail-content">1969 Ford Mustang Boss 429 Fastback</div>
-							</div>
-							<div class="item-date item-detail">
-								<div class="detail-label">Auction Start</div>
-								<div class="detail-content">6/15/2016 12:00pm EST</div>
-							</div>
-							<div class="item-bid item-detail">
-								<div class="detail-label">Current Bid</div>
-								<div class="detail-content">$67,250</div>
-							</div>
-							<div class="item-bids item-detail">
-								<div class="detail-label">Total Bids</div>
-								<div class="detail-content">7</div>
-							</div>
-						</div>
-					</div>
-					<div class="item-footer">
-						<div class="item-actions">
-							<div class="action-button" form-name="item-bid" action-type="form">
-								<div class="button-label">Bid</div>
-							</div>
-							<div class="action-button" form-name="item-detail" action-type="detail">
-								<div class="button-label">Details</div>
-							</div>
-						</div>
-					</div>
-				</div><div class="item" item-id="2000">
-					<div class="item-header">
-						<div class="item-image" style="background-image:url('img/item-002.jpg');"></div>
-					</div>
-					<div class="item-content">
-						<div class="item-details">
-							<div class="item-title item-detail">
-								<div class="detail-label"></div>
-								<div class="detail-content">1969 Ford Mustang Boss 429 Fastback</div>
-							</div>
-							<div class="item-date item-detail">
-								<div class="detail-label">Auction Start</div>
-								<div class="detail-content">6/15/2016 12:00pm EST</div>
-							</div>
-							<div class="item-bid item-detail">
-								<div class="detail-label">Current Bid</div>
-								<div class="detail-content">$67,250</div>
-							</div>
-							<div class="item-bids item-detail">
-								<div class="detail-label">Total Bids</div>
-								<div class="detail-content">7</div>
-							</div>
-						</div>
-					</div>
-					<div class="item-footer">
-						<div class="item-actions">
-							<div class="action-button"  form-name="item-bid" action-type="form">
-								<div class="button-label">Bid</div>
-							</div>
-							<div class="action-button" form-name="item-detail" action-type="detail">
-								<div class="button-label">Details</div>
-							</div>
-						</div>
-					</div>
-				</div><div class="item" item-id="3000">
-					<div class="item-header">
-						<div class="item-image" style="background-image:url('img/item-003.jpg');"></div>
-					</div>
-					<div class="item-content">
-						<div class="item-details">
-							<div class="item-title item-detail">
-								<div class="detail-label"></div>
-								<div class="detail-content">1969 Ford Mustang Boss 429 Fastback</div>
-							</div>
-							<div class="item-date item-detail">
-								<div class="detail-label">Auction Start</div>
-								<div class="detail-content">6/15/2016 12:00pm EST</div>
-							</div>
-							<div class="item-bid item-detail">
-								<div class="detail-label">Current Bid</div>
-								<div class="detail-content">$67,250</div>
-							</div>
-							<div class="item-bids item-detail">
-								<div class="detail-label">Total Bids</div>
-								<div class="detail-content">7</div>
-							</div>
-						</div>
-					</div>
-					<div class="item-footer">
-						<div class="item-actions">
-							<div class="action-button" form-name="item-bid" action-type="form">
-								<div class="button-label">Bid</div>
-							</div>
-							<div class="action-button" form-name="item-detail" action-type="detail">
-								<div class="button-label">Details</div>
-							</div>
-						</div>
-					</div>
-				</div><div class="item" item-id="4000">
-					<div class="item-header">
-						<div class="item-image" style="background-image:url('img/item-004.jpg');"></div>
-					</div>
-					<div class="item-content">
-						<div class="item-details">
-							<div class="item-title item-detail">
-								<div class="detail-label"></div>
-								<div class="detail-content">1969 Ford Mustang Boss 429 Fastback</div>
-							</div>
-							<div class="item-date item-detail">
-								<div class="detail-label">Auction Start</div>
-								<div class="detail-content">6/15/2016 12:00pm EST</div>
-							</div>
-							<div class="item-bid item-detail">
-								<div class="detail-label">Current Bid</div>
-								<div class="detail-content">$67,250</div>
-							</div>
-							<div class="item-bids item-detail">
-								<div class="detail-label">Total Bids</div>
-								<div class="detail-content">7</div>
-							</div>
-						</div>
-					</div>
-					<div class="item-footer">
-						<div class="item-actions">
-							<div class="action-button" form-name="item-bid" action-type="form">
-								<div class="button-label">Bid</div>
-							</div>
-							<div class="action-button" form-name="item-detail" action-type="detail">
-								<div class="button-label">Details</div>
-							</div>
-						</div>
-					</div>
-				</div><div class="item" item-id="5000">
-					<div class="item-header">
-						<div class="item-image" style="background-image:url('img/item-005.jpg');"></div>
-					</div>
-					<div class="item-content">
-						<div class="item-details">
-							<div class="item-title item-detail">
-								<div class="detail-label"></div>
-								<div class="detail-content">1969 Ford Mustang Boss 429 Fastback</div>
-							</div>
-							<div class="item-date item-detail">
-								<div class="detail-label">Auction Start</div>
-								<div class="detail-content">6/15/2016 12:00pm EST</div>
-							</div>
-							<div class="item-bid item-detail">
-								<div class="detail-label">Current Bid</div>
-								<div class="detail-content">$67,250</div>
-							</div>
-							<div class="item-bids item-detail">
-								<div class="detail-label">Total Bids</div>
-								<div class="detail-content">7</div>
-							</div>
-						</div>
-					</div>
-					<div class="item-footer">
-						<div class="item-actions">
-							<div class="action-button" form-name="item-bid" action-type="form">
-								<div class="button-label">Bid</div>
-							</div>
-							<div class="action-button" form-name="item-detail" action-type="detail">
-								<div class="button-label">Details</div>
-							</div>
-						</div>
-					</div>
+			<div class="item-view-container">
+				<div class="item-view-title">Auction chain</div>
+				<!--div class="item-view-intro">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec orci mollis, finibus ipsum volutpat, vehicula velit. Quisque venenatis erat vitae interdum venenatis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</div-->
+				<div class="item-view-nav">
+					<div class="nav-arrow left"></div>
+					<div class="nav-arrow right"></div>
 				</div>
+				<div class="item-view horizontal"></div>
 			</div>
 		</div>
 	</div>
@@ -266,11 +102,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
