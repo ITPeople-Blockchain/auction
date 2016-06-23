@@ -28,11 +28,6 @@ The typical business process is shown below
 6. During the window of the auction, bidders can place bids
 7. When the auction expires, the Auction House picks the highest bid and converts it to a transaction ( A  transaction in the real world could mean creating insurance and shipping docs, collecting payment and commissions, issuing a new title or certificate to the new owner etc.) and transfers ownership to the buyer and updates the price with the new "Hammer" price.
 
-
-
-
-
-
 ##Environment Setup
 Please review instructions on setting up the [Development Environment](https://github.com/hyperledger/fabric/blob/master/docs/dev-setup/devnet-setup.md) as well as the setting up the [Sandbox Environment](https://github.com/hyperledger/fabric/blob/master/docs/API/SandboxSetup.md) to execute the chaincode.
 
@@ -75,21 +70,27 @@ Please see code for detailed comments
 
 ./PostItems
 
-In the business process, the owner (User ID# 100) of the ASSET (Item# 1000) requests an entity like an Auction House (User ID# 200)
-to put the item on auction. Before Posting the auction request, the Asset is validated against the database. The Auction House 
-ID is verified in the User Table. A log entry is made in the Item Log.
+In the business process, the owner (User ID# 100) of the ASSET (Item# 1000) requests an entity like an Auction House (User ID# 200) to put the item on auction. Before Posting the auction request, the Asset is validated against the database. The Auction House ID is verified in the User Table. A log entry is made in the Item Log.
 
 TODO: In future, the owner of the asset will present his key to help with validation. 
 The AES key will be used to un-encrypt the stored image and authenticate ASSET ownership. 
 
 #### PostAuctionRequest
-Even though the ASSET OWNER has requested the Auction House to place the item on auction, the Auction is not yet open for acceptance of user bids. Hence any bid submitted against the item will be rejected if the auction is not open
+
+When the ASSET OWNER  of an item is ready to place his item on auction, he/she would identify an Auction House, determine what the reserve price should be and send a request to the Auction House expressing interest in placing their item on the auction block. 
 
 ./PostAuctionRequest
 
+#### OpenAuctionRequestForBids
+
+The Auction Houise, we assume will inspect the physical item, the certificate of authenticity, the ownership key and other details. They would also run a valuation of the item to determine if the reserve price is valid. The application assumes these have occured outside of the scope of the application
+
+Even though the ASSET OWNER has requested the Auction House to place the item on auction, the Auction is not yet open for acceptance of user bids. Hence any bid submitted against the item will be rejected if the auction is not open
 This script opens the Auction Request for bids. It sets the status of the AuctionRequest to "OPEN". It opens a timer for 
-the duration of the auction which in the example is 3 minutes. During this window, any user can submit bids against the AuctionID. 
-Once the timer expires, a script is created and saved called "CloseAuction.sh". The script gets triggered. 
+the duration of the auction which in the example is 3 minutes. During this window, any user can submit bids against the AuctionID. Once the timer expires, a script is created and saved called "CloseAuction.sh". The script gets triggered. 
+
+##### CloseAuction
+
 The CloseAuction.sh script invokes CloseAuction. 
 CloseAuction will first change the status of the AuctionRequest to "CLOSED". It then fetches the highest bid from the list of bids received, and converts it to a Transaction. The transaction is posted, the ASSET is retrieved from the database, its price is set to the new Hammer Price and the CurrentOwner is set to the new buyer. The ASSET image is un-encrypted with the old key, a new Key is generated and the image is encrypted with the new key. The ASSET is updated in the database.
 An log entry is made in the Item Log.
@@ -97,18 +98,17 @@ An log entry is made in the Item Log.
 TODO: In future, the Transaction will be a business document that triggers payments, shipping,insurance and commissions
 
 ./OpenAuctionRequestForBids
-  Opens the auction request for bids for 3 minutes - Auction Request ID used for testing is 1111 and Item 1000
-  This opens a timer for 3 minutes and once timer expires, writes a shell script to invoke CloseAuction...
 
-# As described above, once the auction is "OPEN", this script submits bids against that auctionID. Both thhe auctionID and the buyerID
-# are validated before the bid is posted. Once the auction is "CLOSED", new bids will be rejected
+Opens the auction request for bids for 3 minutes - Auction Request ID used for testing is 1111 and Item 1000
+This opens a timer for 3 minutes and once timer expires, writes a shell script to invoke CloseAuction...
+
+As described above, once the auction is "OPEN", this script submits bids against that auctionID. Both thhe auctionID and the buyerID are validated before the bid is posted. Once the auction is "CLOSED", new bids will be rejected
 
 ./Submitbids
   submits a series of bids against auction# 1111 and item# 1000
 
 ./SubmitQueries
   This is list of queries that can be issued and must be used via cut and paste on command line (CLI)
-
 
 After the timer expires, the Close auction should get invoked and the highest bid should be posted as a transaction
 
