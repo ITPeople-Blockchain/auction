@@ -10,6 +10,7 @@
 	<link href="style/style.css" media="screen" rel="stylesheet" type="text/css">
 	<link href="style/style-form-list.css" media="screen" rel="stylesheet" type="text/css">
 	<script src="js/jquery-2.2.4.min.js"></script>
+	<script src="js/jquery-mousewheel.js"></script>
 	<script src="js/main.js"></script>
 	<script src="js/main-application.js"></script>
 	<script src="js/main-init.js"></script>
@@ -26,20 +27,20 @@
 	</div>
 	<div class="header-right">
 		<div class="header-menu">
+			<div class="menu-item action-load-form" form-name="user-register">
+				<div class="item-label">Create Account</div>
+			</div>
 			<div class="menu-item">
-				<div class="item-label primary-event">Actions</div>
+				<div class="item-label primary-event" menu-name="actions">Actions</div>
 				<div class="item-content">
 					<div class="sub-menu">
-						<div class="menu-item action-load-form" form-name="user-register">
-							<div class="item-label">Register User</div>
-						</div>
 						<div class="menu-item action-load-form" form-name="item-register">
 							<div class="item-label">Register Item</div>
 						</div>
 						<!--div class="menu-item action-load-form" form-name="item-detail">
 							<div class="item-label">Auction Item</div>
 						</div-->
-						<div class="menu-item action-load-form" form-name="item-bid">
+						<div class="menu-item action-load-form" form-name="list-bidding">
 							<div class="item-label">Bid on Item</div>
 						</div>
 						<div class="menu-item action-load-list" list-name="list-auctions">
@@ -50,11 +51,14 @@
 				</div>
 			</div>
 			<div class="menu-item">
-				<div class="item-label primary-event">Categories</div>
+				<div class="item-label primary-event" menu-name="categories">Categories</div>
 				<div class="item-content">
 					<div class="sub-menu">
-						<div class="menu-item action-load-page" page-name="category-paintings">
-							<div class="item-label">Paintings</div>
+						<div class="menu-item action-load-page" page-name="category-paintings" id="modern">
+							<div class="item-label">Modern</div>
+						</div>
+						<div class="menu-item action-load-page" page-name="category-paintings" id="landscape">
+							<div class="item-label">Landscape</div>
 						</div>
 						<!--div class="menu-item">
 							<div class="item-label">Category Two</div>
@@ -85,41 +89,61 @@
 					<div class="form-message success">Bid submitted successfully</div>
 					<div class="form-message error">Bid submission failed</div>
 				</div>
+				<!--div class="form-specs">
+					<div class="specs-title">Current Bids:</div>
+					<div class="spec-item" name="bid-highest">
+						<div class="spec-label">Highest:</div>
+						<div class="spec-content">--</div>
+					</div>
+					<div class="spec-item" name="bid-last">
+						<div class="spec-label">Last Received:</div>
+						<div class="spec-content">--</div>
+					</div>
+				</div-->
 			</div>
 			<div class="form-content">
 				<div class="form-body">
 					<div class="body-column column-1 half">
-						<div class="form-item" style="display:none;">
+						<div class="form-item" >
 							<div class="item-label">Auction ID</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="bid_auction_id" id="bid_auction_id" type="text" value="1111" tabindex="1">
+									<input name="bid_auction_id" id="bid_auction_id" type="text" value="" tabindex="1">
 								</div>
 							</div>
 						</div>
-						<div class="form-item">
+						<!--div class="form-item">
 							<div class="item-label">Bid ID</div>
 							<div class="item-content">
 								<div class="form-input">
 									<input name="bid_id" id="bid_id" type="text" value="1" tabindex="1">
 								</div>
 							</div>
-						</div>
+						</div-->
 						<div class="form-item">
 							<div class="item-label">Art ID</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="bid_art" id="bid_art" type="text" value="1000" tabindex="6">
+									<input name="bid_art" id="bid_art_id" type="text" value="" tabindex="6">
 								</div>
 							</div>
 						</div>
+
 					</div>
 					<div class="body-column column-2 half">
+						<!--div class="form-item">
+							<div class="item-label">Bid ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="bid_id" id="bid_id" type="text" value="" tabindex="2">
+								</div>
+							</div>
+						</div-->
 						<div class="form-item">
 							<div class="item-label">Buyer ID</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="bid_buyer" id="bid_buyer" type="text" value="300" tabindex="2">
+									<input name="bid_buyer" id="bid_buyer_id" type="text" value="" tabindex="4">
 								</div>
 							</div>
 						</div>
@@ -127,7 +151,7 @@
 							<div class="item-label">Bid Price</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="bid_price" id="bid_price" type="text" value="1200" tabindex="7">
+									<input name="bid_price" id="bid_price" type="text" value="" tabindex="6">
 								</div>
 							</div>
 						</div>
@@ -135,8 +159,9 @@
 				</div>
 			</div>
 			<div class="form-footer">
-				<div class="form-button" tabindex="10">
-					<div class="button-label">Place Bid</div>
+				<div class="form-specs"></div>
+				<div class="form-button" tabindex="8">
+					<div class="button-label" id='bid_submit_button'>Place Bid</div>
 				</div>
 			</div>
 		</div>
@@ -151,11 +176,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
