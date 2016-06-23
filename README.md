@@ -6,6 +6,8 @@ This Hyperledger/Fabric The fabric is an implementation of blockchain technology
 
 The original intention of this application is to understand how to write a Go application on the Hyperledger/Fabric. This initial version was written to understand the different chaincode api's, the boundary that separates what goes into the blockchain and what lives within the enterprise application, usage of database features, error management etc.
 
+![auction_chain](auction_chain.jpg)
+
 ## Application Description
 
 This application deals with auctioning ART on the block chain. The blockchain makes sense here as there are many different stakeholders and can leverage the benifits of the "Network Effect". This application deals with the following stake holders:
@@ -18,7 +20,7 @@ This application deals with auctioning ART on the block chain. The blockchain ma
 * Artists (ART)
 
 The typical business process is shown below
-<Insert Business Process Picture here>
+![Business Process](art_process.jpg)
 
 1. Artists, Traders, Dealers own ART items
 2. To trade on the block chain, the stakeholder has to open an account on the block chain
@@ -59,7 +61,6 @@ TODO: In a future version, the user identity will be validated against the IDaaS
 inserting into the database
 
 ./PostUsers
-
 
 #### PostItems
 The PostItems script inserts a set of ART ASSETS into the database. Before inserting the asset the chaincode checks 
@@ -112,4 +113,6 @@ As described above, once the auction is "OPEN", this script submits bids against
 
 After the timer expires, the Close auction should get invoked and the highest bid should be posted as a transaction
 
+## Runnning the Application using the Web Browser
 
+The chaincode functions can be accessed via the browser. To kick off the application, load the index.html file via the browser. We have tested the application by pre-loading some data via the CLI and using the browser to fire up a simple auction
