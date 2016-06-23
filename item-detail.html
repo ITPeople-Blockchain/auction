@@ -10,7 +10,6 @@
 	<link href="style/style.css" media="screen" rel="stylesheet" type="text/css">
 	<link href="style/style-form-list.css" media="screen" rel="stylesheet" type="text/css">
 	<script src="js/jquery-2.2.4.min.js"></script>
-	<script src="js/jquery-mousewheel.js"></script>
 	<script src="js/main.js"></script>
 	<script src="js/main-application.js"></script>
 	<script src="js/main-init.js"></script>
@@ -27,20 +26,20 @@
 	</div>
 	<div class="header-right">
 		<div class="header-menu">
-			<div class="menu-item action-load-form" form-name="user-register">
-				<div class="item-label">Create Account</div>
-			</div>
 			<div class="menu-item">
-				<div class="item-label primary-event" menu-name="actions">Actions</div>
+				<div class="item-label primary-event">Actions</div>
 				<div class="item-content">
 					<div class="sub-menu">
+						<div class="menu-item action-load-form" form-name="user-register">
+							<div class="item-label">Register User</div>
+						</div>
 						<div class="menu-item action-load-form" form-name="item-register">
 							<div class="item-label">Register Item</div>
 						</div>
 						<!--div class="menu-item action-load-form" form-name="item-detail">
 							<div class="item-label">Auction Item</div>
 						</div-->
-						<div class="menu-item action-load-form" form-name="list-bidding">
+						<div class="menu-item action-load-form" form-name="item-bid">
 							<div class="item-label">Bid on Item</div>
 						</div>
 						<div class="menu-item action-load-list" list-name="list-auctions">
@@ -50,14 +49,11 @@
 				</div>
 			</div>
 			<div class="menu-item">
-				<div class="item-label primary-event" menu-name="categories">Categories</div>
+				<div class="item-label primary-event">Categories</div>
 				<div class="item-content">
 					<div class="sub-menu">
-						<div class="menu-item action-load-page" page-name="category-paintings" id="modern">
-							<div class="item-label">Modern</div>
-						</div>
-						<div class="menu-item action-load-page" page-name="category-paintings" id="landscape">
-							<div class="item-label">Landscape</div>
+						<div class="menu-item action-load-page" page-name="category-paintings">
+							<div class="item-label">Paintings</div>
 						</div>
 						<!--div class="menu-item">
 							<div class="item-label">Category Two</div>
@@ -175,7 +171,7 @@
 					</div>
 					<div class="body-column column-2 half">
 						<div class="form-image">
-							<div class="item-image" id="art_image" style="background-image:url('img/item-00q.jpg');"></div>
+							<div class="item-image" id='art_image' style="background:url('img/noimage.jpg') no-repeat right top;"></div>
 						</div>
 					</div>
 				</div>
@@ -184,7 +180,6 @@
 				<div class="form-button" tabindex="10">
 					<div class="button-label" id='art_submit_auction'>Put on Auction</div>
 				</div>
-				<div class="form-indicators"></div>
 			</div>
 		</div>
 	</div>
@@ -198,3 +193,11 @@
 
 </body>
 </html>
+
+
+
+
+
+
+
+

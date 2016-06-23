@@ -1,3 +1,3 @@
 $(document).ready(function(){
-  mainApp.init();
+  m3sApp.init();
 });

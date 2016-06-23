@@ -5,25 +5,16 @@ html {
 	width: 100%;
 	height: 100%;
 	font-family: "Lato", sans-serif;
+	background-color: #123d70;
 	overflow-x: hidden;
 }
 
-body {
-	background-image: url('img/bkg-main-dark.jpg');
-    background-position: 50% 100%;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment:fixed;
-}
-
 .site-header {
-	width: 100%;
 	height: 100px;
-	position: absolute;
+	position: relative;
 	color: #FFF;
 	font-size: 20px;
 	z-index: 1;
-	background-color: #123d70;
 }
 
 .site-header .header-branding {
@@ -38,6 +29,7 @@ body {
 	background-repeat: no-repeat;
 	cursor: pointer;
 }
+
 
 .site-header .header-right {
 	position: absolute;
@@ -100,47 +92,22 @@ body {
 	text-decoration: none;
 }
 
-.site-header .menu-item[form-name="user-register"]{
-	padding-left: 40px;
-	background-image: url('img/icon-user-add.svg');
-	background-size: 35px 35px;
-	background-position: 0 50%;
-	background-repeat: no-repeat;
-}
-
-.site-header .item-label[menu-name="actions"]{
-	padding-left: 32px;
-	background-image: url('img/icon-actions.svg');
-	background-size: 25px 25px;
-	background-position: 0 50%;
-	background-repeat: no-repeat;
-}
-
-.site-header .item-label[menu-name="categories"]{
-	padding-left: 31px;
-	background-image: url('img/icon-categories.svg');
-	background-size: 23px 23px;
-	background-position: 0 50%;
-	background-repeat: no-repeat;
-}
-
-
-
-
-
 .site-main {
-    
+    background-color: #fafafa;
+    background-image: url('img/bkg-main-dark.jpg');
+    background-position: 50% 100%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    padding-bottom: 200px;
+    background-attachment:fixed;
     position: relative;
     z-index: 0;
-    height: 100%;
 }
 
 .main-content {
 	max-width: 1200px;
     margin: auto;
     padding: 30px;
-    padding-top: 120px;
-    padding-bottom: 120px;
 }
 
 
@@ -154,11 +121,9 @@ body {
 
 .site-footer {
 	height: 75px;
-	position: absolute;
-	width: 100%;
-	bottom: 0;
-	background-color: #123d70;
-	padding: 0;
+	position: relative;
+	background-color: rgba(0,0,0,.1);
+	padding: 0 30px;
 }
 
 .site-footer .footer-left,
@@ -167,7 +132,6 @@ body {
 	color: #FFF;
 	text-transform: uppercase;
 	font-size: 13px;
-	padding: 0 30px
 }
 
 .site-footer .footer-left {
