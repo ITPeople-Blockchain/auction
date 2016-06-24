@@ -7,19 +7,19 @@
 	<title>IT People :: IBM Blockchain Application</title>
 	<link href='https://fonts.googleapis.com/css?family=Lato:400,100,100italic,300,300italic,400italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
 	<link href='https://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
-	<link href="style/style.css" media="screen" rel="stylesheet" type="text/css">
-	<link href="style/style-form-list.css" media="screen" rel="stylesheet" type="text/css">
-	<script src="js/jquery-2.2.4.min.js"></script>
-	<script src="js/jquery-mousewheel.js"></script>
-	<script src="js/main.js"></script>
-	<script src="js/main-application.js"></script>
-	<script src="js/main-init.js"></script>
-	<script src="js/form.js"></script>
-	<script src="js/form-application.js"></script>
-	<script src="js/form-init.js"></script>
+	<link href="../style/style.css" media="screen" rel="stylesheet" type="text/css">
+	<link href="../style/style-form-list.css" media="screen" rel="stylesheet" type="text/css">
+	<script src="../js/jquery-2.2.4.min.js"></script>
+	<script src="../js/jquery-mousewheel.js"></script>
+	<script src="../js/main.js"></script>
+	<script src="../js/main-init.js"></script>
+	<script src="../js/main-application.js"></script>
+	<script src="../js/form.js"></script>
+	<script src="../js/form-application.js"></script>
+	<script src="../js/form-init.js"></script>
 </head>
 
-<body class="form-page" name="user-register">
+<body class="form-page" name="item-bid">
 
 <div class="site-header">
 	<div class="header-left">
@@ -37,7 +37,7 @@
 						<div class="menu-item action-load-form" form-name="item-register">
 							<div class="item-label">Register Item</div>
 						</div>
-						<!--div class="menu-item action-load-form" form-name="item-auction">
+						<!--div class="menu-item action-load-form" form-name="item-detail">
 							<div class="item-label">Auction Item</div>
 						</div-->
 						<div class="menu-item action-load-form" form-name="list-bidding">
@@ -46,6 +46,7 @@
 						<div class="menu-item action-load-list" list-name="list-auctions">
 							<div class="item-label">Auctions</div>
 						</div>
+
 					</div>
 				</div>
 			</div>
@@ -60,6 +61,9 @@
 							<div class="item-label">Landscape</div>
 						</div>
 						<!--div class="menu-item">
+							<div class="item-label">Category Two</div>
+						</div>
+						<div class="menu-item">
 							<div class="item-label">Category Three</div>
 						</div>
 						<div class="menu-item">
@@ -75,91 +79,79 @@
 	</div>
 </div>
 
-
+<!-- ["1111", "BID", "1", "1000", "300", "1200"] -->
 <div class="site-main">
 	<div class="main-content">
-		<div class="form-container" id="user-register">
+		<div class="form-container" id="item-bid">
 			<div class="form-header">
-				<div class="form-title">Create Account</div>
+				<div class="form-title">Bid on Item</div>
 				<div class="form-messages">
-					<div class="form-message success">User registered successfully</div>
-					<div class="form-message error">User registered failed</div>
+					<div class="form-message success">Bid submitted successfully</div>
+					<div class="form-message error">Bid submission failed</div>
 				</div>
+				<!--div class="form-specs">
+					<div class="specs-title">Current Bids:</div>
+					<div class="spec-item" name="bid-highest">
+						<div class="spec-label">Highest:</div>
+						<div class="spec-content">--</div>
+					</div>
+					<div class="spec-item" name="bid-last">
+						<div class="spec-label">Last Received:</div>
+						<div class="spec-content">--</div>
+					</div>
+				</div-->
 			</div>
 			<div class="form-content">
 				<div class="form-body">
 					<div class="body-column column-1 half">
-						<div class="form-item">
-							<div class="item-label">User ID</div>
+						<div class="form-item" >
+							<div class="item-label">Auction ID</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_id" id="user_id" type="text" value="100" tabindex="1">
+									<input name="bid_auction_id" id="bid_auction_id" type="text" value="" tabindex="1">
 								</div>
 							</div>
 						</div>
-						<div class="form-item">
-							<div class="item-label">Name</div>
+						<!--div class="form-item">
+							<div class="item-label">Bid ID</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_name" id="user_name" type="text" value="Ashley Hart" tabindex="2">
+									<input name="bid_id" id="bid_id" type="text" value="1" tabindex="1">
+								</div>
+							</div>
+						</div-->
+						<div class="form-item">
+							<div class="item-label">Art ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="bid_art" id="bid_art_id" type="text" value="" tabindex="6">
 								</div>
 							</div>
 						</div>
-						<div class="form-item">
-							<div class="item-label">User Type</div>
-							<div class="item-content">
-								<div class="form-input">
-									<input name="user_type" id="user_type" type="text" value="PERSON" tabindex="3">
-								</div>
-							</div>
-						</div>
-						<div class="form-item">
-							<div class="item-label">Address</div>
-							<div class="item-content">
-								<div class="form-input">
-									<input name="user_address" id="user_address" type="text" value="One Copley Parkway, #216, Morrisville, NC 27560" tabindex="4">
-								</div>
-							</div>
-						</div>
-						<div class="form-item">
-							<div class="item-label">Phone</div>
-							<div class="item-content">
-								<div class="form-input">
-									<input name="user_phone" id="user_phone" type="text" value="9198063535" tabindex="5">
-								</div>
-							</div>
-						</div>
+
 					</div>
 					<div class="body-column column-2 half">
-						<div class="form-item">
-							<div class="item-label">Email</div>
+						<!--div class="form-item">
+							<div class="item-label">Bid ID</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_email" id="user_email" type="text" value="admin@itpeople.com" tabindex="6">
+									<input name="bid_id" id="bid_id" type="text" value="" tabindex="2">
+								</div>
+							</div>
+						</div-->
+						<div class="form-item">
+							<div class="item-label">Buyer ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="bid_buyer" id="bid_buyer_id" type="text" value="" tabindex="4">
 								</div>
 							</div>
 						</div>
 						<div class="form-item">
-							<div class="item-label">Bank</div>
+							<div class="item-label">Bid Price</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_bank" id="user_bank" type="text" value="SUNTRUST" tabindex="7">
-								</div>
-							</div>
-						</div>
-						<div class="form-item">
-							<div class="item-label">Account #</div>
-							<div class="item-content">
-								<div class="form-input">
-									<input name="user_account" id="user_account" type="text" value="00017102345" tabindex="8">
-								</div>
-							</div>
-						</div>
-						<div class="form-item">
-							<div class="item-label">Routing #</div>
-							<div class="item-content">
-								<div class="form-input">
-									<input name="user_routing" id="user_routing" type="text" value="0234678" tabindex="9">
+									<input name="bid_price" id="bid_price" type="text" value="" tabindex="6">
 								</div>
 							</div>
 						</div>
@@ -167,8 +159,9 @@
 				</div>
 			</div>
 			<div class="form-footer">
-				<div class="form-button" tabindex="10">
-					<div class="button-label">Register</div>
+				<div class="form-specs"></div>
+				<div class="form-button" tabindex="8">
+					<div class="button-label" id='bid_submit_button'>Place Bid</div>
 				</div>
 			</div>
 		</div>
