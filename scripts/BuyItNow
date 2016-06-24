@@ -1,0 +1,1 @@
+./peer chaincode invoke -l golang -n mycc -c '{"Function": "BuyItNow", "Args":["1111", "BID", "1", "1000", "300", "1800"]}'
