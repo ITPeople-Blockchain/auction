@@ -31,6 +31,36 @@ The typical business process is shown below
 6. During the window of the auction, bidders can place bids
 7. When the auction expires, the Auction House picks the highest bid and converts it to a transaction ( A  transaction in the real world could mean creating insurance and shipping docs, collecting payment and commissions, issuing a new title or certificate to the new owner etc.) and transfers ownership to the buyer and updates the price with the new "Hammer" price.
 
+## APIs Available
+The following Invoke and Query APIs are available from both CLI and REST, and have the following signature
+
+    func(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) 
+
+### Invoke
+                * PostUser 
+                * PostItem
+                * PostAuctionRequest
+                * PostTransaction
+                * PostBid
+                * OpenAuctionForBids
+                * BuyItNow
+                * CloseAuction
+### Query
+                * GetItem
+                * GetUser
+                * GetAuctionRequest
+                * GetTransaction
+                * GetBid
+                * GetLastBid
+                * GetHighestBid
+                * GetNoOfBidsReceived
+                * GetListOfBids
+                * GetItemLog
+                * GetItemListByCat
+                * GetUserListByCat
+                * GetListOfItemsOnAuc
+                * GetListOfOpenAucs
+
 ##Environment Setup
 Please review instructions on setting up the [Development Environment](https://github.com/hyperledger/fabric/blob/master/docs/dev-setup/devnet-setup.md) as well as the setting up the [Sandbox Environment](https://github.com/hyperledger/fabric/blob/master/docs/API/SandboxSetup.md) to execute the chaincode.
 
