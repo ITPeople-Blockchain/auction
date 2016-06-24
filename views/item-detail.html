@@ -7,19 +7,19 @@
 	<title>IT People :: IBM Blockchain Application</title>
 	<link href='https://fonts.googleapis.com/css?family=Lato:400,100,100italic,300,300italic,400italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
 	<link href='https://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
-	<link href="style/style.css" media="screen" rel="stylesheet" type="text/css">
-	<link href="style/style-form-list.css" media="screen" rel="stylesheet" type="text/css">
-	<script src="js/jquery-2.2.4.min.js"></script>
-	<script src="js/jquery-mousewheel.js"></script>
-	<script src="js/main.js"></script>
-	<script src="js/main-application.js"></script>
-	<script src="js/main-init.js"></script>
-	<script src="js/form.js"></script>
-	<script src="js/form-application.js"></script>
-	<script src="js/form-init.js"></script>
+	<link href="../style/style.css" media="screen" rel="stylesheet" type="text/css">
+	<link href="../style/style-form-list.css" media="screen" rel="stylesheet" type="text/css">
+	<script src="../js/jquery-2.2.4.min.js"></script>
+	<script src="../js/jquery-mousewheel.js"></script>
+	<script src="../js/main.js"></script>
+	<script src="../js/main-application.js"></script>
+	<script src="../js/main-init.js"></script>
+	<script src="../js/form.js"></script>
+	<script src="../js/form-application.js"></script>
+	<script src="../js/form-init.js"></script>
 </head>
 
-<body class="form-page" name="item-bid">
+<body class="form-page" name="item-detail">
 
 <div class="site-header">
 	<div class="header-left">
@@ -46,7 +46,6 @@
 						<div class="menu-item action-load-list" list-name="list-auctions">
 							<div class="item-label">Auctions</div>
 						</div>
-
 					</div>
 				</div>
 			</div>
@@ -79,90 +78,113 @@
 	</div>
 </div>
 
-<!-- ["1111", "BID", "1", "1000", "300", "1200"] -->
+
 <div class="site-main">
 	<div class="main-content">
-		<div class="form-container" id="item-bid">
+		<div class="form-container">
 			<div class="form-header">
-				<div class="form-title">Bid on Item</div>
+				<div class="form-title">Item Details</div>
 				<div class="form-messages">
-					<div class="form-message success">Bid submitted successfully</div>
-					<div class="form-message error">Bid submission failed</div>
+					<div class="form-message success">Item registered successfully</div>
+					<div class="form-message error">Item registered failed</div>
 				</div>
-				<!--div class="form-specs">
-					<div class="specs-title">Current Bids:</div>
-					<div class="spec-item" name="bid-highest">
-						<div class="spec-label">Highest:</div>
-						<div class="spec-content">--</div>
-					</div>
-					<div class="spec-item" name="bid-last">
-						<div class="spec-label">Last Received:</div>
-						<div class="spec-content">--</div>
-					</div>
-				</div-->
 			</div>
 			<div class="form-content">
 				<div class="form-body">
 					<div class="body-column column-1 half">
-						<div class="form-item" >
-							<div class="item-label">Auction ID</div>
-							<div class="item-content">
-								<div class="form-input">
-									<input name="bid_auction_id" id="bid_auction_id" type="text" value="" tabindex="1">
-								</div>
-							</div>
-						</div>
-						<!--div class="form-item">
-							<div class="item-label">Bid ID</div>
-							<div class="item-content">
-								<div class="form-input">
-									<input name="bid_id" id="bid_id" type="text" value="1" tabindex="1">
-								</div>
-							</div>
-						</div-->
 						<div class="form-item">
-							<div class="item-label">Art ID</div>
+							<div class="item-label">Item Identifier</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="bid_art" id="bid_art_id" type="text" value="" tabindex="6">
+									<input name="art_id" id="art_id" type="text" value="" tabindex="1">
 								</div>
 							</div>
 						</div>
-
+						<div class="form-item noedit first">
+							<div class="item-label">Description</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="art_description" id="art_description" type="text" value="" tabindex="6">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">Other Details</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="art_artist" id="art_artist" type="text" value="" tabindex="2">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">Date of Creation</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="art_date" id="art_date" type="text" value="" tabindex="7">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">Type</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="art_type" id="art_type" type="text" value="" tabindex="3">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">Subject Area</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="art_subject" id="art_subject" type="text" value="" tabindex="8">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">Media</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="art_media" id="art_media" type="text" value="" tabindex="4">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">Size</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="art_size" id="art_size" type="text" value="" tabindex="9">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">Purchase Price in $</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="art_price" id="art_price" type="text" value="" tabindex="9">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">Current Owner ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="art_owner" id="art_owner" type="text" value="" tabindex="5">
+								</div>
+							</div>
+						</div>
 					</div>
 					<div class="body-column column-2 half">
-						<!--div class="form-item">
-							<div class="item-label">Bid ID</div>
-							<div class="item-content">
-								<div class="form-input">
-									<input name="bid_id" id="bid_id" type="text" value="" tabindex="2">
-								</div>
-							</div>
-						</div-->
-						<div class="form-item">
-							<div class="item-label">Buyer ID</div>
-							<div class="item-content">
-								<div class="form-input">
-									<input name="bid_buyer" id="bid_buyer_id" type="text" value="" tabindex="4">
-								</div>
-							</div>
-						</div>
-						<div class="form-item">
-							<div class="item-label">Bid Price</div>
-							<div class="item-content">
-								<div class="form-input">
-									<input name="bid_price" id="bid_price" type="text" value="" tabindex="6">
-								</div>
-							</div>
+						<div class="form-image">
+							<div class="item-image" id="art_image" style="background-image:url('img/item-00q.jpg');"></div>
 						</div>
 					</div>
 				</div>
 			</div>
 			<div class="form-footer">
-				<div class="form-specs"></div>
-				<div class="form-button" tabindex="8">
-					<div class="button-label" id='bid_submit_button'>Place Bid</div>
+				<div class="form-button" tabindex="10">
+					<div class="button-label" id='art_submit_auction'>Put on Auction</div>
 				</div>
+				<div class="form-indicators"></div>
 			</div>
 		</div>
 	</div>
