@@ -1,0 +1,12 @@
+site_name: ITPeople Blockchain Auction
+site_url: http://itpeople-blockchain-auction.readthedocs.org
+theme: readthedocs
+repo_url: https://github.com/ITPeople-Blockchain/auction
+site_description: 'Welcome to the ITPeople Blockchain Art Auction Application documentation'
+markdown_extensions:
+# Convert ASCII dashes, quotes to HTML entity
+- smarty
+
+pages:
+- HOME: index.md
+- Getting Started: README.md
