@@ -69,13 +69,12 @@ Please review instructions on setting up the [Development Environment](https://g
 
 * $ cd $GOPATH/src/github.com/hyperledger/fabric/peer
 * $ go build
-* $ ./peer peer --peer-chaincodedev
+* $ peer peer --peer-chaincodedev
 
 ###Terminal 2
 
-* $ cd  $GOPATH/src/github.com/hyperledger/fabric
-* $ cd art/artchaincode
-* $ go build art_app.go
+* $ cd  $GOPATH/src/github.com/hyperledger/fabric/art/artchaincode
+* $ go build
 * $ CORE_CHAINCODE_ID_NAME=mycc CORE_PEER_ADDRESS=0.0.0.0:30303 ./artchaincode
 
 ###Terminal 3
