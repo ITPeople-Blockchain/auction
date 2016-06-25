@@ -1,8 +1,7 @@
 
-//TODO: Can we do this better ? Make sure these maps are in sync with Form ids and RecordType enums in Go
-
 //TODO: Change this path according to the application path
-var path = "github.com/hyperledger/fabric/examples/chaincode/go/artfun";
+//var path = "github.com/hyperledger/fabric/examples/chaincode/go/artfun";
+var path = "https://github.com/ratnakar-asara/auction/tree/master/art/artchaincode";
 var JsonRPC_Version = "2.0";
 //Save chaincode Hash, TODO: should check for a better and alternate solution
 var InvokeMethod = "invoke";
@@ -13,13 +12,6 @@ recordTypeByFormID['user-register'] = 'USER';
 recordTypeByFormID['item-register'] = 'ARTINV';
 recordTypeByFormID['item-auction'] = 'AUCREQ';
 recordTypeByFormID['item-bid'] = 'BID';
-/*"PostItem":           PostItem,
-"PostUser":           PostUser,
-"PostAuctionRequest": PostAuctionRequest,
-"PostTransaction":    PostTransaction,
-"PostBid":            PostBid,
-"OpenAuctionForBids": OpenAuctionForBids,
-"CloseAuction":       CloseAuction,*/
 
 var functionByRecType = {};
 functionByRecType['USER'] = 'PostUser';
@@ -106,9 +98,7 @@ function formApplication(){
 		var recType = '';
 		var args = [];
 		// this is a special case where we need to Submit the current for auction
-		//alert(formButton.children("div")[0].id)
 		if(formButton.children("div")[0] && formButton.children("div")[0].id == 'art_submit_auction' ) {
-			//alert ("################### Put on auction")
 			recType = 'AUCREQ';
 			functionName = functionByRecType[recType];
 			var fieldValue = '';
@@ -128,7 +118,6 @@ function formApplication(){
 			args.push(new Date().toString());
 			console.log(args);
 		} else if(formButton.children("div")[0] && formButton.children("div")[0].id == 'submit_bid_button' ) {
-			//alert ("################### Put on auction")
 			//console.log(actionForm.find("#bid_buyer").val())
 			//console.log(actionForm.find("#bid_price").val())
 			var res = (actionForm.find("#form_field_values").val()).split("-")
@@ -166,7 +155,6 @@ function formApplication(){
 			}
 			//return;
 		} else {
-			//alert ("################### Other auction")
 			var actionForm = formButton.parents('.form-container');
 			recType = recordTypeByFormID[actionForm[0].id];
 			functionName = functionByRecType[recType];
@@ -327,7 +315,6 @@ function formApplication(){
 
 	thisObj.populateFormField = function(fieldID,fieldData){
 		$('#'+fieldID).val(fieldData);
-		//alert($('#'+fieldID).val(fieldData));
 
 	}
 	thisObj.getItemRegister = function(){
@@ -389,13 +376,7 @@ function formApplication(){
 
 
 	thisObj.populateItemDetail = function(data){
-//		alert("Great Query execution is successful !!");
 		var obj = JSON.parse(data);
-		//alert(Object.keys(obj).length);
-		/*var display = '';
-		for (name in obj) {
-			display += name + ' \n';
-		}*/
 		//PARSE DATA RETURNED FROM API
 		//USE "populateFormField" function above to add data to DOM
 
@@ -593,7 +574,6 @@ function makeRestCall(payload, method, recordType){
 				console.log("################# Invoke Successful ??");
 				if (recordType == 'AUCREQ'){
 					formApp.populateFormIndicator("Auction ID", auctionID)
-					//alert(auctionID);
 				} //TODO: should we do any thing for BID
 				if (recordType == 'BID'){
 					console.log("Bid placed successfully !!")
