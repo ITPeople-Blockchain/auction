@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/itpeople-blockchain-auction/badge/?version=latest)](http://itpeople-blockchain-auction.readthedocs.io/en/latest/?badge=latest)
+
 #Art Auction Blockchain Application
 Credits: Ratnakar Asara, Nishi Nidamarty, Ramesh Thoomu, Adam Gordon and Mohan Venkataraman
 
