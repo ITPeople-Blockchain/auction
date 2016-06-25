@@ -143,6 +143,7 @@ type AuctionRequest struct {
 	SellerID       string // ID Of Seller - to verified against the Item CurrentOwnerId
 	RequestDate    string // Date on which Auction Request was filed
 	ReservePrice   string // reserver price > previous purchase price
+	BuyItNowPrice  string // 0 (Zero) if not applicable else specify price
 	Status         string // INIT, OPEN, CLOSED (To be Updated by Trgger Auction)
 	OpenDate       string // Date on which auction will occur (To be Updated by Trigger Auction)
 	CloseDate      string // Date and time when Auction will close (To be Updated by Trigger Auction)
@@ -235,6 +236,7 @@ func InvokeFunction(fname string) func(stub *shim.ChaincodeStub, function string
 		"PostTransaction":    PostTransaction,
 		"PostBid":            PostBid,
 		"OpenAuctionForBids": OpenAuctionForBids,
+		"BuyItNow":	      BuyItNow,
 		"CloseAuction":       CloseAuction,
 	}
 	return InvokeFunc[fname]
@@ -276,7 +278,7 @@ func main() {
 
 	// maximize CPU usage for maximum performance
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	fmt.Printf("Starting Item Auction Application chaincode ver 13 Dated 2016-06-06 17.00.00: ")
+	fmt.Printf("Starting Item Auction Application chaincode ver 14 Dated 2016-06-23 17.00.00: ")
 
 	// Start the shim -- running the fabric
 	err := shim.Start(new(SimpleChaincode))
@@ -874,13 +876,13 @@ func CreateAuctionRequest(args []string) (AuctionRequest, error) {
 	var err error
 	var aucReg AuctionRequest
 
-	// Check there are 10 Arguments
+	// Check there are 11 Arguments
 	// See example -- The Open and Close Dates are Dummy, and will be set by open auction
-	// '{"Function": "PostAuctionRequest", "Args":["1111", "AUCREQ", "1000", "200", "100", "04012016", "1200",
+	// '{"Function": "PostAuctionRequest", "Args":["1111", "AUCREQ", "1000", "200", "100", "04012016", "1200", "1800",
 	//   "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]}'
-	if len(args) != 10 {
-		fmt.Println("CreateAuctionRegistrationObject(): Incorrect number of arguments. Expecting 8 ")
-		return aucReg, errors.New("CreateAuctionRegistrationObject() : Incorrect number of arguments. Expecting 8 ")
+	if len(args) != 11 {
+		fmt.Println("CreateAuctionRegistrationObject(): Incorrect number of arguments. Expecting 11 ")
+		return aucReg, errors.New("CreateAuctionRegistrationObject() : Incorrect number of arguments. Expecting 11 ")
 	}
 
 	// Validate UserID is an integer . I think this redundant and can be avoided
@@ -890,7 +892,7 @@ func CreateAuctionRequest(args []string) (AuctionRequest, error) {
 		return aucReg, errors.New("CreateAuctionRequest() : User ID should be an integer")
 	}
 
-	aucReg = AuctionRequest{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]}
+	aucReg = AuctionRequest{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]}
 	fmt.Println("CreateAuctionObject() : Auction Registration : ", aucReg)
 
 	return aucReg, nil
@@ -2518,37 +2520,36 @@ func OpenAuctionForBids(stub *shim.ChaincodeStub, function string, args []string
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 func ShellCmdToCloseAuction(aucID string) error {
 
-	gopath := os.Getenv("GOPATH")
-	cdir := fmt.Sprintf("cd %s/src/github.com/hyperledger/fabric/", gopath)
-	argStr := "'{\"Function\": \"CloseAuction\", \"Args\": [\"" + aucID + "\"," + "\"AUCREQ\"" + "]}'"
-	argStr = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/peer/peer chaincode invoke -l golang -n mycc -c %s", gopath, argStr)
+        cdir := "cd /opt/gopath/src/github.com/hyperledger/fabric/peer"
+        argStr := "'{\"Function\": \"CloseAuction\", \"Args\": [\"" + aucID + "\"," + "\"AUCREQ\"" + "]}'"
+        argStr = "./peer chaincode invoke -l golang -n mycc -c " + argStr
 
-	fileHandle, _ := os.Create(fmt.Sprintf("%s/src/github.com/hyperledger/fabric/closeauction.sh", gopath))
-	writer := bufio.NewWriter(fileHandle)
-	defer fileHandle.Close()
+        fileHandle, _ := os.Create("/opt/gopath/src/github.com/hyperledger/fabric/peer/closeauction.sh")
+        writer := bufio.NewWriter(fileHandle)
+        defer fileHandle.Close()
 
-	fmt.Fprintln(writer, cdir)
-	fmt.Fprintln(writer, argStr)
-	writer.Flush()
+        fmt.Fprintln(writer, cdir)
+        fmt.Fprintln(writer, argStr)
+        writer.Flush()
 
-	x := fmt.Sprintf("sh %s/src/github.com/hyperledger/fabric/closeauction.sh", gopath)
-	err := exe_cmd(x)
-	if err != nil {
-		fmt.Printf("%s", err)
-	}
+        x := "sh /opt/gopath/src/github.com/hyperledger/fabric/peer/closeauction.sh"
+        err := exe_cmd(x)
+        if err != nil {
+                fmt.Printf("%s", err)
+        }
 
-	err = exe_cmd(fmt.Sprintf("rm %s/src/github.com/hyperledger/fabric/closeauction.sh", gopath))
-	if err != nil {
-		fmt.Printf("%s", err)
-	}
+        err = exe_cmd("rm /opt/gopath/src/github.com/hyperledger/fabric/peer/closeauction.sh")
+        if err != nil {
+                fmt.Printf("%s", err)
+        }
 
-	fmt.Println("Kicking off CloseAuction", argStr)
-	return nil
+        fmt.Println("Kicking off CloseAuction", argStr)
+        return nil
 }
 
 func exe_cmd(cmd string) error {
 
-	fmt.Println("Command :  ", cmd)
+	fmt.Println("command :  ", cmd)
 	parts := strings.Fields(cmd)
 	head := parts[0]
 	parts = parts[1:len(parts)]
@@ -2632,6 +2633,80 @@ func CloseAuction(stub *shim.ChaincodeStub, function string, args []string) ([]b
 	fmt.Println("CloseAuction(): PostTransaction() Completed Successfully ")
 	return Avalbytes, nil
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// Buy It Now
+// Rules:
+// If Buy IT Now Option is available then a Buyer has the option to buy the ITEM 
+// before the bids exceed BuyITNow Price . Normally, The application should take of this
+// at the UI level and this chain-code assumes application has validated that
+////////////////////////////////////////////////////////////////////////////////////////////
+
+func BuyItNow(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+
+	// Close The Auction -  Fetch Auction Object
+	Avalbytes, err := QueryLedger(stub, "AuctionTable", []string{args[0], "AUCREQ"})
+	if err != nil {
+		fmt.Println("BuyItNow(): Auction Object Retrieval Failed ")
+		return nil, errors.New("BuyItNow(): Auction Object Retrieval Failed ")
+	}
+
+	aucR, err := JSONtoAucReq(Avalbytes)
+	if err != nil {
+		fmt.Println("BuyItNow(): Auction Object Unmarshalling Failed ")
+		return nil, errors.New("BuyItNow(): Auction Object UnMarshalling Failed ")
+	}
+
+	//  Update Auction Status
+	aucR.Status = "CLOSED"
+	fmt.Println("BuyItNow(): UpdateAuctionStatus() successful ", aucR)
+
+	Avalbytes, err = UpdateAuctionStatus(stub, "AuctionTable", aucR)
+	if err != nil {
+		fmt.Println("BuyItNow(): UpdateAuctionStatus() Failed ")
+		return nil, errors.New("BuyItNow(): UpdateAuctionStatus() Failed ")
+	}
+
+	// Remove the Auction from Open Bucket
+	keys := []string{"2016", aucR.AuctionID}
+	err = DeleteFromLedger(stub, "AucOpenTable", keys)
+	if err != nil {
+		fmt.Println("BuyItNow(): DeleteFromLedger(AucOpenTable) Failed ")
+		return nil, errors.New("BuyItNow(): DeleteFromLedger(AucOpenTable) Failed ")
+	}
+
+	fmt.Println("BuyItNow(): Proceeding to process the highest bid ")
+
+	// Convert the BuyITNow to a Bid type struct
+        buyItNowBid, err := CreateBidObject(args[0:])
+        if err != nil {
+                return nil, err
+        }
+
+        // Reject the offer if the Buyer Information Is not Valid or not registered on the Block Chain
+        buyerInfo, err := ValidateMember(stub, args[4])
+        fmt.Printf("Buyer information  ", buyerInfo, args[4])
+        if err != nil {
+                fmt.Printf("BuyItNow() : Failed Buyer not registered on the block-chain ", args[4])
+                return nil, err
+        }
+
+	tran := BidtoTransaction(buyItNowBid)
+	fmt.Println("BuyItNow(): Converting Bid to tran ", tran)
+
+	// Process the buy-it-now offer 
+	tranArgs := []string{tran.AuctionID, tran.RecType, tran.ItemID, tran.TransType, tran.UserId, tran.TransDate, tran.HammerTime, tran.HammerPrice, tran.Details}
+	fmt.Println("BuyItNow(): Proceeding to process the  Transaction ", tranArgs)
+
+	Avalbytes, err = PostTransaction(stub, "PostTransaction", tranArgs)
+	if err != nil {
+		fmt.Println("BuyItNow(): PostTransaction() Failed ")
+		return nil, errors.New("CloseAuction(): PostTransaction() Failed ")
+	}
+	fmt.Println("BuyItNow(): PostTransaction() Completed Successfully ")
+	return Avalbytes, nil
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // Update the Auction Object
