@@ -9,4 +9,3 @@ markdown_extensions:
 
 pages:
 - HOME: index.md
-- Getting Started: README.md
