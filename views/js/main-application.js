@@ -311,14 +311,15 @@ function mainApplication(){
 	}
 
 		thisObj.populateCategoryItem = function(itemTitle,itemID,imgURL,itemDetail,itemSubject,itemMedia, itemBasePrice){
-			//TODO: Name details  , Media and Currrent price
-			//var masterHTML = '<div class="item" item-id="'+itemID+'"><div class="item-header"><div class="item-image" style="background-image:url('+imgURL+');"></div></div><div class="item-content"><div class="item-details"><div class="item-title item-detail"><div class="detail-label"></div><div class="detail-content">'+itemTitle+'</div></div><div class="item-date item-detail"><div class="detail-label">Auction Start</div><div class="detail-content">'+auctionStart+'</div></div><div class="item-bid item-detail"><div class="detail-label">Current Bid</div><div class="detail-content">'+currentBid+'</div></div><div class="item-bids item-detail"><div class="detail-label">Total Bids</div><div class="detail-content">'+totalBids+'</div></div></div></div><div class="item-footer"><div class="item-actions"><div class="action-button" form-name="item-bid" action-type="form"><div class="button-label">Bid</div></div><div class="action-button" form-name="item-detail" action-type="detail"><div class="button-label">Details</div></div></div></div></div>';
+			//work around to get the image
+			imgURL = '../art/artchaincode/'+imgURL;
       var masterHTML = '<div class="item" item-id="'+itemID+'"><div class="item-header"><div class="item-image" style="background-image:url('+imgURL+');"></div></div><div class="item-content"><div class="item-details"><div class="item-title item-detail"><div class="detail-label"></div><div class="detail-content">'+itemTitle+'</div></div><div class="item-date item-detail"><div class="detail-label">Details</div><div class="detail-content">'+itemDetail+'</div></div><div class="item-bid item-detail"><div class="detail-label">Media</div><div class="detail-content">'+itemMedia+'</div></div><div class="item-bids item-detail"><div class="detail-label">Price</div><div class="detail-content">'+itemBasePrice+'</div></div></div></div><div class="item-footer"><div class="item-actions"><div class="action-button" form-name="item-bid" action-type="form"><div class="button-label">Bid</div></div><div class="action-button" form-name="item-detail" action-type="detail"><div class="button-label">Details</div></div></div></div></div>';
 			$('.category-content .item-view').append(masterHTML);
 
 		}
 	thisObj.populateFrontItem = function(itemTitle,itemID,imgURL){
-
+		//work around to get the image
+		imgURL = '../art/artchaincode/'+imgURL;
 		var masterHTML = '<div class="item" item-id="'+itemID+'"><div class="item-header"><div class="item-image" style="background-image:url('+imgURL+');"></div></div><div class="item-content"><div class="item-details"><div class="item-title item-detail"><div class="detail-label"></div><div class="detail-content">'+itemTitle+'</div></div></div></div><div class="item-footer"><div class="item-actions"><div class="action-button" form-name="item-bid" action-type="form"><div class="button-label">Bid</div></div><div class="action-button" form-name="item-detail" action-type="detail"><div class="button-label">Details</div></div></div></div></div>';
 
 		$('.front-header .item-view').append(masterHTML);
