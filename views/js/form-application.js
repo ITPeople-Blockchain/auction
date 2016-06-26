@@ -1,7 +1,8 @@
 
 //TODO: Change this path according to the application path
 //var path = "github.com/hyperledger/fabric/examples/chaincode/go/artfun";
-var path = "https://github.com/ratnakar-asara/auction/tree/master/art/artchaincode";
+//var path = "https://github.com/ratnakar-asara/auction/tree/master/art/artchaincode";
+var path = "https://github.com/ITPeople-Blockchain/auction/art/artchaincode";
 var JsonRPC_Version = "2.0";
 //Save chaincode Hash, TODO: should check for a better and alternate solution
 var InvokeMethod = "invoke";
@@ -118,8 +119,6 @@ function formApplication(){
 			args.push(new Date().toString());
 			console.log(args);
 		} else if(formButton.children("div")[0] && formButton.children("div")[0].id == 'submit_bid_button' ) {
-			//console.log(actionForm.find("#bid_buyer").val())
-			//console.log(actionForm.find("#bid_price").val())
 			var res = (actionForm.find("#form_field_values").val()).split("-")
 			recType = 'BID';
 			functionName = functionByRecType[recType];
@@ -161,7 +160,6 @@ function formApplication(){
 			var fieldValue = '';
 			var ips = $( ":input" );
 			for (var i=0;i<ips.length;i++){
-				//console.log('################# '+ips[i].value)
 				fieldValue = ips[i].value;
 				if (!fieldValue || fieldValue == '') {
 					console.log(" ###### Field values shouldn't be empty ###### ")
@@ -241,6 +239,9 @@ function formApplication(){
 	}
 
 	thisObj.populateFormImage = function(imgURL){
+		//work around to get the image
+		imgURL = '../art/artchaincode/'+imgURL;
+		alert(imgURL);
 		$('.form-image .item-image').css('background-image','url('+imgURL+')')
 	}
 
@@ -391,8 +392,8 @@ function formApplication(){
 		thisObj.populateFormField('art_size', obj['ItemSize']);
 		thisObj.populateFormField('art_price', obj['ItemBasePrice']);
 		thisObj.populateFormField('art_owner', obj['CurrentOwnerID']);
-
-		$('#art_image').css('background-image', 'url(' +obj['ItemPicFN'] + ')');
+		var imgurl = '../art/artchaincode/'+obj['ItemPicFN'];
+		$('#art_image').css('background-image', 'url(' + imgurl+ ')');
 	}
 
 	thisObj.populateItemRegister = function(data){
@@ -449,7 +450,7 @@ function formApplication(){
 		var obj = JSON.parse(data)
 		thisObj.populateFormSpec('Highest Bid :', obj.BidPrice);
 	}
-	
+
 	thisObj.populateLastBid = function(data){
 		var obj = JSON.parse(data)
 		thisObj.populateFormSpec('Last Bid :', obj.BidPrice);
@@ -568,10 +569,10 @@ function makeRestCall(payload, method, recordType){
 				// Store chaincode which is required for subsequent Invokes/Queries
 				chaincodeHash = res;
 				isDeploySucess = true;
-				console.log("Deloyment  Successful ??");
+				console.log("Deloyment  Successful");
 				//TODO:  Unblock UI ?
 			} else if (method == "invoke") {
-				console.log("################# Invoke Successful ??");
+				console.log("################# Invoke Successful");
 				if (recordType == 'AUCREQ'){
 					formApp.populateFormIndicator("Auction ID", auctionID)
 				} //TODO: should we do any thing for BID

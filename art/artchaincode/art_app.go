@@ -2197,7 +2197,8 @@ func GetList(stub *shim.ChaincodeStub, tableName string, args []string) ([]shim.
 				rowChannel = nil
 			} else {
 				rows = append(rows, row)
-				fmt.Println(row)
+				//If required enable for debugging
+				//fmt.Println(row)
 			}
 		}
 		if rowChannel == nil {
@@ -2205,8 +2206,8 @@ func GetList(stub *shim.ChaincodeStub, tableName string, args []string) ([]shim.
 		}
 	}
 
-	fmt.Printf("Number of Keys retrieved : ", nKeys)
-	fmt.Printf("Number of rows retrieved : ", len(rows))
+	fmt.Println("Number of Keys retrieved : ", nKeys)
+	fmt.Println("Number of rows retrieved : ", len(rows))
 	return rows, nil
 }
 
@@ -2716,7 +2717,7 @@ func BuyItNow(stub *shim.ChaincodeStub, function string, args []string) ([]byte,
 
 func UpdateAuctionStatus(stub *shim.ChaincodeStub, tableName string, ar AuctionRequest) ([]byte, error) {
 
-	buff, err := AucReqtoJSON(ar) 
+	buff, err := AucReqtoJSON(ar)
 	if err != nil {
 		fmt.Printf("UpdateAuctionStatus() : Failed Cannot create object buffer for write : " + ar.AuctionID + "\n")
 		return nil, errors.New("UpdateAuctionStatus(): Failed Cannot create object buffer for write : " + ar.AuctionID)
