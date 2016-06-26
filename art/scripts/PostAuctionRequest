@@ -1,1 +1,1 @@
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostAuctionRequest", "Args":["1111", "AUCREQ", "1000", "200", "100", "04012016", "1200", "1800", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostAuctionRequest", "Args":["1111", "AUCREQ", "1000", "200", "100", "04012016", "1200", "1800", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]}'

@@ -1,0 +1,12 @@
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "1", "1000", "300", "1200"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "2", "1000", "400", "3000"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "3", "1000", "400", "6000"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "4", "1000", "500", "7000"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "5", "1000", "400", "8000"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "6", "1000", "600", "8200"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "7", "1000", "700", "8400"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "8", "1000", "300", "8900"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "9", "1000", "400", "9000"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "10", "1000", "500", "12000"]}'
+
+
