@@ -40,6 +40,8 @@ import (
 	"github.com/op/go-logging"
 	"image"
 	"image/png"
+	"image/gif"
+	"image/jpeg"
 	"io"
 	"net/http"
 	"os"
@@ -278,7 +280,7 @@ func main() {
 
 	// maximize CPU usage for maximum performance
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	fmt.Printf("Starting Item Auction Application chaincode ver 14 Dated 2016-06-23 17.00.00: ")
+	fmt.Printf("Starting Item Auction Application chaincode ver 15 Dated 2016-06-25 09.00.00: ")
 
 	// Start the shim -- running the fabric
 	err := shim.Start(new(SimpleChaincode))
@@ -1186,7 +1188,27 @@ func ByteArrayToImage(imgByte []byte, imageFile string) error {
 	}
 	fmt.Printf("ProcessRequestType ByteArrayToImage : proceeding to Encode image ")
 
-	err = png.Encode(out, img)
+	//err = png.Encode(out, img)
+        filetype := http.DetectContentType(imgByte)
+
+        switch filetype {
+        case "image/jpeg", "image/jpg":
+                var opt jpeg.Options
+                opt.Quality = 100
+                err = jpeg.Encode(out, img, &opt)
+
+        case "image/gif":
+	        var opt gif.Options
+                opt.NumColors = 256
+                err = gif.Encode(out, img, &opt)
+
+        case "image/png":
+                err = png.Encode(out, img)
+
+        default:
+                err = errors.New("Only PMNG, JPG and GIF Supported ")
+        }
+
 
 	if err != nil {
 		fmt.Println("ByteArrayToImage() : cannot ENCODE image file ", err)
