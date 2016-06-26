@@ -6,11 +6,14 @@ $PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1
 sleep 5
 $PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1300", "ARTINV", "Female Water Color", "David Crest", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "art4.png","$9600", "100"]}'
 sleep 5
-$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1400", "ARTINV", "Nature", "James Thomas", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "art5.png","$1800", "100"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1400", "ARTINV", "Nature", "James Thomas", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "item-001.jpg","$1800", "100"]}'
 sleep 5
-$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1500", "ARTINV", "Ladys Hair", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "art6.png","$1200", "300"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1500", "ARTINV", "Ladys Hair", "James Thomas", "19900115", "Original", "landscape", "Acrylic", "12 x 17 in", "item-002.jpg","$1200", "300"]}'
 sleep 5
-$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1600", "ARTINV", "Flowers", "James Thomas", "19900115", "Original", "landscape", "Acrylic", "12 x 17 in", "art7.png","$1000", "300"]}'
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1600", "ARTINV", "Flowers", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "item-003.jpg","$1000", "300"]}'
 sleep 5
-$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1700", "ARTINV", "Women at work", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "sample.png","$1500", "400"]}'
-
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1700", "ARTINV", "Women at work", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "item-004.jpg","$1500", "400"]}'
+sleep 5
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1800", "ARTINV", "People", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "people.gif","$900", "400"]}'
+sleep 5
+$PEER chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1900", "ARTINV", "Mad fb", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "mad-fb.jpg","$1100", "500"]}'

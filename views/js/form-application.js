@@ -104,7 +104,7 @@ function formApplication(){
 			functionName = functionByRecType[recType];
 			var fieldValue = '';
 			var ips = $( ":input" );
-			//["2000", "Shadows by Asppen", "Painted by famed Mughal era Painter Qasim", "10102015", "Original – could be a Reprint", "Miniature", "Acrylic", "15” x 20”", "$600", "100"]
+			//["2000", "Shadows by Asppen", "Painted by famed Mughal era Painter Qasim", "10102015", "Original", "Miniature", "Acrylic", "15” x 20”", "$600", "100"]
 			auctionID = getUUID();
 			args.push(auctionID); // How do we generate ID ?
 			//args.push(recType);
@@ -114,6 +114,7 @@ function formApplication(){
 			args.push(new Date().toString());
 			var str = ips[8].value;
 			args.push((parseInt(str.substring(1, str.length)) * 1.4).toString());
+			args.push("0");//TODO: enable once BuyItNowPrice enabled from UI
 			args.push("INIT");
 			args.push(new Date().toString());
 			args.push(new Date().toString());

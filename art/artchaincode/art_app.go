@@ -40,6 +40,8 @@ import (
 	"github.com/op/go-logging"
 	"image"
 	"image/png"
+	"image/gif"
+	"image/jpeg"
 	"io"
 	"net/http"
 	"os"
@@ -58,7 +60,7 @@ import (
 // which used a record type field. The array below holds a list of valid record types.
 // This could be stored on a blockchain table or an application
 //////////////////////////////////////////////////////////////////////////////////////////////////
-var recType = []string{"ARTINV", "USER", "BID", "AUCREQ", "POSTTRAN", "OPENAUC", "CLAUC"}
+var recType = []string{"ARTINV", "USER", "BID", "AUCREQ", "POSTTRAN", "OPENAUC", "CLAUC", "XFER"}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // The following array holds the list of tables that should be created
@@ -237,6 +239,7 @@ func InvokeFunction(fname string) func(stub *shim.ChaincodeStub, function string
 		"PostBid":            PostBid,
 		"OpenAuctionForBids": OpenAuctionForBids,
 		"BuyItNow":	      BuyItNow,
+		"TransferItem":	      TransferItem,
 		"CloseAuction":       CloseAuction,
 	}
 	return InvokeFunc[fname]
@@ -262,6 +265,7 @@ func QueryFunction(fname string) func(stub *shim.ChaincodeStub, function string,
 		"GetUserListByCat":    GetUserListByCat,
 		"GetListOfItemsOnAuc": GetListOfItemsOnAuc,
 		"GetListOfOpenAucs":   GetListOfOpenAucs,
+		"ValidateItemOwnership":   ValidateItemOwnership,
 	}
 	return QueryFunc[fname]
 }
@@ -278,7 +282,7 @@ func main() {
 
 	// maximize CPU usage for maximum performance
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	fmt.Printf("Starting Item Auction Application chaincode ver 14 Dated 2016-06-23 17.00.00: ")
+	fmt.Println("Starting Item Auction Application chaincode ver 14 Dated 2016-06-23 17.00.00: ")
 
 	// Start the shim -- running the fabric
 	err := shim.Start(new(SimpleChaincode))
@@ -311,7 +315,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 		}
 	}
 
-	fmt.Printf("Init() Initialization Complete  : ", args)
+	fmt.Println("Init() Initialization Complete  : ", args)
 	return []byte("Init(): Initialization Complete"), nil
 }
 
@@ -338,14 +342,14 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 	// example:
 	// ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "1", "1000", "300", "1200"]}'
 
-	if CheckRequestType(args[1]) == true {
+	if ChkReqType(args) == true {
 
 		InvokeRequest := InvokeFunction(function)
 		if InvokeRequest != nil {
 			buff, err = InvokeRequest(stub, function, args)
 		}
 	} else {
-		fmt.Printf("Invoke() Invalid recType : " + args[1] + "\n")
+		fmt.Println("Invoke() Invalid recType : ", args[1] , "\n")
 		return nil, errors.New("Invoke() : Invalid recType : " + args[1])
 	}
 
@@ -363,11 +367,11 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	var err error
 	var buff []byte
-	fmt.Printf("ID Extracted and Type = ", args[0])
-	fmt.Printf("Args supplied : ", args)
+	fmt.Println("ID Extracted and Type = ", args[0])
+	fmt.Println("Args supplied : ", args)
 
 	if len(args) < 1 {
-		fmt.Printf("Query() : Include at least 1 arguments Key \n")
+		fmt.Println("Query() : Include at least 1 arguments Key ")
 		return nil, errors.New("Query() : Expecting Transation type and Key value for query")
 	}
 
@@ -375,12 +379,12 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	if QueryRequest != nil {
 		buff, err = QueryRequest(stub, function, args)
 	} else {
-		fmt.Printf("Query() Invalid function call : " + function + "\n")
+		fmt.Println("Query() Invalid function call : " , function)
 		return nil, errors.New("Query() : Invalid function call : " + function)
 	}
 
 	if err != nil {
-		fmt.Printf("Query() Object not found : " + args[0] + "\n")
+		fmt.Println("Query() Object not found : " , args[0] )
 		return nil, errors.New("Query() : Object not found : " + args[0])
 	}
 	return buff, err
@@ -399,18 +403,18 @@ func GetUser(stub *shim.ChaincodeStub, function string, args []string) ([]byte, 
 	// Get the Object and Display it
 	Avalbytes, err := QueryLedger(stub, "UserTable", args)
 	if err != nil {
-		fmt.Printf("GetUser() : Failed to Query Object ")
+		fmt.Println("GetUser() : Failed to Query Object ")
 		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
 	if Avalbytes == nil {
-		fmt.Printf("GetUser() : Incomplete Query Object ")
+		fmt.Println("GetUser() : Incomplete Query Object ")
 		jsonResp := "{\"Error\":\"Incomplete information about the key for " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
-	fmt.Printf("GetUser() : Response : Successfull - \n")
+	fmt.Println("GetUser() : Response : Successfull -")
 	return Avalbytes, nil
 }
 
@@ -426,19 +430,81 @@ func GetItem(stub *shim.ChaincodeStub, function string, args []string) ([]byte, 
 	// Get the Objects and Display it
 	Avalbytes, err := QueryLedger(stub, "ItemTable", args)
 	if err != nil {
-		fmt.Printf("GetItem() : Failed to Query Object ")
+		fmt.Println("GetItem() : Failed to Query Object ")
 		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
 	if Avalbytes == nil {
-		fmt.Printf("GetItem() : Incomplete Query Object ")
+		fmt.Println("GetItem() : Incomplete Query Object ")
 		jsonResp := "{\"Error\":\"Incomplete information about the key for " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
-	fmt.Printf("GetItem() : Response : Successfull - \n")
+	fmt.Println("GetItem() : Response : Successfull ")
 	return Avalbytes, nil
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Validates The Ownership of an Asset using ItemID, OwnerID, and HashKey
+//
+// ./peer chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership", "Args": ["1000", "100", "tGEBaZuKUBmwTjzNEyd+nr/fPUASuVJAZ1u7gha5fJg="]}'
+// 100, eDblPoHQy2XGLQp3tLL38Ka6akIupBABOqzH7NlPkUI=
+// 100, qLpJzPlm1UoSqb+9MwNyDAI5TZ7AZPgCNPY2wQGYk/c=
+// 100, PpYRXjyaZrJlBZWhzzukn5TuRPOhEStRaWUpp7I+51o=
+// 300, JAdJ06tKj09QRey7VGC7deMvpxf6duNUFh60tZGxzso=
+// 300, 84jSwaXohiSJsczziwKNuTa1WWMSj+CBce99IglGgfo=
+// 400, nAc0SJXTOHwL5DjfwwseAgPgxvPQbn6Nt2TYHEoFxbM=
+// 400, apO+vUJ1ek21SN7hpiN4ena4aQq59XvJtxvZBGzaU68=
+// 500, kFzQkyQNxBK3hSwQGz0aFNN38OQEIG4WXc0bX1A586o=
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+func ValidateItemOwnership(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+
+        var err error
+
+	if len(args) < 3 {
+		fmt.Printf("ValidateItemOwnership() : Requires 3 arguments Item#, Owner# and Key \n")
+		return nil, errors.New("ValidateItemOwnership() : Requires 3 arguments Item#, Owner# and Key")
+	}
+        // Get the Objects and Display it
+        Avalbytes, err := QueryLedger(stub, "ItemTable", []string{args[0]})
+        if err != nil {
+                fmt.Printf("ValidateItemOwnership() : Failed to Query Object ")
+                jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
+                return nil, errors.New(jsonResp)
+        }
+
+        if Avalbytes == nil {
+                fmt.Printf("ValidateItemOwnership() : Incomplete Query Object ")
+                jsonResp := "{\"Error\":\"Incomplete information about the key for " + args[0] + "\"}"
+                return nil, errors.New(jsonResp)
+        }
+
+	myItem, err := JSONtoAR(Avalbytes)
+        if err != nil {
+                fmt.Printf("ValidateItemOwnership() : Failed to Query Object ")
+                jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
+                return nil, errors.New(jsonResp)
+        }
+
+        myKey :=  GetKeyValue(Avalbytes, "AES_Key")
+        fmt.Printf("Key String := ", myKey)
+
+	if myKey != args[2] {
+                fmt.Printf("ValidateItemOwnership() : Key does not match supplied key ", args[2], " - " , myKey)
+                jsonResp := "{\"Error\":\"ValidateItemOwnership() : Key does not match asset owner supplied key  " + args[0] + "\"}"
+                return nil, errors.New(jsonResp)
+        }
+
+	if myItem.CurrentOwnerID != args[1] {
+                fmt.Printf("ValidateItemOwnership() : ValidateItemOwnership() : Owner-Id does not match supplied ID ", args[1])
+                jsonResp := "{\"Error\":\"ValidateItemOwnership() : Owner-Id does not match supplied ID " + args[0] + "\"}"
+                return nil, errors.New(jsonResp)
+        }
+
+        fmt.Printf("ValidateItemOwnership() : Response : Successfull - \n")
+        return Avalbytes, nil
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -455,18 +521,18 @@ func GetAuctionRequest(stub *shim.ChaincodeStub, function string, args []string)
 	// Get the Objects and Display it
 	Avalbytes, err := QueryLedger(stub, "AuctionTable", args)
 	if err != nil {
-		fmt.Printf("GetAuctionRequest() : Failed to Query Object ")
+		fmt.Println("GetAuctionRequest() : Failed to Query Object ")
 		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
 	if Avalbytes == nil {
-		fmt.Printf("GetAuctionRequest() : Incomplete Query Object ")
+		fmt.Println("GetAuctionRequest() : Incomplete Query Object ")
 		jsonResp := "{\"Error\":\"Incomplete information about the key for " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
-	fmt.Printf("GetAuctionRequest() : Response : Successfull - \n")
+	fmt.Println("GetAuctionRequest() : Response : Successfull - \n")
 	return Avalbytes, nil
 }
 
@@ -491,18 +557,18 @@ func GetBid(stub *shim.ChaincodeStub, function string, args []string) ([]byte, e
 	// Get the Objects and Display it
 	Avalbytes, err := QueryLedger(stub, "BidTable", args)
 	if err != nil {
-		fmt.Printf("GetBid() : Failed to Query Object ")
+		fmt.Println("GetBid() : Failed to Query Object ")
 		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
 	if Avalbytes == nil {
-		fmt.Printf("GetBid() : Incomplete Query Object ")
+		fmt.Println("GetBid() : Incomplete Query Object ")
 		jsonResp := "{\"Error\":\"Incomplete information about the key for " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
-	fmt.Printf("GetBid() : Response : Successfull - \n")
+	fmt.Println("GetBid() : Response : Successfull -")
 	return Avalbytes, nil
 }
 
@@ -519,24 +585,24 @@ func GetTransaction(stub *shim.ChaincodeStub, function string, args []string) ([
 	// Get the Objects and Display it
 	Avalbytes, err := QueryLedger(stub, "TransTable", args)
 	if Avalbytes == nil {
-		fmt.Printf("GetTransaction() : Incomplete Query Object ")
+		fmt.Println("GetTransaction() : Incomplete Query Object ")
 		jsonResp := "{\"Error\":\"Incomplete information about the key for " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
 	if err != nil {
-		fmt.Printf("GetTransaction() : Failed to Query Object ")
+		fmt.Println("GetTransaction() : Failed to Query Object ")
 		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
-	fmt.Printf("GetTransaction() : Response : Successfull - \n")
+	fmt.Println("GetTransaction() : Response : Successfull")
 	return Avalbytes, nil
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Create a User Object. The first step is to have users 
-// registered 
+// Create a User Object. The first step is to have users
+// registered
 // There are different types of users - Traders (TRD), Auction Houses (AH)
 // Shippers (SHP), Insurance Companies (INS), Banks (BNK)
 // While this version of the chain code does not enforce strict validation
@@ -554,7 +620,7 @@ func PostUser(stub *shim.ChaincodeStub, function string, args []string) ([]byte,
 	buff, err := UsertoJSON(record) //
 
 	if err != nil {
-		fmt.Printf("PostuserObject() : Failed Cannot create object buffer for write : " + args[1] + "\n")
+		fmt.Println("PostuserObject() : Failed Cannot create object buffer for write : " , args[1] )
 		return nil, errors.New("PostUser(): Failed Cannot create object buffer for write : " + args[1])
 	} else {
 		// Update the ledger with the Buffer Data
@@ -562,7 +628,7 @@ func PostUser(stub *shim.ChaincodeStub, function string, args []string) ([]byte,
 		keys := []string{args[0]}
 		err = UpdateLedger(stub, "UserTable", keys, buff)
 		if err != nil {
-			fmt.Printf("PostUser() : write error while inserting record\n")
+			fmt.Println("PostUser() : write error while inserting record")
 			return nil, err
 		}
 
@@ -570,7 +636,7 @@ func PostUser(stub *shim.ChaincodeStub, function string, args []string) ([]byte,
 		keys = []string{"2016", args[3], args[0]}
 		err = UpdateLedger(stub, "UserCatTable", keys, buff)
 		if err != nil {
-			fmt.Printf("PostUser() : write error while inserting recordinto UserCatTable \n")
+			fmt.Println("PostUser() : write error while inserting recordinto UserCatTable \n")
 			return nil, err
 		}
 	}
@@ -614,22 +680,22 @@ func PostItem(stub *shim.ChaincodeStub, function string, args []string) ([]byte,
 
 	itemObject, err := CreateItemObject(args[0:])
 	if err != nil {
-		fmt.Printf("PostItem(): Cannot create item object \n")
+		fmt.Println("PostItem(): Cannot create item object \n")
 		return nil, err
 	}
 
 	// Check if the Owner ID specified is registered and valid
 	ownerInfo, err := ValidateMember(stub, itemObject.CurrentOwnerID)
-	fmt.Printf("Owner information  ", ownerInfo, itemObject.CurrentOwnerID)
+	fmt.Println("Owner information  ", ownerInfo, itemObject.CurrentOwnerID)
 	if err != nil {
-		fmt.Printf("PostItem() : Failed Owner information not found for ", itemObject.CurrentOwnerID)
+		fmt.Println("PostItem() : Failed Owner information not found for ", itemObject.CurrentOwnerID)
 		return nil, err
 	}
 
 	// Convert Item Object to JSON
 	buff, err := ARtoJSON(itemObject) //
 	if err != nil {
-		fmt.Printf("PostItem() : Failed Cannot create object buffer for write : " + args[1] + "\n")
+		fmt.Println("PostItem() : Failed Cannot create object buffer for write : " , args[1])
 		return nil, errors.New("PostItem(): Failed Cannot create object buffer for write : " + args[1])
 	} else {
 		// Update the ledger with the Buffer Data
@@ -637,14 +703,14 @@ func PostItem(stub *shim.ChaincodeStub, function string, args []string) ([]byte,
 		keys := []string{args[0]}
 		err = UpdateLedger(stub, "ItemTable", keys, buff)
 		if err != nil {
-			fmt.Printf("PostItem() : write error while inserting record\n")
+			fmt.Println("PostItem() : write error while inserting record\n")
 			return buff, err
 		}
 
 		// Put an entry into the Item History Table
 		_, err = PostItemLog(stub, itemObject, "INITIAL", "DEFAULT")
 		if err != nil {
-			fmt.Printf("PostItemLog() : write error while inserting record\n")
+			fmt.Println("PostItemLog() : write error while inserting record\n")
 			return nil, err
 		}
 
@@ -653,12 +719,15 @@ func PostItem(stub *shim.ChaincodeStub, function string, args []string) ([]byte,
 		keys = []string{"2016", args[6], args[0]}
 		err = UpdateLedger(stub, "ItemCatTable", keys, buff)
 		if err != nil {
-			fmt.Printf("PostItem() : Write error while inserting record into ItemCatTable \n")
+			fmt.Println("PostItem() : Write error while inserting record into ItemCatTable \n")
 			return buff, err
 		}
 
 	}
-	return buff, nil
+
+    	secret_key, _ := json.Marshal(itemObject.AES_Key)
+        fmt.Println(string(secret_key))
+	return secret_key, nil
 }
 
 func CreateItemObject(args []string) (ItemObject, error) {
@@ -721,7 +790,7 @@ func UpdateItemObject(stub *shim.ChaincodeStub, ar []byte, hammerPrice string, b
 	var err error
 	myItem, err := JSONtoAR(ar)
 	if err != nil {
-		fmt.Printf("U() : UpdateItemObject() : Failed to create Art Record Object from JSON ")
+		fmt.Println("U() : UpdateItemObject() : Failed to create Art Record Object from JSON ")
 		return nil, err
 	}
 
@@ -742,33 +811,81 @@ func UpdateItemObject(stub *shim.ChaincodeStub, ar []byte, hammerPrice string, b
 	keys := []string{myItem.ItemID, myItem.CurrentOwnerID}
 	err = ReplaceLedgerEntry(stub, "ItemTable", keys, ar)
 	if err != nil {
-		fmt.Printf("UpdateItemObject() : Failed ReplaceLedgerEntry in ItemTable into Blockchain ")
+		fmt.Println("UpdateItemObject() : Failed ReplaceLedgerEntry in ItemTable into Blockchain ")
 		return nil, err
 	}
-	fmt.Printf("UpdateItemObject() : ReplaceLedgerEntry in ItemTable successful ")
+	fmt.Println("UpdateItemObject() : ReplaceLedgerEntry in ItemTable successful ")
 
 	// Update entry in Item Category Table as it holds the Item object as wekk
 	keys = []string{"2016", myItem.ItemSubject, myItem.ItemID}
 	err = ReplaceLedgerEntry(stub, "ItemCatTable", keys, ar)
 	if err != nil {
-		fmt.Printf("UpdateItemObject() : Failed ReplaceLedgerEntry in ItemCategoryTable into Blockchain ")
+		fmt.Println("UpdateItemObject() : Failed ReplaceLedgerEntry in ItemCategoryTable into Blockchain ")
 		return nil, err
 	}
 
-	fmt.Printf("UpdateItemObject() : ReplaceLedgerEntry in ItemCategoryTable successful ")
+	fmt.Println("UpdateItemObject() : ReplaceLedgerEntry in ItemCategoryTable successful ")
 	return myItem.AES_Key, nil
 }
 
-///////////////////////////////////////////////////////////////////////
-// Checks if the ART Work Is Valid
-// The Sellet Provides an Authentication Key which is used to
-// Retrieve the ART Object and Validate if it is as represented by the
-// Seller
-// The keys are User ID, Item ID and Encryption Key
-///////////////////////////////////////////////////////////////////////
-func (t *SimpleChaincode) AuthenticateItem(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
-	// TODO - For future implementation
-	return nil, nil
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Obtain Asset Details and Validate Item
+// Transfer Item to new owner - no change in price  - In the example XFER is the recType
+// ./peer chaincode invoke -l golang -n mycc -c '{"Function": "TransferItem", "Args": ["1000", "100", "tGEBaZuKUBmwTjzNEyd+nr/fPUASuVJAZ1u7gha5fJg=", "300", "XFER"]}'
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+func TransferItem(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+
+	var err error
+	// Validate Item or Asset Ownership
+        ar, err  := ValidateItemOwnership(stub, "ValidateItemOwnership", args[:3])
+        if err != nil {
+                fmt.Println("TransferItem() : ValidateItemOwnership() : Failed to authenticate item or asset ownership")
+                return nil, err
+        }
+
+	myItem, err := JSONtoAR(ar)
+	if err != nil {
+		fmt.Println("TransferItem() : Failed to create item Object from JSON ")
+		return nil, err
+	}
+
+	// Insert logic to  re-encrypt image by first fetching the current Key
+	CurrentAES_Key := myItem.AES_Key
+	// Decrypt Image and Save Image in a file
+	image := Decrypt(CurrentAES_Key, myItem.ItemImage)
+
+	// Get a New Key & Encrypt Image with New Key
+	myItem.AES_Key, _ = GenAESKey()
+	myItem.ItemImage = Encrypt(myItem.AES_Key, image)
+
+	// Update the owner to the new owner transfered to
+	myItem.CurrentOwnerID = args[3]
+
+	ar, err = ARtoJSON(myItem)
+	keys := []string{myItem.ItemID, myItem.CurrentOwnerID}
+	err = ReplaceLedgerEntry(stub, "ItemTable", keys, ar)
+	if err != nil {
+		fmt.Println("TransferAsset() : Failed ReplaceLedgerEntry in ItemTable into Blockchain ")
+		return nil, err
+	}
+	fmt.Printf("TransferAsset() : ReplaceLedgerEntry in ItemTable successful ")
+
+	// Update entry in Item Category Table as it holds the Item object as well
+	keys = []string{"2016", myItem.ItemSubject, myItem.ItemID}
+	err = ReplaceLedgerEntry(stub, "ItemCatTable", keys, ar)
+	if err != nil {
+		fmt.Println("TransferAsset() : Failed ReplaceLedgerEntry in ItemCategoryTable into Blockchain ")
+		return nil, err
+	}
+
+        _, err = PostItemLog(stub, myItem, "Transfer", args[1])
+        if err != nil {
+                fmt.Printf("TransferItem() : PostItemLog() write error while inserting record\n")
+                return nil, err
+        }
+
+	fmt.Printf("TransferAsset() : ReplaceLedgerEntry in ItemCategoryTable successful ")
+	return myItem.AES_Key, nil
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -786,14 +903,14 @@ func PostItemLog(stub *shim.ChaincodeStub, item ItemObject, status string, ah st
 
 	buff, err := ItemLogtoJSON(iLog)
 	if err != nil {
-		fmt.Printf("PostItemLog() : Failed Cannot create object buffer for write : " + item.ItemID + "\n")
+		fmt.Println("PostItemLog() : Failed Cannot create object buffer for write : " , item.ItemID)
 		return nil, errors.New("PostItemLog(): Failed Cannot create object buffer for write : " + item.ItemID)
 	} else {
 		// Update the ledger with the Buffer Data
 		keys := []string{iLog.ItemID, iLog.Status, iLog.AuctionedBy}
 		err = UpdateLedger(stub, "ItemHistoryTable", keys, buff)
 		if err != nil {
-			fmt.Printf("PostItem() : write error while inserting record\n")
+			fmt.Println("PostItem() : write error while inserting record\n")
 			return buff, err
 		}
 	}
@@ -812,30 +929,30 @@ func PostItemLog(stub *shim.ChaincodeStub, item ItemObject, status string, ah st
 
 func PostAuctionRequest(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
-	ar, err := CreateAuctionRequest(args[0:]) 
+	ar, err := CreateAuctionRequest(args[0:])
 	if err != nil {
 		return nil, err
 	}
 
 	// Validate Auction House to check it is a registered User
 	aucHouse, err := ValidateMember(stub, ar.AuctionHouseID)
-	fmt.Printf("Auction House information  ", aucHouse, ar.AuctionHouseID)
+	fmt.Println("Auction House information  ", aucHouse," ID: ", ar.AuctionHouseID)
 	if err != nil {
-		fmt.Printf("PostAuctionRequest() : Failed Auction House not Registered in Blockchain ", ar.AuctionHouseID)
+		fmt.Println("PostAuctionRequest() : Failed Auction House not Registered in Blockchain ", ar.AuctionHouseID)
 		return nil, err
 	}
 
 	// Validate Item record
 	itemObject, err := ValidateItemSubmission(stub, ar.ItemID)
 	if err != nil {
-		fmt.Printf("PostAuctionRequest() : Failed Could not Validate Item Object in Blockchain ", ar.ItemID)
+		fmt.Println("PostAuctionRequest() : Failed Could not Validate Item Object in Blockchain ", ar.ItemID)
 		return itemObject, err
 	}
 
 	// Convert AuctionRequest to JSON
 	buff, err := AucReqtoJSON(ar) // Converting the auction request struct to []byte array
 	if err != nil {
-		fmt.Printf("PostAuctionRequest() : Failed Cannot create object buffer for write : " + args[1] + "\n")
+		fmt.Println("PostAuctionRequest() : Failed Cannot create object buffer for write : " , args[1])
 		return nil, errors.New("PostAuctionRequest(): Failed Cannot create object buffer for write : " + args[1])
 	} else {
 		// Update the ledger with the Buffer Data
@@ -843,7 +960,7 @@ func PostAuctionRequest(stub *shim.ChaincodeStub, function string, args []string
 		keys := []string{args[0]}
 		err = UpdateLedger(stub, "AuctionTable", keys, buff)
 		if err != nil {
-			fmt.Printf("PostAuctionRequest() : write error while inserting record\n")
+			fmt.Println("PostAuctionRequest() : write error while inserting record\n")
 			return buff, err
 		}
 
@@ -852,7 +969,7 @@ func PostAuctionRequest(stub *shim.ChaincodeStub, function string, args []string
 		io, err := JSONtoAR(itemObject)
 		_, err = PostItemLog(stub, io, "ReadyForAuc", ar.AuctionHouseID)
 		if err != nil {
-			fmt.Printf("PostItemLog() : write error while inserting record\n")
+			fmt.Println("PostItemLog() : write error while inserting record\n")
 			return buff, err
 		}
 
@@ -863,7 +980,7 @@ func PostAuctionRequest(stub *shim.ChaincodeStub, function string, args []string
 		keys = []string{"2016", args[0]}
 		err = UpdateLedger(stub, "AucInitTable", keys, buff)
 		if err != nil {
-			fmt.Printf("PostAuctionRequest() : write error while inserting record into AucInitTable \n")
+			fmt.Println("PostAuctionRequest() : write error while inserting record into AucInitTable \n")
 			return buff, err
 		}
 
@@ -900,7 +1017,7 @@ func CreateAuctionRequest(args []string) (AuctionRequest, error) {
 
 //////////////////////////////////////////////////////////
 // Create an Item Transaction record to process Request
-// This is invoked by the CloseAuctionRequest 
+// This is invoked by the CloseAuctionRequest
 //
 ////////////////////////////////////////////////////////////
 func PostTransaction(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
@@ -917,35 +1034,35 @@ func PostTransaction(stub *shim.ChaincodeStub, function string, args []string) (
 	// Validate buyer's ID
 	buyer, err := ValidateMember(stub, ar.UserId)
 	if err != nil {
-		fmt.Printf("PostTransaction() : Failed Buyer not Registered in Blockchain ", ar.UserId)
+		fmt.Println("PostTransaction() : Failed Buyer not Registered in Blockchain ", ar.UserId)
 		return nil, err
 	}
 
-	fmt.Printf("PostTransaction(): Validated Buyer information successfully ", buyer, ar.UserId)
+	fmt.Println("PostTransaction(): Validated Buyer information successfully ", buyer, ar.UserId)
 
 	// Validate Item record
 	lastUpdatedItemOBCObject, err := ValidateItemSubmission(stub, ar.ItemID)
 	if err != nil {
-		fmt.Printf("PostTransaction() : Failed Could not Validate Item Object in Blockchain ", ar.ItemID)
+		fmt.Println("PostTransaction() : Failed Could not Validate Item Object in Blockchain ", ar.ItemID)
 		return lastUpdatedItemOBCObject, err
 	}
-	fmt.Printf("PostTransaction() : Validated Item Object in Blockchain successfully", ar.ItemID)
+	fmt.Println("PostTransaction() : Validated Item Object in Blockchain successfully", ar.ItemID)
 
 	// Update Item Object with new Owner Key
 	newKey, err := UpdateItemObject(stub, lastUpdatedItemOBCObject, ar.HammerPrice, ar.UserId)
 	if err != nil {
-		fmt.Printf("PostTransaction() : Failed to update Item Master Object in Blockchain ", ar.ItemID)
+		fmt.Println("PostTransaction() : Failed to update Item Master Object in Blockchain ", ar.ItemID)
 		return nil, err
 	} else {
 		// Write New Key to file
-		fmt.Printf("PostTransaction() : New encryption Key is  ", newKey)
+		fmt.Println("PostTransaction() : New encryption Key is  ", newKey)
 	}
-	fmt.Printf("PostTransaction() : Updated Item Master Object in Blockchain successfully", ar.ItemID)
+	fmt.Println("PostTransaction() : Updated Item Master Object in Blockchain successfully", ar.ItemID)
 
 	// Post an Item Log
 	itemObject, err := JSONtoAR(lastUpdatedItemOBCObject)
 	if err != nil {
-		fmt.Printf("PostTransaction() : Conversion error JSON to ItemRecord\n")
+		fmt.Println("PostTransaction() : Conversion error JSON to ItemRecord\n")
 		return lastUpdatedItemOBCObject, err
 	}
 
@@ -955,16 +1072,16 @@ func PostTransaction(stub *shim.ChaincodeStub, function string, args []string) (
 
 	_, err = PostItemLog(stub, itemObject, "NA", "DEFAULT")
 	if err != nil {
-		fmt.Printf("PostTransaction() : write error while inserting item log record\n")
+		fmt.Println("PostTransaction() : write error while inserting item log record\n")
 		return lastUpdatedItemOBCObject, err
 	}
 
-	fmt.Printf("PostTransaction() : Inserted item log record successfully", ar.ItemID)
+	fmt.Println("PostTransaction() : Inserted item log record successfully", ar.ItemID)
 
 	// Convert Transaction Object to JSON
 	buff, err := TrantoJSON(ar) //
 	if err != nil {
-		fmt.Printf("GetObjectBuffer() : Failed to convert Transaction Object to JSON ", args[0])
+		fmt.Println("GetObjectBuffer() : Failed to convert Transaction Object to JSON ", args[0])
 		return nil, err
 	}
 
@@ -972,13 +1089,18 @@ func PostTransaction(stub *shim.ChaincodeStub, function string, args []string) (
 	keys := []string{args[0], args[3]}
 	err = UpdateLedger(stub, "TransTable", keys, buff)
 	if err != nil {
-		fmt.Printf("PostTransaction() : write error while inserting record\n")
+		fmt.Println("PostTransaction() : write error while inserting record\n")
 		return buff, err
 	}
 
-	fmt.Printf("PostTransaction() : Posted Transaction Record successfully\n")
+	fmt.Println("PostTransaction() : Posted Transaction Record successfully\n")
 
-	return buff, err
+	// Returns New Key. To get Transaction Details, run GetTransaction
+
+        secret_key, _ := json.Marshal(newKey)
+        fmt.Println(string(secret_key))
+        return secret_key, nil
+
 }
 
 func CreateTransactionRequest(args []string) (ItemTransaction, error) {
@@ -1018,34 +1140,34 @@ func PostBid(stub *shim.ChaincodeStub, function string, args []string) ([]byte, 
 
 	// Reject the Bid if the Buyer Information Is not Valid or not registered on the Block Chain
 	buyerInfo, err := ValidateMember(stub, args[4])
-	fmt.Printf("Buyer information  ", buyerInfo, args[4])
+	fmt.Println("Buyer information  ", buyerInfo,"  ", args[4])
 	if err != nil {
-		fmt.Printf("PostBid() : Failed Buyer not registered on the block-chain ", args[4])
+		fmt.Println("PostBid() : Failed Buyer not registered on the block-chain ", args[4])
 		return nil, err
 	}
 
-	// Reject Bid if Auction is not "OPEN" 
+	// Reject Bid if Auction is not "OPEN"
 	// The OpenAuctionForBids automatically updates Auction to "CLOSED" On Timer expiry
 	RBytes, err := GetAuctionRequest(stub, "GetAuctionRequest", []string{args[0]})
 	if err != nil {
-		fmt.Printf("PostBid() : Cannot find Auction record ", args[0])
+		fmt.Println("PostBid() : Cannot find Auction record ", args[0])
 		return nil, errors.New("PostBid(): Cannot find Auction record : " + args[0])
 	}
 
 	aucR, err := JSONtoAucReq(RBytes)
 	if err != nil {
-		fmt.Printf("PostBid() : Cannot UnMarshall Auction record")
+		fmt.Println("PostBid() : Cannot UnMarshall Auction record")
 		return nil, errors.New("PostBid(): Cannot UnMarshall Auction record: " + args[0])
 	}
 	if aucR.Status != "OPEN" {
-		fmt.Printf("PostBid() : Cannot accept Bid as Auction is not OPEN ", args[0])
+		fmt.Println("PostBid() : Cannot accept Bid as Auction is not OPEN ", args[0])
 		return nil, errors.New("PostBid(): Cannot accept Bid as Auction is not OPEN : " + args[0])
 	}
 
 	buff, err := BidtoJSON(record) //
 
 	if err != nil {
-		fmt.Printf("PostBid() : Failed Cannot create object buffer for write : " + args[1] + "\n")
+		fmt.Println("PostBid() : Failed Cannot create object buffer for write : " , args[1])
 		return nil, errors.New("PostBid(): Failed Cannot create object buffer for write : " + args[1])
 	} else {
 		// Update the ledger with the Buffer Data
@@ -1053,7 +1175,7 @@ func PostBid(stub *shim.ChaincodeStub, function string, args []string) ([]byte, 
 		keys := []string{args[0], args[2]}
 		err = UpdateLedger(stub, "BidTable", keys, buff)
 		if err != nil {
-			fmt.Printf("PostBidTable() : write error while inserting record\n")
+			fmt.Println("PostBidTable() : write error while inserting record\n")
 			return buff, err
 		}
 	}
@@ -1114,7 +1236,7 @@ func imageToByteArray(imageFile string) ([]byte, string) {
 	file, err := os.Open(imageFile)
 
 	if err != nil {
-		fmt.Printf("imageToByteArray() : cannot OPEN image file ", err)
+		fmt.Println("imageToByteArray() : cannot OPEN image file ", err)
 		return nil, string("imageToByteArray() : cannot OPEN image file ")
 	}
 
@@ -1129,12 +1251,12 @@ func imageToByteArray(imageFile string) ([]byte, string) {
 	_, err = buff.Read(bytes)
 
 	if err != nil {
-		fmt.Printf("imageToByteArray() : cannot READ image file")
+		fmt.Println("imageToByteArray() : cannot READ image file")
 		return nil, string("imageToByteArray() : cannot READ image file ")
 	}
 
 	filetype := http.DetectContentType(bytes)
-	fmt.Printf("imageToByteArray() : ", filetype)
+	fmt.Println("imageToByteArray() : ", filetype)
 	//filetype := GetImageType(bytes)
 
 	return bytes, filetype
@@ -1175,7 +1297,7 @@ func ByteArrayToImage(imgByte []byte, imageFile string) error {
 	// convert []byte to image for saving to file
 	img, _, _ := image.Decode(bytes.NewReader(imgByte))
 
-	fmt.Printf("ProcessQueryResult ByteArrayToImage : proceeding to create image ")
+	fmt.Println("ProcessQueryResult ByteArrayToImage : proceeding to create image ")
 
 	//save the imgByte to file
 	out, err := os.Create(imageFile)
@@ -1184,9 +1306,29 @@ func ByteArrayToImage(imgByte []byte, imageFile string) error {
 		fmt.Println("ByteArrayToImage() : cannot CREATE image file ", err)
 		return errors.New("ByteArrayToImage() : cannot CREATE image file ")
 	}
-	fmt.Printf("ProcessRequestType ByteArrayToImage : proceeding to Encode image ")
+	fmt.Println("ProcessRequestType ByteArrayToImage : proceeding to Encode image ")
 
-	err = png.Encode(out, img)
+	//err = png.Encode(out, img)
+        filetype := http.DetectContentType(imgByte)
+
+        switch filetype {
+        case "image/jpeg", "image/jpg":
+                var opt jpeg.Options
+                opt.Quality = 100
+                err = jpeg.Encode(out, img, &opt)
+
+        case "image/gif":
+	        var opt gif.Options
+                opt.NumColors = 256
+                err = gif.Encode(out, img, &opt)
+
+        case "image/png":
+                err = png.Encode(out, img)
+
+        default:
+                err = errors.New("Only PMNG, JPG and GIF Supported ")
+        }
+
 
 	if err != nil {
 		fmt.Println("ByteArrayToImage() : cannot ENCODE image file ", err)
@@ -1305,7 +1447,7 @@ func Encrypt(key []byte, ba []byte) []byte {
 }
 
 //////////////////////////////////////////////////////////
-// JSON To args[]
+// JSON To args[] - return a map of the JSON string
 //////////////////////////////////////////////////////////
 func JSONtoArgs(Avalbytes []byte) (map[string]interface{}, error) {
 
@@ -1316,6 +1458,20 @@ func JSONtoArgs(Avalbytes []byte) (map[string]interface{}, error) {
 	}
 
 	return data, nil
+}
+
+//////////////////////////////////////////////////////////
+// Variation of the above - return value from a JSON string
+//////////////////////////////////////////////////////////
+
+func GetKeyValue(Avalbytes []byte, key string) string {
+        var dat map[string]interface{}
+        if err := json.Unmarshal(Avalbytes, &dat); err != nil {
+                panic(err)
+        }
+
+        val := dat[key].(string)
+        return val
 }
 
 //////////////////////////////////////////////////////////
@@ -1546,18 +1702,18 @@ func ValidateMember(stub *shim.ChaincodeStub, owner string) ([]byte, error) {
 	Avalbytes, err := QueryLedger(stub, "UserTable", args)
 
 	if err != nil {
-		fmt.Printf("ValidateMember() : Failed - Cannot find valid owner record for ART  " + owner + "\n")
+		fmt.Println("ValidateMember() : Failed - Cannot find valid owner record for ART  " , owner)
 		jsonResp := "{\"Error\":\"Failed to get Owner Object Data for " + owner + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
 	if Avalbytes == nil {
-		fmt.Printf("ValidateMember() : Failed - Incomplete owner record for ART  " + owner + "\n")
+		fmt.Println("ValidateMember() : Failed - Incomplete owner record for ART  " , owner)
 		jsonResp := "{\"Error\":\"Failed - Incomplete information about the owner for " + owner + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
-	fmt.Printf("ValidateMember() : Validated Item Owner:\n", owner)
+	fmt.Println("ValidateMember() : Validated Item Owner:\n", owner)
 	return Avalbytes, nil
 }
 
@@ -1571,18 +1727,18 @@ func ValidateItemSubmission(stub *shim.ChaincodeStub, artId string) ([]byte, err
 	args := []string{artId, "ARTINV"}
 	Avalbytes, err := QueryLedger(stub, "ItemTable", args)
 	if err != nil {
-		fmt.Printf("ValidateItemSubmission() : Failed - Cannot find valid owner record for ART  " + artId + "\n")
+		fmt.Println("ValidateItemSubmission() : Failed - Cannot find valid owner record for ART  " , artId )
 		jsonResp := "{\"Error\":\"Failed to get Owner Object Data for " + artId + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
 	if Avalbytes == nil {
-		fmt.Printf("ValidateItemSubmission() : Failed - Incomplete owner record for ART  " + artId + "\n")
+		fmt.Println("ValidateItemSubmission() : Failed - Incomplete owner record for ART  " , artId)
 		jsonResp := "{\"Error\":\"Failed - Incomplete information about the owner for " + artId + "\"}"
 		return nil, errors.New(jsonResp)
 	}
 
-	fmt.Printf("ValidateItemSubmission() : Validated Item Owner:%s\n", Avalbytes)
+	//fmt.Println("ValidateItemSubmission() : Validated Item Owner:", Avalbytes)
 	return Avalbytes, nil
 }
 
@@ -1590,11 +1746,11 @@ func ValidateItemSubmission(stub *shim.ChaincodeStub, artId string) ([]byte, err
 // Open a Ledgers if one does not exist
 // These ledgers will be used to write /  read data
 // Use names are listed in aucTables {}
-// THIS FUNCTION REPLACES ALL THE INIT Functions below 
+// THIS FUNCTION REPLACES ALL THE INIT Functions below
 //  - InitUserReg()
 //  - InitAucReg()
 //  - InitBidReg()
-//  - InitItemReg() 
+//  - InitItemReg()
 //  - InitItemMaster()
 //  - InitTransReg()
 //  - InitAuctionTriggerReg()
@@ -1609,8 +1765,8 @@ func InitLedger(stub *shim.ChaincodeStub, tableName string) error {
 
 	nKeys := GetNumberOfKeys(tableName)
 	if nKeys < 1 {
-		fmt.Printf("Atleast 1 Key must be provided \n")
-		fmt.Printf("Auction_Application: Failed creating Table ", tableName)
+		fmt.Println("Atleast 1 Key must be provided \n")
+		fmt.Println("Auction_Application: Failed creating Table ", tableName)
 		return errors.New("Auction_Application: Failed creating Table " + tableName)
 	}
 
@@ -1628,183 +1784,8 @@ func InitLedger(stub *shim.ChaincodeStub, tableName string) error {
 	err := stub.CreateTable(tableName, columnDefsForTbl)
 
 	if err != nil {
-		fmt.Printf("Auction_Application: Failed creating Table ", tableName)
+		fmt.Println("Auction_Application: Failed creating Table ", tableName)
 		return errors.New("Auction_Application: Failed creating Table " + tableName)
-	}
-
-	return err
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Open a Ledgers if one does not exist
-// These ledgers will be used to write /  read data
-// Use names are listed in aucTables {}
-////////////////////////////////////////////////////////////////////////////
-func InitUserReg(stub *shim.ChaincodeStub) error {
-
-	// Create Item Ledger table
-	err := stub.CreateTable("UserTable", []*shim.ColumnDefinition{
-		&shim.ColumnDefinition{"User", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"Details", shim.ColumnDefinition_BYTES, false},
-	})
-
-	if err != nil {
-		fmt.Printf("Auction_Application: Failed creating Table ", "UserTable")
-		return errors.New("Auction_Application: Failed creating Table " + "UserTable")
-	}
-
-	return err
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Open a Ledgers if one does not exist
-// These ledgers will be used to write /  read data
-// Use names are listed in aucTables {}
-////////////////////////////////////////////////////////////////////////////
-func InitAucReg(stub *shim.ChaincodeStub) error {
-
-	// Create Item Ledger table
-	err := stub.CreateTable("AuctionTable", []*shim.ColumnDefinition{
-		&shim.ColumnDefinition{"AuctionID", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"Details", shim.ColumnDefinition_BYTES, false},
-	})
-
-	if err != nil {
-		fmt.Printf("Auction_Application: Failed creating Auction Table ")
-		return errors.New("Auction_Application: Failed creating Auction Table ")
-	}
-
-	return err
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Open a Ledgers if one does not exist
-// These ledgers will be used to write /  read data
-// Use names are listed in Bid {}
-////////////////////////////////////////////////////////////////////////////
-func InitBidReg(stub *shim.ChaincodeStub) error {
-
-	// Create Item Ledger table
-	err := stub.CreateTable("BidTable", []*shim.ColumnDefinition{
-		&shim.ColumnDefinition{"AuctionID", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"BidNum", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"Details", shim.ColumnDefinition_BYTES, false},
-	})
-
-	if err != nil {
-		fmt.Printf("Auction_Application: Failed creating Bid Table ")
-		return errors.New("Auction_Application: Failed creating Bid Table ")
-	}
-
-	return err
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Open a Ledgers if one does not exist
-// These ledgers will be used to write /  read data
-// Use names are listed in aucTables {}
-////////////////////////////////////////////////////////////////////////////
-func InitTransReg(stub *shim.ChaincodeStub) error {
-
-	// Create Item Ledger table
-	err := stub.CreateTable("TransTable", []*shim.ColumnDefinition{
-		&shim.ColumnDefinition{"AuctionID", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"ItemID", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"Details", shim.ColumnDefinition_BYTES, false},
-	})
-
-	if err != nil {
-		fmt.Printf("Auction_Application: Failed creating Transaction Table ")
-		return errors.New("Auction_Application: Failed creating Transaction Table ")
-	}
-
-	return err
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Open a Ledgers if one does not exist
-// These ledgers will be used to write /  read data
-// Use names are listed in aucTables {}
-////////////////////////////////////////////////////////////////////////////
-func InitItemMaster(stub *shim.ChaincodeStub) error {
-
-	// Create Item Ledger table
-	err := stub.CreateTable("ItemTable", []*shim.ColumnDefinition{
-		&shim.ColumnDefinition{"Item", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"Details", shim.ColumnDefinition_BYTES, false},
-	})
-
-	if err != nil {
-		fmt.Printf("Auction_Application: Failed creating Item Table")
-		return errors.New("Auction_Application: Failed creating Item Table")
-	}
-
-	return err
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Open a Ledgers if one does not exist
-// These ledgers will be used to write /  read data
-// Use names are listed in aucTables {}
-////////////////////////////////////////////////////////////////////////////
-func InitItemReg(stub *shim.ChaincodeStub) error {
-
-	// Create Item Ledger table
-	err := stub.CreateTable("ItemHistoryTable", []*shim.ColumnDefinition{
-		&shim.ColumnDefinition{"Item", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"Status", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"AucHouse", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"Details", shim.ColumnDefinition_BYTES, false},
-	})
-
-	if err != nil {
-		fmt.Printf("Auction_Application: Failed creating Item Register")
-		return errors.New("Auction_Application: Failed creating Item Register")
-	}
-
-	return err
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Open a Ledgers if one does not exist
-// These ledgers will be used to write /  read data
-// Use names are listed in aucTables {}
-////////////////////////////////////////////////////////////////////////////
-func InitIBidReg(stub *shim.ChaincodeStub) error {
-
-	// Create Item Ledger table
-	err := stub.CreateTable("BidTable", []*shim.ColumnDefinition{
-		&shim.ColumnDefinition{"AuctionID", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"BidID", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"Details", shim.ColumnDefinition_BYTES, false},
-	})
-
-	if err != nil {
-		fmt.Printf("Auction_Application: Failed creating Item Register")
-		return errors.New("Auction_Application: Failed creating Item Register")
-	}
-
-	return err
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Open a Ledgers if one does not exist
-// These ledgers will be used to write /  read data
-// Use names are listed in aucTables {}
-////////////////////////////////////////////////////////////////////////////
-func InitAucTriggerReg(stub *shim.ChaincodeStub) error {
-
-	// Create Item Ledger table
-	err := stub.CreateTable("AucTriggerTable", []*shim.ColumnDefinition{
-		&shim.ColumnDefinition{"AuctionID", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"AucStartDt", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"AucEndDt", shim.ColumnDefinition_STRING, true},
-		&shim.ColumnDefinition{"Details", shim.ColumnDefinition_BYTES, false},
-	})
-
-	if err != nil {
-		fmt.Printf("Auction_Application: Failed creating Item Register")
-		return errors.New("Auction_Application: Failed creating Item Register")
 	}
 
 	return err
@@ -1818,7 +1799,7 @@ func UpdateLedger(stub *shim.ChaincodeStub, tableName string, keys []string, arg
 
 	nKeys := GetNumberOfKeys(tableName)
 	if nKeys < 1 {
-		fmt.Printf("Atleast 1 Key must be provided \n")
+		fmt.Println("Atleast 1 Key must be provided \n")
 	}
 
 	var columns []*shim.Column
@@ -1840,7 +1821,7 @@ func UpdateLedger(stub *shim.ChaincodeStub, tableName string, keys []string, arg
 		return errors.New("UpdateLedger: InsertRow into " + tableName + " Table failed. Row with given key " + keys[0] + " already exists")
 	}
 
-	fmt.Printf("UpdateLedger: InsertRow into " + tableName + " Table operation Successful. ")
+	fmt.Println("UpdateLedger: InsertRow into " , tableName , " Table operation Successful. ")
 	return nil
 }
 
@@ -1854,7 +1835,7 @@ func DeleteFromLedger(stub *shim.ChaincodeStub, tableName string, keys []string)
 	//nKeys := GetNumberOfKeys(tableName)
 	nCol := len(keys)
 	if nCol < 1 {
-		fmt.Printf("Atleast 1 Key must be provided \n")
+		fmt.Println("Atleast 1 Key must be provided \n")
 		return errors.New("DeleteFromLedger failed. Must include at least key values")
 	}
 
@@ -1868,7 +1849,7 @@ func DeleteFromLedger(stub *shim.ChaincodeStub, tableName string, keys []string)
 		return fmt.Errorf("DeleteFromLedger operation failed. %s", err)
 	}
 
-	fmt.Printf("DeleteFromLedger: DeleteRow from " + tableName + " Table operation Successful. ")
+	fmt.Println("DeleteFromLedger: DeleteRow from " , tableName , " Table operation Successful. ")
 	return nil
 }
 
@@ -1880,7 +1861,7 @@ func ReplaceLedgerEntry(stub *shim.ChaincodeStub, tableName string, keys []strin
 
 	nKeys := GetNumberOfKeys(tableName)
 	if nKeys < 1 {
-		fmt.Printf("Atleast 1 Key must be provided \n")
+		fmt.Println("Atleast 1 Key must be provided \n")
 	}
 
 	var columns []*shim.Column
@@ -1902,7 +1883,7 @@ func ReplaceLedgerEntry(stub *shim.ChaincodeStub, tableName string, keys []strin
 		return errors.New("ReplaceLedgerEntry: Replace Row into " + tableName + " Table failed. Row with given key " + keys[0] + " already exists")
 	}
 
-	fmt.Printf("ReplaceLedgerEntry: Replace Row in " + tableName + " Table operation Successful. ")
+	fmt.Println("ReplaceLedgerEntry: Replace Row in " , tableName , " Table operation Successful. ")
 	return nil
 }
 
@@ -1919,25 +1900,27 @@ func QueryLedger(stub *shim.ChaincodeStub, tableName string, args []string) ([]b
 	}
 
 	row, err := stub.GetRow(tableName, columns)
-	fmt.Printf("Length or number of rows retrieved ", len(row.Columns))
+	fmt.Println("Length or number of rows retrieved ", len(row.Columns))
 
 	if len(row.Columns) == 0 {
 		jsonResp := "{\"Error\":\"Failed retrieving data " + args[0] + ". \"}"
-		fmt.Printf("Error retrieving data record for Key = ", args[0], "Error : ", jsonResp)
+		fmt.Println("Error retrieving data record for Key = ", args[0], "Error : ", jsonResp)
 		return nil, errors.New(jsonResp)
 	}
-
-	fmt.Printf("User Query Response:\n", row)
-	jsonResp := "{\"Owner\":\"" + string(row.Columns[nCol].GetBytes()) + "\"}"
-	fmt.Printf("User Query Response:%s\n", jsonResp)
+	//Disable printing binary Image content on stdout
+	if (tableName != "ItemTable") {
+		fmt.Println("User Query Response:\n", row)
+		jsonResp := "{\"Owner\":\"" + string(row.Columns[nCol].GetBytes()) + "\"}"
+		fmt.Println("User Query Response:%s\n", jsonResp)
+	}
 
 	Avalbytes := row.Columns[nCol].GetBytes()
 
 	// Perform Any additional processing of data
-	fmt.Printf("QueryLedger() : Successful - Proceeding to ProcessRequestType ")
+	fmt.Println("QueryLedger() : Successful - Proceeding to ProcessRequestType ")
 	err = ProcessQueryResult(stub, Avalbytes, args)
 	if err != nil {
-		fmt.Printf("QueryLedger() : Cannot create object  : " + args[1] + "\n")
+		fmt.Println("QueryLedger() : Cannot create object  : " , args[1] )
 		jsonResp := "{\"QueryLedger() Error\":\" Cannot create Object for key " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
@@ -1947,7 +1930,7 @@ func QueryLedger(stub *shim.ChaincodeStub, tableName string, args []string) ([]b
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Get List of Bids for an Auction
-// in the block-chain -- 
+// in the block-chain --
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfBids", "Args": ["1111"]}'
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid", "Args": ["1111"]}'
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetHighestBid", "Args": ["1111"]}'
@@ -1966,7 +1949,7 @@ func GetListOfBids(stub *shim.ChaincodeStub, function string, args []string) ([]
 		ts := rows[i].Columns[nCol].GetBytes()
 		bid, err := JSONtoBid(ts)
 		if err != nil {
-			fmt.Printf("GetListOfBids() Failed : Ummarshall error")
+			fmt.Println("GetListOfBids() Failed : Ummarshall error")
 			return nil, fmt.Errorf("GetListOfBids() operation failed. %s", err)
 		}
 		tlist[i] = bid
@@ -1974,7 +1957,7 @@ func GetListOfBids(stub *shim.ChaincodeStub, function string, args []string) ([]
 
 	jsonRows, _ := json.Marshal(tlist)
 
-	//fmt.Printf("List of Bids Requested : ", jsonRows)
+	//fmt.Println("List of Bids Requested : ", jsonRows)
 	return jsonRows, nil
 
 }
@@ -1999,7 +1982,7 @@ func GetListOfItemsOnAuc(stub *shim.ChaincodeStub, function string, args []strin
 		ts := rows[i].Columns[nCol].GetBytes()
 		ar, err := JSONtoAucReq(ts)
 		if err != nil {
-			fmt.Printf("GetListOfItemsOnAuc() Failed : Ummarshall error")
+			fmt.Println("GetListOfItemsOnAuc() Failed : Ummarshall error")
 			return nil, fmt.Errorf("getBillForMonth() operation failed. %s", err)
 		}
 		tlist[i] = ar
@@ -2007,7 +1990,7 @@ func GetListOfItemsOnAuc(stub *shim.ChaincodeStub, function string, args []strin
 
 	jsonRows, _ := json.Marshal(tlist)
 
-	//fmt.Printf("List of Auctions Requested : ", jsonRows)
+	//fmt.Println("List of Auctions Requested : ", jsonRows)
 	return jsonRows, nil
 
 }
@@ -2032,7 +2015,7 @@ func GetListOfOpenAucs(stub *shim.ChaincodeStub, function string, args []string)
 		ts := rows[i].Columns[nCol].GetBytes()
 		ar, err := JSONtoAucReq(ts)
 		if err != nil {
-			fmt.Printf("GetListOfOpenAucs() Failed : Ummarshall error")
+			fmt.Println("GetListOfOpenAucs() Failed : Ummarshall error")
 			return nil, fmt.Errorf("GetListOfOpenAucs() operation failed. %s", err)
 		}
 		tlist[i] = ar
@@ -2040,7 +2023,7 @@ func GetListOfOpenAucs(stub *shim.ChaincodeStub, function string, args []string)
 
 	jsonRows, _ := json.Marshal(tlist)
 
-	//fmt.Printf("List of Open Auctions : ", jsonRows)
+	//fmt.Println("List of Open Auctions : ", jsonRows)
 	return jsonRows, nil
 
 }
@@ -2071,7 +2054,7 @@ func GetItemLog(stub *shim.ChaincodeStub, function string, args []string) ([]byt
 		ts := rows[i].Columns[nCol].GetBytes()
 		il, err := JSONtoItemLog(ts)
 		if err != nil {
-			fmt.Printf("() Failed : Ummarshall error")
+			fmt.Println("() Failed : Ummarshall error")
 			return nil, fmt.Errorf("GetItemLog() operation failed. %s", err)
 		}
 		tlist[i] = il
@@ -2079,7 +2062,7 @@ func GetItemLog(stub *shim.ChaincodeStub, function string, args []string) ([]byt
 
 	jsonRows, _ := json.Marshal(tlist)
 
-	//fmt.Printf("All History : ", jsonRows)
+	//fmt.Println("All History : ", jsonRows)
 	return jsonRows, nil
 
 }
@@ -2114,7 +2097,7 @@ func GetItemListByCat(stub *shim.ChaincodeStub, function string, args []string) 
 		ts := rows[i].Columns[nCol].GetBytes()
 		io, err := JSONtoAR(ts)
 		if err != nil {
-			fmt.Printf("() Failed : Ummarshall error")
+			fmt.Println("() Failed : Ummarshall error")
 			return nil, fmt.Errorf("GetItemListByCat() operation failed. %s", err)
 		}
 		tlist[i] = io
@@ -2122,7 +2105,7 @@ func GetItemListByCat(stub *shim.ChaincodeStub, function string, args []string) 
 
 	jsonRows, _ := json.Marshal(tlist)
 
-	//fmt.Printf("All Items : ", jsonRows)
+	//fmt.Println("All Items : ", jsonRows)
 	return jsonRows, nil
 
 }
@@ -2153,7 +2136,7 @@ func GetUserListByCat(stub *shim.ChaincodeStub, function string, args []string) 
 		ts := rows[i].Columns[nCol].GetBytes()
 		uo, err := JSONtoUser(ts)
 		if err != nil {
-			fmt.Printf("GetUserListByCat() Failed : Ummarshall error")
+			fmt.Println("GetUserListByCat() Failed : Ummarshall error")
 			return nil, fmt.Errorf("GetUserListByCat() operation failed. %s", err)
 		}
 		tlist[i] = uo
@@ -2161,7 +2144,7 @@ func GetUserListByCat(stub *shim.ChaincodeStub, function string, args []string) 
 
 	jsonRows, _ := json.Marshal(tlist)
 
-	//fmt.Printf("All Users : ", jsonRows)
+	//fmt.Println("All Users : ", jsonRows)
 	return jsonRows, nil
 
 }
@@ -2176,7 +2159,7 @@ func GetList(stub *shim.ChaincodeStub, tableName string, args []string) ([]shim.
 	nKeys := GetNumberOfKeys(tableName)
 	nCol := len(args)
 	if nCol < 1 {
-		fmt.Printf("Atleast 1 Key must be provided \n")
+		fmt.Println("Atleast 1 Key must be provided \n")
 		return nil, errors.New("GetList failed. Must include at least key values")
 	}
 
@@ -2231,12 +2214,12 @@ func GetLastBid(stub *shim.ChaincodeStub, function string, args []string) ([]byt
 	for i := 0; i < len(rows); i++ {
 		currentBid := rows[i].Columns[nCol].GetBytes()
 		if err := json.Unmarshal(currentBid, &dat); err != nil {
-			fmt.Printf("GetHighestBid() Failed : Ummarshall error")
+			fmt.Println("GetHighestBid() Failed : Ummarshall error")
 			return nil, fmt.Errorf("GetHighestBid(0 operation failed. %s", err)
 		}
 		bidTime, err := time.Parse(layout, dat["BidTime"].(string))
 		if err != nil {
-			fmt.Printf("GetLastBid() Failed : time Conversion error on BidTime")
+			fmt.Println("GetLastBid() Failed : time Conversion error on BidTime")
 			return nil, fmt.Errorf("GetHighestBid() Int Conversion error on BidPrice! failed. %s", err)
 		}
 
@@ -2285,12 +2268,12 @@ func GetHighestBid(stub *shim.ChaincodeStub, function string, args []string) ([]
 	for i := 0; i < len(rows); i++ {
 		currentBid := rows[i].Columns[nCol].GetBytes()
 		if err := json.Unmarshal(currentBid, &dat); err != nil {
-			fmt.Printf("GetHighestBid() Failed : Ummarshall error")
+			fmt.Println("GetHighestBid() Failed : Ummarshall error")
 			return nil, fmt.Errorf("GetHighestBid(0 operation failed. %s", err)
 		}
 		bidPrice, err = strconv.Atoi(dat["BidPrice"].(string))
 		if err != nil {
-			fmt.Printf("GetHighestBid() Failed : Int Conversion error on BidPrice")
+			fmt.Println("GetHighestBid() Failed : Int Conversion error on BidPrice")
 			return nil, fmt.Errorf("GetHighestBid() Int Conversion error on BidPrice! failed. %s", err)
 		}
 
@@ -2322,6 +2305,24 @@ func IdentifyReqType(args []string) string {
 }
 
 /////////////////////////////////////////////////////////////////
+// This function checks the incoming args stuff for a valid record
+// type entry as per the declared array recType[]
+// The assumption is that rectType can be anywhere in the args or struct
+// not necessarily in args[1] as per my old logic
+// The Request type is used to process the record accordingly
+/////////////////////////////////////////////////////////////////
+func ChkReqType(args []string) bool {
+        for _, rt := range args {
+                for _, val := range recType {
+                        if val == rt {
+                                return true
+                        }
+                }
+        }
+        return false
+}
+
+/////////////////////////////////////////////////////////////////
 // Checks if the incoming invoke has a valid requesType
 // The Request type is used to process the record accordingly
 // Old Logic (see new logic up)
@@ -2329,11 +2330,11 @@ func IdentifyReqType(args []string) string {
 func CheckRequestType(rt string) bool {
 	for _, val := range recType {
 		if val == rt {
-			fmt.Printf("CheckRequestType() : Valid Request Type , val : ", val, rt, "\n")
+			fmt.Println("CheckRequestType() : Valid Request Type , val : ", val, rt, "\n")
 			return true
 		}
 	}
-	fmt.Printf("CheckRequestType() : Invalid Request Type , val : ", rt, "\n")
+	fmt.Println("CheckRequestType() : Invalid Request Type , val : ", rt, "\n")
 	return false
 }
 
@@ -2346,8 +2347,8 @@ func ProcessQueryResult(stub *shim.ChaincodeStub, Avalbytes []byte, args []strin
 
 	// Identify Record Type by scanning the args for one of the recTypes
 	// This is kind of a post-processor once the query fetches the results
-	// RecType is the style of programming in the punch card days .. 
-	// ... well 
+	// RecType is the style of programming in the punch card days ..
+	// ... well
 
 	var dat map[string]interface{}
 
@@ -2363,20 +2364,20 @@ func ProcessQueryResult(stub *shim.ChaincodeStub, Avalbytes []byte, args []strin
 
 		ar, err := JSONtoAR(Avalbytes) //
 		if err != nil {
-			fmt.Printf("ProcessRequestType(): Cannot create itemObject \n")
+			fmt.Println("ProcessRequestType(): Cannot create itemObject \n")
 			return err
 		}
 
 		// Decrypt Image and Save Image in a file
 		image := Decrypt(ar.AES_Key, ar.ItemImage)
 		if err != nil {
-			fmt.Printf("ProcessRequestType() : Image decrytion failed ")
+			fmt.Println("ProcessRequestType() : Image decrytion failed ")
 			return err
 		}
 
 		err = ByteArrayToImage(image, "copy."+ar.ItemPicFN)
 		if err != nil {
-			fmt.Printf("ProcessRequestType() : Image conversion from byte[] to file failed ")
+			fmt.Println("ProcessRequestType() : Image conversion from byte[] to file failed ")
 			return err
 		}
 		return err
@@ -2386,7 +2387,7 @@ func ProcessQueryResult(stub *shim.ChaincodeStub, Avalbytes []byte, args []strin
 		if err != nil {
 			return err
 		}
-		fmt.Printf("ProcessRequestType() : ", ur)
+		fmt.Println("ProcessRequestType() : ", ur)
 		return err
 
 	case "AUCREQ":
@@ -2394,36 +2395,40 @@ func ProcessQueryResult(stub *shim.ChaincodeStub, Avalbytes []byte, args []strin
 		if err != nil {
 			return err
 		}
-		fmt.Printf("ProcessRequestType() : ", ar)
+		fmt.Println("ProcessRequestType() : ", ar)
 		return err
 	case "OPENAUC":
 		ar, err := JSONtoAucReq(Avalbytes) //
 		if err != nil {
 			return err
 		}
-		fmt.Printf("ProcessRequestType() : ", ar)
+		fmt.Println("ProcessRequestType() : ", ar)
 		return err
 	case "CLAUC":
 		ar, err := JSONtoAucReq(Avalbytes) //
 		if err != nil {
 			return err
 		}
-		fmt.Printf("ProcessRequestType() : ", ar)
+		fmt.Println("ProcessRequestType() : ", ar)
 		return err
 	case "POSTTRAN":
 		atr, err := JSONtoTran(Avalbytes) //
 		if err != nil {
 			return err
 		}
-		fmt.Printf("ProcessRequestType() : ", atr)
+		fmt.Println("ProcessRequestType() : ", atr)
 		return err
 	case "BID":
 		bid, err := JSONtoBid(Avalbytes) //
 		if err != nil {
 			return err
 		}
-		fmt.Printf("ProcessRequestType() : ", bid)
+		fmt.Println("ProcessRequestType() : ", bid)
 		return err
+        case "DEFAULT":
+		return nil
+        case "XFER":
+		return nil
 	default:
 
 		return errors.New("Unknown")
@@ -2495,7 +2500,7 @@ func OpenAuctionForBids(stub *shim.ChaincodeStub, function string, args []string
 	// Add the Auction to Open Bucket
 	err = UpdateLedger(stub, "AucOpenTable", keys, buff)
 	if err != nil {
-		fmt.Printf("OpenAuctionForBids() : write error while inserting record into AucInitTable \n")
+		fmt.Println("OpenAuctionForBids() : write error while inserting record into AucInitTable \n")
 		return buff, err
 	}
 
@@ -2515,7 +2520,7 @@ func OpenAuctionForBids(stub *shim.ChaincodeStub, function string, args []string
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Create a Command to execute Close Auction From the Command line
 // cloaseauction.sh is created and then executed as seen below
-// The file contains just one line 
+// The file contains just one line
 // /opt/gopath/src/github.com/hyperledger/fabric/peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseAuction", "Args": ["1111","AUCREQ"]}'
 // This approach has been used as opposed to exec.Command... because additional logic to gather environment variables etc. is required
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2566,7 +2571,7 @@ func exe_cmd(cmd string) error {
 // Close the Auction
 // This is invoked by OpenAuctionForBids
 // which kicks-off a go-routine timer for the duration of the auction
-// When the timer expires, it creates a shell script to CloseAuction() and triggers it 
+// When the timer expires, it creates a shell script to CloseAuction() and triggers it
 // This function can also be invoked via CLI - the intent was to close as and when I implement BuyItNow()
 // CloseAuction
 // - Sets the status of the Auction to "CLOSED"
@@ -2638,7 +2643,7 @@ func CloseAuction(stub *shim.ChaincodeStub, function string, args []string) ([]b
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Buy It Now
 // Rules:
-// If Buy IT Now Option is available then a Buyer has the option to buy the ITEM 
+// If Buy IT Now Option is available then a Buyer has the option to buy the ITEM
 // before the bids exceed BuyITNow Price . Normally, The application should take of this
 // at the UI level and this chain-code assumes application has validated that
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -2686,16 +2691,16 @@ func BuyItNow(stub *shim.ChaincodeStub, function string, args []string) ([]byte,
 
         // Reject the offer if the Buyer Information Is not Valid or not registered on the Block Chain
         buyerInfo, err := ValidateMember(stub, args[4])
-        fmt.Printf("Buyer information  ", buyerInfo, args[4])
+        fmt.Println("Buyer information  ", buyerInfo, args[4])
         if err != nil {
-                fmt.Printf("BuyItNow() : Failed Buyer not registered on the block-chain ", args[4])
+                fmt.Println("BuyItNow() : Failed Buyer not registered on the block-chain ", args[4])
                 return nil, err
         }
 
 	tran := BidtoTransaction(buyItNowBid)
 	fmt.Println("BuyItNow(): Converting Bid to tran ", tran)
 
-	// Process the buy-it-now offer 
+	// Process the buy-it-now offer
 	tranArgs := []string{tran.AuctionID, tran.RecType, tran.ItemID, tran.TransType, tran.UserId, tran.TransDate, tran.HammerTime, tran.HammerPrice, tran.Details}
 	fmt.Println("BuyItNow(): Proceeding to process the  Transaction ", tranArgs)
 
@@ -2719,7 +2724,7 @@ func UpdateAuctionStatus(stub *shim.ChaincodeStub, tableName string, ar AuctionR
 
 	buff, err := AucReqtoJSON(ar)
 	if err != nil {
-		fmt.Printf("UpdateAuctionStatus() : Failed Cannot create object buffer for write : " + ar.AuctionID + "\n")
+		fmt.Println("UpdateAuctionStatus() : Failed Cannot create object buffer for write : " , ar.AuctionID)
 		return nil, errors.New("UpdateAuctionStatus(): Failed Cannot create object buffer for write : " + ar.AuctionID)
 	}
 
@@ -2727,7 +2732,7 @@ func UpdateAuctionStatus(stub *shim.ChaincodeStub, tableName string, ar AuctionR
 	keys := []string{ar.AuctionID, ar.ItemID}
 	err = ReplaceLedgerEntry(stub, "AuctionTable", keys, buff)
 	if err != nil {
-		fmt.Printf("UpdateAuctionStatus() : write error while inserting record\n")
+		fmt.Println("UpdateAuctionStatus() : write error while inserting record\n")
 		return buff, err
 	}
 	return buff, err
