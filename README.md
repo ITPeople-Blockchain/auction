@@ -36,7 +36,7 @@ The typical business process is shown below
 ## APIs Available
 The following Invoke and Query APIs are available from both CLI and REST, and have the following signature
 
-    func(stub *shim.ChaincodeStub, function string, args []string) <API NAME> ([]byte, error) 
+    func(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) 
 
 ### Invoke
                 * PostUser 
