@@ -70,7 +70,7 @@ Please review instructions on setting up the [Development Environment](https://g
 
 **Cloning the auction app**
 ```
- cd $GOPATH/src/github.com/hyperledger/fabric/peer
+ cd $GOPATH/src/github.com/hyperledger/fabric
  git clone https://github.com/<username>/auction.git
 ```
 
