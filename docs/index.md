@@ -3,11 +3,11 @@ Credits: Ratnakar Asara, Nishi Nidamarty, Ramesh Thoomu, Adam Gordon and Mohan V
 
 ##Introduction
 
-This Hyperledger/Fabric The fabric is an implementation of blockchain technology, leveraging familiar and proven technologies. It is a modular architecture allowing pluggable implementations of various function. It features powerful container technology to host any mainstream language for smart contracts development. Chain code (smart contracts) or blockchain applications run on the fabric. Chain code is written in Go language 
+[Hyperledger/fabric](https://github.com/hyperledger/fabric.git) is an implementation of blockchain technology, leveraging familiar and proven technologies. It is a modular architecture allowing pluggable implementations of various function. It features powerful container technology to host any mainstream language for smart contracts development. Chain code (smart contracts) or blockchain applications run on the fabric. Chain code is written in Go language.
 
 The original intention of this application is to understand how to write a Go application on the Hyperledger/Fabric. This initial version was written to understand the different chaincode api's, the boundary that separates what goes into the blockchain and what lives within the enterprise application, usage of database features, error management etc.
 
-![auction_chain](auction_chain.jpg)
+![auction_chain](images/auction_chain.png)
 
 ## Application Description
 
@@ -21,7 +21,7 @@ This application deals with auctioning ART on the block chain. The blockchain ma
 * Artists (ART)
 
 The typical business process is shown below
-![Business Process](art_process.jpg)
+![Business Process](images/art_process.png)
 
 1. Artists, Traders, Dealers own ART items
 2. To trade on the block chain, the stakeholder has to open an account on the block chain
@@ -67,21 +67,21 @@ Please review instructions on setting up the [Development Environment](https://g
 ## Running the Application
 ###Terminal 1
 
-* `$ cd $GOPATH/src/github.com/hyperledger/fabric/peer`
-* `$ go build `
-* `$ ./peer peer --peer-chaincodedev`
+* `cd $GOPATH/src/github.com/hyperledger/fabric/peer`
+* `go build `
+* `./peer peer --peer-chaincodedev`
 
 ###Terminal 2
 
-* `$ cd  $GOPATH/src/github.com/hyperledger/fabric`
-* `$ cd art/artchaincode`
-* `$ go build art_app.go`
-* `$ CORE_CHAINCODE_ID_NAME=mycc CORE_PEER_ADDRESS=0.0.0.0:30303 ./artchaincode`
+* `cd  $GOPATH/src/github.com/hyperledger/fabric`
+* `cd art/artchaincode`
+* `go build art_app.go`
+* `CORE_CHAINCODE_ID_NAME=mycc CORE_PEER_ADDRESS=0.0.0.0:30303 ./artchaincode`
 
 ###Terminal 3
 
-* `$ cd  $GOPATH/src/github.com/hyperledger/fabric/art/scripts`	
-* `$ ./setup.sh`
+* `cd  $GOPATH/src/github.com/hyperledger/fabric/art/scripts`	
+* `. ./setup.sh`
 
 ###Run the following shell scripts
 

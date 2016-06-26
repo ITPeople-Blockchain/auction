@@ -9,7 +9,7 @@ This Hyperledger/Fabric The fabric is an implementation of blockchain technology
 
 The original intention of this application is to understand how to write a Go application on the Hyperledger/Fabric. This initial version was written to understand the different chaincode api's, the boundary that separates what goes into the blockchain and what lives within the enterprise application, usage of database features, error management etc.
 
-![auction_chain](auction_chain.jpg)
+![auction_chain](docs/images/auction_chain.png)
 
 ## Application Description
 
@@ -23,7 +23,7 @@ This application deals with auctioning ART on the block chain. The blockchain ma
 * Artists (ART)
 
 The typical business process is shown below
-![Business Process](art_process.jpg)
+![Business Process](docs/images/art_process.png)
 
 1. Artists, Traders, Dealers own ART items
 2. To trade on the block chain, the stakeholder has to open an account on the block chain
