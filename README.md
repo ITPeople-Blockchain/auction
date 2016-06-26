@@ -36,7 +36,7 @@ The typical business process is shown below
 ## APIs Available
 The following Invoke and Query APIs are available from both CLI and REST, and have the following signature
 
-    func(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) 
+    func(stub *shim.ChaincodeStub, function string, args []string) <API NAME> ([]byte, error) 
 
 ### Invoke
                 * PostUser 
@@ -67,23 +67,31 @@ The following Invoke and Query APIs are available from both CLI and REST, and ha
 Please review instructions on setting up the [Development Environment](https://github.com/hyperledger/fabric/blob/master/docs/dev-setup/devnet-setup.md) as well as the setting up the [Sandbox Environment](https://github.com/hyperledger/fabric/blob/master/docs/API/SandboxSetup.md) to execute the chaincode.
 
 ## Running the Application
-###Terminal 1
 
-* `cd $GOPATH/src/github.com/hyperledger/fabric/peer`
-* `go build`
-* `peer node start --peer-chaincodedev`
+**Cloning the auction app**
+```
+ cd $GOPATH/src/github.com/hyperledger/fabric/peer
+ git clone https://github.com/<username>/auction.git
+```
+
+###Terminal 1
+```
+ cd $GOPATH/src/github.com/hyperledger/fabric/peer
+ go build
+ peer node start --peer-chaincodedev
+```
 
 ###Terminal 2
-
-* `cd  $GOPATH/src/github.com/hyperledger/fabric/art/artchaincode`
-* `go build`
-* `CORE_CHAINCODE_ID_NAME=mycc CORE_PEER_ADDRESS=0.0.0.0:30303 ./artchaincode`
-
+```
+ cd $GOPATH/src/github.com/hyperledger/fabric/auction/art/artchaincode
+ go build
+ CORE_CHAINCODE_ID_NAME=mycc CORE_PEER_ADDRESS=0.0.0.0:30303 ./artchaincode
+```
 ###Terminal 3
-
-* `cd  $GOPATH/src/github.com/hyperledger/fabric/art/scripts`
-* `. ./setup.sh`
-
+```
+ cd $GOPATH/src/github.com/hyperledger/fabric/auction/art/scripts
+ . ./setup.sh
+```
 ###Run the following shell scripts
 
 #### PostUsers
