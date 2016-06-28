@@ -44,7 +44,7 @@ The Auction House will most likely get the Asset authenticated and valued before
 
 ###Opening the Auction Item for Bids
 
-The Auction House will choose a time frame to place the item on auction and **OPEN** it up for accepting bids from potential Buyers. They may, if applicable, advertise the **"BuyItNow"** price.
+The Auction House will choose a time frame to place the item on auction and **OPEN** it up for accepting bids from potential Buyers. They may, if applicable, advertise the **BuyItNow** price.
 
 ### "Buy It Now" and Accepting Bids
 
