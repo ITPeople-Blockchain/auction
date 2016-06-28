@@ -78,7 +78,7 @@ Please review instructions on setting up the [Development Environment](https://g
 ```
  cd $GOPATH/src/github.com/hyperledger/fabric/peer
  go build
- peer node start --peer-chaincodedev
+ ./peer node start --peer-chaincodedev
 ```
 
 ###Terminal 2
