@@ -129,8 +129,14 @@ function formApplication(){
 			//args.push("BID")
 			args.push(getUUID()) // TODO: auctionID+ItemID+buyer ID Generate Bid number
 			args.push(res[1]) //bid_price
-			args.push(actionForm.find("#bid_buyer").val()) // GET BUYER ID FROM FORM //bid_buyer
-			args.push(actionForm.find("#bid_price").val()) //GET THE PRICE //bid_price
+			var bid_buyer_val = actionForm.find("#bid_buyer").val();
+			var bid_price_val = actionForm.find("#bid_price").val();
+			if (!bid_buyer_val || !bid_price_val || bid_buyer_val === '' || bid_price_val === ''){
+				//TODO: update successful/failure
+				return;
+			}
+			args.push(bid_buyer_val) // GET BUYER ID FROM FORM //bid_buyer
+			args.push(bid_price_val) //GET THE PRICE //bid_price
 			//console.log(args)
 			//return;
 		} else if(formButton.children("div")[0] && formButton.children("div")[0].id == 'bid_submit_button'){
@@ -571,16 +577,17 @@ function makeRestCall(payload, method, recordType){
 				chaincodeHash = res;
 				isDeploySucess = true;
 				console.log("Deloyment  Successful");
-				//TODO:  Unblock UI ?
 			} else if (method == "invoke") {
 				console.log("################# Invoke Successful");
 				if (recordType == 'AUCREQ'){
 					formApp.populateFormIndicator("Auction ID", auctionID)
-				} //TODO: should we do any thing for BID
+					showSuccsessFailureMessage(true);
+				}
 				if (recordType == 'BID'){
 					console.log("Bid placed successfully !!")
+					showSuccsessFailureMessage(true);
 				}
-				showSuccsessFailureMessage(true);
+
 			} else if (method == "query"){
 				console.log("################# Query is Successful !!");
 				if (recordType == 'ARTINV') {
@@ -594,7 +601,7 @@ function makeRestCall(payload, method, recordType){
 			}
 		} else {
 			console.log("Error : Check chaincode logs for more details")
-			showSuccsessFailureMessage(false);
+			//showSuccsessFailureMessage(false);
 		}
 	    },
 	    error: function (jqXHR, textStatus, errorThrown)
