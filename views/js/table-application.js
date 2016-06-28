@@ -125,7 +125,7 @@ function tableApplication(){
 		var args = [];
 		args.push(auctionID);
 		args.push("OPENAUC");
-		args.push("5");
+		args.push("5"); //TODO: get this from text field
 		var payload = constructPayload("invoke", "OpenAuctionForBids", args)
 		RestCall(payload, "invoke");
 		//MAKE API CALL HERE TO OPEN AUCTION BASED ON "auctionID" VARIABLE
