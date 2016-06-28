@@ -25,7 +25,7 @@ This application deals with auctioning ART on the block chain. The blockchain ma
 The typical business process is shown below
 ![Business Process](docs/images/art_process.png)
 
-###Registering Accounts
+###Registering Stakeholder Accounts
 
 Artists, Traders, Dealers own **Assets** (Items). Auction Houses, Banks, Insurance Companies and Service Providers play a role in the auction process. To conduct business on the block chain, the stakeholder has to open an account on the block chain. In the production world, prior to opening an account, all of the stake-holder details may be authenticated by another blockchain like an IDaaS (Identity-as-a-Service). There are various types of stake holders as listed above, each with a different interest.
 
