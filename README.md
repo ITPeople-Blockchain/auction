@@ -27,41 +27,45 @@ The typical business process is shown below
 
 ###Registering Accounts
 
-Artists, Traders, Dealers own **Assets** (Items). To conduct business on the block chain, the stakeholder has to open an account on the block chain. In the production world, prior to opening an account, all of the stake-holder details may be authenticated by another blockchain like an IDaaS. There are various types of stake holders as listed above, each with a different interest.
+Artists, Traders, Dealers own **Assets** (Items). Auction Houses, Banks, Insurance Companies and Service Providers play a role in the auction process. To conduct business on the block chain, the stakeholder has to open an account on the block chain. In the production world, prior to opening an account, all of the stake-holder details may be authenticated by another blockchain like an IDaaS (Identity-as-a-Service). There are various types of stake holders as listed above, each with a different interest.
 
-The Seller (Trader) who owns ASSETS must register their ASSET on the block chain in order to conduct business. When an **Asset** is submitted for registration, the chaincode does the following:
+The Seller (Trader) who owns **Assets** must register the asset on the block chain in order to conduct business. When an **Asset** is submitted for registration, the chaincode does the following:
     * Checks if the owner is registered
-    * Converts any presented "Certificate of Authenticity" or a credibly issued image to a byte stream, generates a key, encrypts the byte stream using the key and stored the image on the BC. It provides the key to the **owner** for future reference
-    * It makes entries into the Item History so that the lifecycle of the Asset can be reviewed at any time
+    * Converts any presented "Certificate of Authenticity" or a credibly issued image to a byte stream, generates a key, encrypts the byte stream using the key and stores the image on the BC. It provides the key to the **owner** for safe keeping and future reference
+    * Makes entries into the Item History so that the lifecycle of the Asset can be reviewed at any time
 
-###Requesting to Auction an Asset
+###Making a Request to Auction an Asset
 
-When the owner of an Asset sees an opportunity to make money, they would like to auction the Asset. They engage an Auction House and make a **request to auction** the Asset. The request always specifies a **Reserve Price"**. Sometime, the seller (owner) may additionally specify a **"Buy It Now"** price as well. When the request is made, the item, owner and the auction house are all validated. (The chaincode simply validates that they are all registered on the BC).
+When the owner of an Asset sees an opportunity to make money, they would like to auction the Asset. They engage an Auction House and make a **request to auction** the Asset. The request always specifies a **Reserve Price"**. Sometimes, the seller (owner) may additionally specify a **"Buy It Now"** price as well. When the request is made, the item, owner and the auction house are all validated. (The chaincode simply validates that they are all registered on the BC).
 
 The Auction House will most likely get the Asset authenticated and valued before deciding to accept the item. One of the ways by which they could do some preliminary authentication is to request the **seller** to enter his **private key**, account-id and the registered item number. While the item number and account identifier is a straight validation, the key will be used to decrypt and view the stored "certificate of authenticity or image". The state of the Auction is set to **INIT** at this point, until it is **OPENED**.
 
 ###Opening the Auction Item for Bids
 
-The Auction House will choose a time frame to place the item on auction and **OPEN** it up for accepting bids from potential Buyers. They may, if applicable, advertise a **"BuyItNow"** price.
+The Auction House will choose a time frame to place the item on auction and **OPEN** it up for accepting bids from potential Buyers. They may, if applicable, advertise the **"BuyItNow"** price.
 
 ### "Buy It Now" and Accepting Bids
 
-During the window of the auction, bidders can place bids. If a Buyer wishes to exercise the "Buy It Now", they can buy the item right away provided there is no bid higher than the "BuyItNow" price.
+During the window of the auction, potential buyers can place bids. If a Buyer wishes to exercise the "Buy It Now", they can buy the item right away provided there is no bid higher than the "BuyItNow" price.
 
-Bids are accepted from buyers. The Bids have to be equal or greater than the **Reserve Price"**. The Bids will be accepted as long as the auction is **OPEN**. 
+Bids are accepted from buyers if
+   * The Bids have are equal or greater than the **Reserve Price"**
+   * The auction is still **OPEN**
+   * The Buyer has a registered account
 
 ### Buy It Now
 
-When a buyer chooses this option, the chaincode does the following
+When a buyer chooses this option, the chain code does the following
     * Validates the Buyer
-    * Checks if there are any bidders whose bid is higher than the **"Buy It Now" ** price. If so, the offer is rejected
-    * If the **"Buy It Now"** price is applicable, immediately **"CLOSES"** the auctions, creates a **transaction**, assigns the Asset to the new buyer
+    * Checks if there are any bidders whose bid is higher than the ** "Buy It Now" ** price. If so, the offer is rejected
+    * If the **"Buy It Now"** price is applicable, it immediately ** "CLOSES" ** the auctions, creates a **transaction**
+    * It assigns the Asset to the new owner
     * It also generates a new **Key**, re-encrypts the "Certificate of Ownership or Image", and provides the key to the new buyer
-    * The new price of the Asset is set to the **"Buy It Noe"** price if not higher
+    * The new price of the Asset is set to the **"Buy It Now"** price if not higher
 
-### Auction Expires
+### Auction Expiry
 
-When the auction expires, the Auction House retrieves the highest bid and converts it to a **transaction** ( A transaction in the real world could mean creating insurance and shipping docs, collecting payment and commissions, issuing a new title or certificate to the new owner etc.) and transfers ownership to the buyer and updates the price with the new **"Hammer"** price. It also generates a new **Key**, re-encrypts the "Certificate of Ownership or Image", and provides the key to the new buyer.
+When the auction expires, the Auction House retrieves the highest bid and converts it to a **transaction** ( A transaction in the real world could mean creating insurance and shipping docs, collecting payments and commissions, issuing a new title or certificate to the new owner etc.), transfers ownership to the buyer and updates the price with the new **"Hammer"** price. It also generates a new **Key**, re-encrypts the "Certificate of Ownership or Image", and provides the key to the new buyer.
 
 ### Transfer an Item to another User
 
