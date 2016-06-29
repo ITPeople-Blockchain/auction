@@ -748,7 +748,7 @@ func CreateItemObject(args []string) (ItemObject, error) {
 	// Validate Picture File exists based on the name provided
 	// Looks for file in current directory of application and must be fixed for other locations
         gopath := os.Getenv("GOPATH")
-        requiredDir := fmt.Sprintf("%s/src/github.com/ratnakar-asara/auction/art/artchaincode/", gopath)
+        requiredDir := fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
         requiredDir += args[9]
         if _, err := os.Stat(requiredDir); err == nil {
                 fmt.Println(requiredDir, "  exists!")
