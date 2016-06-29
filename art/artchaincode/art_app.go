@@ -761,7 +761,7 @@ func CreateItemObject(args []string) (ItemObject, error) {
 	        }
 
 	// Get the Item Image and convert it to a byte array
-	imagebytes, fileType := imageToByteArray(args[9])
+	imagebytes, fileType := imageToByteArray(ccPath + args[9])
 
 	// Generate a new key and encrypt the image
 
