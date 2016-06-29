@@ -37,7 +37,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	//"github.com/op/go-logging"
+	"github.com/op/go-logging"
 	"image"
 	"image/gif"
 	"image/jpeg"
@@ -269,11 +269,12 @@ func QueryFunction(fname string) func(stub *shim.ChaincodeStub, function string,
 	return QueryFunc[fname]
 }
 
-//var myLogger = logging.MustGetLogger("auction_trading")
+var myLogger = logging.MustGetLogger("auction_trading")
 
 type SimpleChaincode struct {
 }
-
+var gopath string
+var ccPath string
 ////////////////////////////////////////////////////////////////////////////////
 // Chain Code Kick-off Main function
 ////////////////////////////////////////////////////////////////////////////////
@@ -282,7 +283,9 @@ func main() {
 	// maximize CPU usage for maximum performance
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fmt.Println("Starting Item Auction Application chaincode ver 20 Dated 2016-06-27 13.45.00: ")
-
+	gopath = os.Getenv("GOPATH")
+	//ccPath := fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
+	ccPath = fmt.Sprintf("%s/src/github.com/ratnakar-asara/auction/art/artchaincode/", gopath)
 	// Start the shim -- running the fabric
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
@@ -747,16 +750,15 @@ func CreateItemObject(args []string) (ItemObject, error) {
 
 	// Validate Picture File exists based on the name provided
 	// Looks for file in current directory of application and must be fixed for other locations
-        gopath := os.Getenv("GOPATH")
-        requiredDir := fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
-        requiredDir += args[9]
-        if _, err := os.Stat(requiredDir); err == nil {
-                fmt.Println(requiredDir, "  exists!")
-        } else {
-                fmt.Printf("CreateItemObject(): Cannot find or load Picture File = %s :  %s\n", args[9], err)
-                return myItem, errors.New("CreateItemObject(): ART Picture File not found " + args[9])
-        }
 
+	// Validate Picture File exists based on the name provided
+		// Looks for file in current directory of application and must be fixed for other locations
+	        if _, err := os.Stat(ccPath + args[9]); err == nil {
+	                fmt.Println(ccPath + args[9], "  exists!")
+	        } else {
+	                fmt.Printf("CreateItemObject(): Cannot find or load Picture File = %s :  %s\n", args[9], err)
+	                return myItem, errors.New("CreateItemObject(): ART Picture File not found " + args[9])
+	        }
 
 	// Get the Item Image and convert it to a byte array
 	imagebytes, fileType := imageToByteArray(args[9])
@@ -2377,16 +2379,17 @@ func ProcessQueryResult(stub *shim.ChaincodeStub, Avalbytes []byte, args []strin
 			fmt.Println("ProcessRequestType(): Cannot create itemObject \n")
 			return err
 		}
-
 		// Decrypt Image and Save Image in a file
 		image := Decrypt(ar.AES_Key, ar.ItemImage)
 		if err != nil {
 			fmt.Println("ProcessRequestType() : Image decrytion failed ")
 			return err
 		}
-
-		err = ByteArrayToImage(image, "copy."+ar.ItemPicFN)
+		fmt.Println(image)
+		fmt.Println("ProcessRequestType() : Image conversion from byte[] to file failed ")
+		err = ByteArrayToImage(image, ccPath + "copy."+ar.ItemPicFN)
 		if err != nil {
+
 			fmt.Println("ProcessRequestType() : Image conversion from byte[] to file failed ")
 			return err
 		}
