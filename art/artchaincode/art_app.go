@@ -747,13 +747,16 @@ func CreateItemObject(args []string) (ItemObject, error) {
 
 	// Validate Picture File exists based on the name provided
 	// Looks for file in current directory of application and must be fixed for other locations
+        gopath := os.Getenv("GOPATH")
+        requiredDir := fmt.Sprintf("%s/src/github.com/ratnakar-asara/auction/art/artchaincode/", gopath)
+        requiredDir += args[9]
+        if _, err := os.Stat(requiredDir); err == nil {
+                fmt.Println(requiredDir, "  exists!")
+        } else {
+                fmt.Printf("CreateItemObject(): Cannot find or load Picture File = %s :  %s\n", args[9], err)
+                return myItem, errors.New("CreateItemObject(): ART Picture File not found " + args[9])
+        }
 
-	if _, err := os.Stat(args[9]); err == nil {
-		fmt.Println(args[9], "  exists!")
-	} else {
-		fmt.Printf("CreateItemObject(): Cannot find or load Picture File = %s :  %s\n", args[9], err)
-		return myItem, errors.New("CreateItemObject(): ART Picture File not found " + args[9])
-	}
 
 	// Get the Item Image and convert it to a byte array
 	imagebytes, fileType := imageToByteArray(args[9])
