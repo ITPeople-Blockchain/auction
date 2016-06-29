@@ -2538,12 +2538,12 @@ func OpenAuctionForBids(stub *shim.ChaincodeStub, function string, args []string
 // This approach has been used as opposed to exec.Command... because additional logic to gather environment variables etc. is required
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 func ShellCmdToCloseAuction(aucID string) error {
-
-	cdir := "cd /opt/gopath/src/github.com/hyperledger/fabric/peer"
+	gopath := os.Getenv("GOPATH")
+	cdir := fmt.Sprintf("cd %s/src/github.com/hyperledger/fabric/", gopath)
 	argStr := "'{\"Function\": \"CloseAuction\", \"Args\": [\"" + aucID + "\"," + "\"AUCREQ\"" + "]}'"
-	argStr = "./peer chaincode invoke -l golang -n mycc -c " + argStr
+	argStr = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/peer/peer chaincode invoke -l golang -n mycc -c %s", gopath, argStr)
 
-	fileHandle, _ := os.Create("/opt/gopath/src/github.com/hyperledger/fabric/peer/closeauction.sh")
+	fileHandle, _ := os.Create(fmt.Sprintf("%s/src/github.com/hyperledger/fabric/closeauction.sh", gopath))
 	writer := bufio.NewWriter(fileHandle)
 	defer fileHandle.Close()
 
