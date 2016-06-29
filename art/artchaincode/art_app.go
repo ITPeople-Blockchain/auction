@@ -2384,8 +2384,10 @@ func ProcessQueryResult(stub *shim.ChaincodeStub, Avalbytes []byte, args []strin
 			fmt.Println("ProcessRequestType() : Image decrytion failed ")
 			return err
 		}
-
-		err = ByteArrayToImage(image, "copy."+ar.ItemPicFN)
+ 		gopath := os.Getenv("GOPATH")
+ 		imagePath := fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
+ 		imagePath += "copy."+ar.ItemPicFN
+		err = ByteArrayToImage(image, imagePath)
 		if err != nil {
 			fmt.Println("ProcessRequestType() : Image conversion from byte[] to file failed ")
 			return err
