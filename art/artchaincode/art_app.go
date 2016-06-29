@@ -37,7 +37,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/op/go-logging"
+	//"github.com/op/go-logging"
 	"image"
 	"image/gif"
 	"image/jpeg"
@@ -269,7 +269,7 @@ func QueryFunction(fname string) func(stub *shim.ChaincodeStub, function string,
 	return QueryFunc[fname]
 }
 
-var myLogger = logging.MustGetLogger("auction_trading")
+//var myLogger = logging.MustGetLogger("auction_trading")
 
 type SimpleChaincode struct {
 }
@@ -300,7 +300,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	// TODO - Include all initialization to be complete before Invoke and Query
 	// Uses aucTables to delete tables if they exist and re-create them
 
-	myLogger.Info("[Trade and Auction Application] Init")
+	//myLogger.Info("[Trade and Auction Application] Init")
 	fmt.Println("[Trade and Auction Application] Init")
 	var err error
 
