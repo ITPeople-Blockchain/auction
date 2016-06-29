@@ -274,7 +274,12 @@ function mainApplication(){
 		//thisObj.setFrontListEvents();
 
 	}
+
 	thisObj.getItemsList = function(category, isHomePage){
+		//if (!localStorage.getItem("chaincodeHash") || localStorage.getItem("chaincodeHash") === '' || formApp.chaincodeHash === '' ){
+		if (!localStorage.getItem("chaincodeHash") || localStorage.getItem("chaincodeHash") === '') {
+			return;
+		}
 		var args = [];
 		var method = "query"
 		if (category == 'All') { //Get List of all items
