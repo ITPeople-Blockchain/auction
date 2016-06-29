@@ -37,7 +37,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/op/go-logging"
+	//"github.com/op/go-logging"
 	"image"
 	"image/gif"
 	"image/jpeg"
@@ -269,7 +269,7 @@ func QueryFunction(fname string) func(stub *shim.ChaincodeStub, function string,
 	return QueryFunc[fname]
 }
 
-var myLogger = logging.MustGetLogger("auction_trading")
+//var myLogger = logging.MustGetLogger("auction_trading")
 
 type SimpleChaincode struct {
 }
@@ -283,9 +283,9 @@ func main() {
 	// maximize CPU usage for maximum performance
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fmt.Println("Starting Item Auction Application chaincode ver 20 Dated 2016-06-27 13.45.00: ")
+
 	gopath = os.Getenv("GOPATH")
-	//ccPath := fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
-	ccPath = fmt.Sprintf("%s/src/github.com/ratnakar-asara/auction/art/artchaincode/", gopath)
+	ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
 	// Start the shim -- running the fabric
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
@@ -761,7 +761,7 @@ func CreateItemObject(args []string) (ItemObject, error) {
 	        }
 
 	// Get the Item Image and convert it to a byte array
-	imagebytes, fileType := imageToByteArray(ccPath + args[9])
+	imagebytes, fileType := imageToByteArray(args[9])
 
 	// Generate a new key and encrypt the image
 
@@ -2385,7 +2385,6 @@ func ProcessQueryResult(stub *shim.ChaincodeStub, Avalbytes []byte, args []strin
 			fmt.Println("ProcessRequestType() : Image decrytion failed ")
 			return err
 		}
-		fmt.Println(image)
 		fmt.Println("ProcessRequestType() : Image conversion from byte[] to file failed ")
 		err = ByteArrayToImage(image, ccPath + "copy."+ar.ItemPicFN)
 		if err != nil {

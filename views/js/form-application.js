@@ -1,8 +1,6 @@
 
-//TODO: Change this path according to the application path
-//var path = "github.com/hyperledger/fabric/examples/chaincode/go/artfun";
-//var path = "https://github.com/ratnakar-asara/auction/tree/master/art/artchaincode";
 var path = "https://github.com/ITPeople-Blockchain/auction/art/artchaincode";
+//var path = "https://github.com/ratnakar-asara/auction/art/artchaincode";
 var JsonRPC_Version = "2.0";
 //Save chaincode Hash, TODO: should check for a better and alternate solution
 var InvokeMethod = "invoke";
@@ -26,18 +24,20 @@ methodIdMap['invoke'] = 3;
 methodIdMap['query'] = 5;
 
 var auctionID = 0;
-var isDeploySucess = false;
 function formApplication(){
 
 	var thisObj = this;
   thisObj.itemID = '';
+	//thisObj.chaincodeHash = '';
 	thisObj.init = function(){
 		console.log('INIT FORM APPLICATION');
 		thisObj.setPrimaryEvents();
 		thisObj.formLoaded();
 
 		//if (!sessionStorage.isDeploySuccess) {
-		if (!isDeploySucess) {
+		//deployChaincode();
+		if (!localStorage.getItem("chaincodeHash") || localStorage.getItem("chaincodeHash") === '') {
+		//if (!thisObj.chaincodeHash && thisObj.chaincodeHash === '') {
 			deployChaincode();
 		}
 	}
@@ -63,6 +63,7 @@ function formApplication(){
 		window.open(formName+'.html'+formArgs,"_self");
 	}
 
+	//V2.0
 	thisObj.submitForm = function(formButton){
 /*
 		var actionForm = formButton.parents('.form-container');
@@ -87,6 +88,9 @@ function formApplication(){
 				break;
 			case 'list-bidding':
 				thisObj.submitItemBid(actionForm);
+				break;
+			case 'list-auctions':
+				thisObj.submitOpenAuction(actionForm);
 				break;
 		}
 */
@@ -237,12 +241,33 @@ function formApplication(){
 		//thisObj.formResult(actionForm,'error');
 	}
 
-	/*thisObj.populateFormSpec = function(specName,specData){
+	//V2.0
+	thisObj.submitOpenAuction = function(actionForm){
+
+		console.log('SUBMIT OPEN AUCTION');
+
+		//USE THIS FUCNTION IF SUCCESS
+		thisObj.formResult(actionForm,'success');
+
+		//USE THIS FUCNTION IF ERROR
+		//thisObj.formResult(actionForm,'error');
+
+		var auctionID = actionForm.parents('tr.table-detail').prev().attr('auction-id');
+		tableApp.finishTableAuction(auctionID);
+	}
+
+	thisObj.populateFormSpec = function(specName,specData){
 		$('.spec-item[name="'+specName+'"] .spec-content').html(specData);
-	}*/
+	}
 
 	thisObj.populateFormField = function(fieldID,fieldData){
 		$('#'+fieldID).val(fieldData);
+	}
+
+	thisObj.populateFormOption = function(selectID,optionData){
+		console.log('POPULATE FORM OPTION');
+		var masterHTML = '<option value="'+optionData+'">'+optionData+'</option>'
+		$('#'+selectID).append(masterHTML);
 	}
 
 	thisObj.populateFormImage = function(imgURL){
@@ -268,6 +293,7 @@ function formApplication(){
 		$('.form-specs').append(masterHTML);
 	}
 
+
 	//API
 
 	thisObj.urlParam = function(name){
@@ -277,6 +303,8 @@ function formApplication(){
 			return ''
 		}*/
 		return results[1] || 0;
+
+
 	}
 
 	thisObj.formLoaded = function(){
@@ -325,11 +353,26 @@ function formApplication(){
 		$('#'+fieldID).val(fieldData);
 
 	}
+
+	//V2.0
 	thisObj.getItemRegister = function(){
+
+		//MAKE API CALL TO GET USER DROPDOWN OPTIONS
+		//RETURN API DATA TO "populateItemRegister" FUNCTION BELOW.
+		//REMOVE DEBUG LINE OF CODE BELOW IF USING API CALL
+		//LEAVE LINE OF CODE BELOW IF MANUALLY POPULATING OPTIONS USING "populateItemRegister"
+		thisObj.populateItemRegister({});
 
 	}
 
+	//V2.0
 	thisObj.getUserRegister = function(){
+
+		//MAKE API CALL TO GET DROPDOWN OPTIONS
+		//RETURN API DATA TO "populateUserRegister" FUNCTION BELOW.
+		//REMOVE DEBUG LINE OF CODE BELOW IF USING API CALL
+		//LEAVE LINE OF CODE BELOW IF MANUALLY POPULATING OPTIONS USING "populateUserRegister"
+		thisObj.populateUserRegister({});
 
 	}
 
@@ -403,11 +446,32 @@ function formApplication(){
 		$('#art_image').css('background-image', 'url(' + imgurl+ ')');
 	}
 
+	//V2.0
 	thisObj.populateItemRegister = function(data){
+
+		//PARSE DATA RETURNED FROM API
+		//USE "populateFormField" and/or "populateFormOption" function above to add data to DOM
+
+		//EXAMPLE START
+		thisObj.populateFormOption('art_type','Art Type 1');
+		thisObj.populateFormOption('art_subject','Subject 1');
+		thisObj.populateFormOption('art_media','Media 1');
+		thisObj.populateFormOption('art_image','Image 1');
+		//EXAMPLE END
 
 	}
 
+	//V2.0
 	thisObj.populateUserRegister = function(data){
+
+		//PARSE DATA RETURNED FROM API
+		//USE "populateFormField" and/or "populateFormOption" function above to add data to DOM
+
+		//EXAMPLE START
+		thisObj.populateFormOption('user_type','User Type 1');
+		thisObj.populateFormOption('user_type','User Type 2');
+		thisObj.populateFormOption('user_type','User Type 3');
+		//EXAMPLE END
 
 	}
 
@@ -458,6 +522,12 @@ function formApplication(){
 		thisObj.populateFormSpec('Highest Bid :', obj.BidPrice);
 	}
 
+	//V2.0
+	thisObj.hideButton = function(){
+		$('.form-button').hide();
+	}
+
+
 	thisObj.populateLastBid = function(data){
 		var obj = JSON.parse(data)
 		thisObj.populateFormSpec('Last Bid :', obj.BidPrice);
@@ -465,6 +535,10 @@ function formApplication(){
 }
 
 getQueryPayload = function (key, recType) {
+	if (!localStorage.getItem("chaincodeHash") || localStorage.getItem("chaincodeHash") === '') {
+	//if (!thisObj.chaincodeHash && thisObj.chaincodeHash === '') {
+		return;
+	}
 	// recordType "ARTINV"
 	var method = "query";
 	var args = [key];
@@ -520,12 +594,10 @@ function constructPayload(methodName, functionName, args){
 	if (Boolean(isInit)) {
 		payload.params.chaincodeID = {
 			"path": path,
-			"name": "mycc",
 		}
 	} else {
 		payload.params.chaincodeID = {
-			"path": path,
-			"name": "mycc",
+			"name": localStorage.getItem("chaincodeHash")
 		}
 	}
 
@@ -552,7 +624,6 @@ function makeRestCall(payload, method, recordType){
 	    {
 		//TODO: How to handle the limitation in chaincode REST response when container creation failed ?
 		if (method == "deploy") {
-			localStorage.isDeploySuccess = true;
 			//TODO: Current limitation in chaincode is that REST response is independent of container creation
 			/*setTimeout(function() {
 				$.unblockUI();
@@ -574,8 +645,8 @@ function makeRestCall(payload, method, recordType){
 			console.log("Results is "+res);
 			if (method == "deploy") {
 				// Store chaincode which is required for subsequent Invokes/Queries
-				chaincodeHash = res;
-				isDeploySucess = true;
+				//formApp.chaincodeHash = res;
+				localStorage.setItem("chaincodeHash", res);
 				console.log("Deloyment  Successful");
 			} else if (method == "invoke") {
 				console.log("################# Invoke Successful");
@@ -633,6 +704,7 @@ deployChaincode = function() {
 	var functionName = "init";
 	var args = ["INITIALIZE"];
 	payload = constructPayload(method, functionName, args);
+	console.log("##################### deploychaincode");
 	makeRestCall(payload, method, "");
 }
 

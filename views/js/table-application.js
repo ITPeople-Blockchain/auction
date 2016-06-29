@@ -11,6 +11,7 @@ function tableApplication(){
 	}
 
 	thisObj.setPrimaryEvents = function(){
+		
 
 	}
 
@@ -60,6 +61,7 @@ function tableApplication(){
 
 	thisObj.actionFunctions['auction-open'] = function(actionItem){
 		var auctionID = actionItem.attr('auction-id');
+		thisObj.showTableDetail(actionItem);
 		thisObj.openTableAuction(auctionID);
 	}
 
@@ -117,9 +119,11 @@ function tableApplication(){
 
 	}
 
+	//V2.0
 	thisObj.openTableAuction = function(auctionID){
 
 		console.log('AUCTION ID: ' + auctionID);
+		//TODO ??? thisObj.populateAuctionForm(); //}
 
 		//TODO: OpenAuctionForBids "Args":["1111", "OPENAUC", "1"]}'
 		var args = [];
@@ -129,6 +133,29 @@ function tableApplication(){
 		var payload = constructPayload("invoke", "OpenAuctionForBids", args)
 		RestCall(payload, "invoke");
 		//MAKE API CALL HERE TO OPEN AUCTION BASED ON "auctionID" VARIABLE
+
+	}
+
+	//V2.0
+	thisObj.finishTableAuction = function(auctionID){
+
+		console.log('AUCTION ID: ' + auctionID);
+
+		//MAKE API CALL HERE TO OPEN AUCTION BASED ON "auctionID" VARIABLE
+		//ON SUCCESS CALL "successfulAuctionOpen" FUNCTION BELOW PASSING AUCTION ID.
+		//REMOVE DEBUG LINE BELOW
+		thisObj.successfulAuctionOpen(auctionID);
+
+	}
+
+
+	//V2.0
+	thisObj.successfulAuctionOpen = function(auctionID){
+
+		console.log('SUCCESS AUCTION ID: ' + auctionID);
+
+		$('tr.table-row[auction-id="'+auctionID+'"]').next().remove();
+		$('tr.table-row[auction-id="'+auctionID+'"]').remove();
 
 	}
 
@@ -185,6 +212,14 @@ function tableApplication(){
 	}
 
 
+	//V2.0
+	thisObj.populateDetailImage = function(imgURL){
+
+		var masterHTML = '<img src="'+imgURL+'" />'
+		$('.table-detail.active .detail-image').html(masterHTML);
+
+	}
+
 
 
 	thisObj.getTableContent = function(){
@@ -201,6 +236,7 @@ function tableApplication(){
 		}
 	}
 
+	//V2.0
 	thisObj.populateTableRow = function(auctionID, itemID, ownerID, index){
 
 		var indexInt = parseInt(index);
@@ -210,8 +246,8 @@ function tableApplication(){
 		}
 
 		/*var masterHTML = '<tr class="table-row'+oddClass+'"><td class="table-cell action-cell" action-type="function" function-name="table-auction">'+auctionID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-item">'+itemID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-owner">'+ownerID+'</td><td class="table-cell">'+description+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="auction-open" auction-id="'+auctionID+'">Open Auction</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="5"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"><div class="button-label">Close</div></div></div></div><div class="detail-content"><div class="detail-body"></div></div><div class="detail-footer"></div></td></tr>';*/
-	    var masterHTML = '<tr class="table-row'+oddClass+'"><td class="table-cell action-cell" action-type="function" function-name="table-auction">'+auctionID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-item">'+itemID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-owner">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="auction-open" auction-id="'+auctionID+'">Open Auction</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="5"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"><div class="button-label">Close</div></div></div></div><div class="detail-content"><div class="detail-body"></div></div><div class="detail-footer"></div></td></tr>';
-
+	    //var masterHTML = '<tr class="table-row'+oddClass+'"><td class="table-cell action-cell" action-type="function" function-name="table-auction">'+auctionID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-item">'+itemID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-owner">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="auction-open" auction-id="'+auctionID+'">Open Auction</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="5"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"><div class="button-label">Close</div></div></div></div><div class="detail-content"><div class="detail-body"></div></div><div class="detail-footer"></div></td></tr>';
+		var masterHTML = '<tr auction-id="'+auctionID+'" class="table-row'+oddClass+'"><td class="table-cell action-cell" action-type="function" function-name="table-auction">'+auctionID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-item">'+itemID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-owner">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="auction-open" auction-id="'+auctionID+'">Open Auction</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="4"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"></div></div></div><div class="detail-content"><div class="detail-body"></div><div class="detail-image"></div></div><div class="detail-footer"></div></td></tr>';
 		$('.table-body').append(masterHTML)
 
 	}
@@ -260,10 +296,7 @@ function tableApplication(){
 
 	}
 
-
-
-
-
+	//V2.0
 	thisObj.populateBiddingRow = function(auctionID, itemID, ownerID, description, index){
 
 		var indexInt = parseInt(index);
@@ -271,7 +304,8 @@ function tableApplication(){
 		if(indexInt%2 == 0) {
 			oddClass = ' odd';
 		}
-		var masterHTML = '<tr class="table-row'+oddClass+'"><td class="table-cell">'+auctionID+'</td><td class="table-cell">'+itemID+'</td><td class="table-cell">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="bid-open" item-id="'+auctionID+"-"+itemID+"-"+ownerID+'">Bid Now</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="5"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"><div class="button-label">Close</div></div></div></div><div class="detail-content"><div class="detail-body"></div></div><div class="detail-footer"></div></td></tr>';
+		//var masterHTML = '<tr class="table-row'+oddClass+'"><td class="table-cell">'+auctionID+'</td><td class="table-cell">'+itemID+'</td><td class="table-cell">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="bid-open" item-id="'+auctionID+"-"+itemID+"-"+ownerID+'">Bid Now</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="5"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"><div class="button-label">Close</div></div></div></div><div class="detail-content"><div class="detail-body"></div></div><div class="detail-footer"></div></td></tr>';
+        var masterHTML = '<tr auction-id="'+auctionID+'" class="table-row'+oddClass+'"><td class="table-cell">'+auctionID+'</td><td class="table-cell">'+itemID+'</td><td class="table-cell">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="bid-open" item-id="'+itemID+'">Bid Now</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="4"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"></div></div></div><div class="detail-content"><div class="detail-body"></div><div class="detail-image"></div></div><div class="detail-footer"></div></td></tr>';
 
 		$('.table-body').append(masterHTML)
 
@@ -321,7 +355,9 @@ function tableApplication(){
     //TODO: Split the value to AuctionID+ ItemID + Current Ownerra ID : 7967-1000-200
 		var res = data.split("-");
 		//LEAVE THIS CODE TO ADD BID FORM TO TABLE DROP DOWN
-		//var masterHTML = '<div class="form-container"><div class="form-header"><div class="form-title">Bid on Item</div><div class="form-messages"><div class="form-message success">Bid submitted successfully</div><div class="form-message error">Bid submission failed</div></div></div><div class="form-content"><div class="form-body"><div class="body-column column-1 half"><div class="form-item"><div class="item-label">Auction ID</div><div class="item-content"><div class="form-input"><input name="bid_auction" id="bid_auction" type="text" value="" tabindex="1"></div></div></div><div class="form-item"><div class="item-label">Item ID</div><div class="item-content"><div class="form-input"><input name="bid_item" id="bid_item" type="text" value="" tabindex="3"></div></div></div><div class="form-item"><div class="item-label">Current Owner ID</div><div class="item-content"><div class="form-input"><input name="bid_owner" id="bid_owner" type="text" value="" tabindex="5"></div></div></div><div class="form-item"><div class="item-label">Bid Time</div><div class="item-content"><div class="form-input"><input name="bid_time" id="bid_time" type="text" value="" tabindex="7"></div></div></div></div><div class="body-column column-2 half"><div class="form-item"><div class="item-label">Bid ID</div><div class="item-content"><div class="form-input"><input name="bid_id" id="bid_id" type="text" value="" tabindex="2"></div></div></div><div class="form-item"><div class="item-label">Buyer ID</div><div class="item-content"><div class="form-input"><input name="bid_buyer" id="bid_buyer" type="text" value="" tabindex="4"></div></div></div><div class="form-item"><div class="item-label">Bid Price</div><div class="item-content"><div class="form-input"><input name="bid_price" id="bid_price" type="text" value="" tabindex="6"></div></div></div></div></div></div><div class="form-footer"><div class="form-specs"></div><div class="form-button" tabindex="8"><div class="button-label">Place Bid</div></div></div></div>';
+		 //TODO: Adam's code
+        /*var masterHTML = '<div class="form-container"><div class="form-header"><div class="form-title">Bid on Item</div><div class="form-messages"><div class="form-message success">Bid submitted successfully</div><div class="form-message error">Bid submission failed</div></div></div><div class="form-content"><div class="form-body"><div class="body-column column-1 half"><div class="form-item"><div class="item-label">Auction ID</div><div class="item-content"><div class="form-input"><input name="bid_auction" id="bid_auction" type="text" value="" tabindex="1"></div></div></div><div class="form-item"><div class="item-label">Item ID</div><div class="item-content"><div class="form-input"><input name="bid_item" id="bid_item" type="text" value="" tabindex="3"></div></div></div><div class="form-item"><div class="item-label">Current Owner ID</div><div class="item-content"><div class="form-input"><input name="bid_owner" id="bid_owner" type="text" value="" tabindex="5"></div></div></div><div class="form-item"><div class="item-label">Bid Time</div><div class="item-content"><div class="form-input"><input name="bid_time" id="bid_time" type="text" value="" tabindex="7"></div></div></div></div><div class="body-column column-2 half"><div class="form-item"><div class="item-label">Bid ID</div><div class="item-content"><div class="form-input"><input name="bid_id" id="bid_id" type="text" value="" tabindex="2"></div></div></div><div class="form-item"><div class="item-label">Buyer ID</div><div class="item-content"><div class="form-input"><input name="bid_buyer" id="bid_buyer" type="text" value="" tabindex="4"></div></div></div><div class="form-item"><div class="item-label">Bid Price</div><div class="item-content"><div class="form-input"><input name="bid_price" id="bid_price" type="text" value="" tabindex="6"></div></div></div></div></div></div><div class="form-footer"><div class="form-specs"></div><div class="form-button" tabindex="8"><div class="button-label">Place Bid</div></div></div></div>';
+		$('.table-detail.active .detail-body').html(masterHTML);*/
 		//TODO: Its a dirty fix, change this
 		var masterHTML = '<div class="form-container"><div class="form-header"><div class="form-title">Bid on Item</div><div class="form-messages"><div class="form-message success">Bid submitted successfully</div><div class="form-message error">Bid submission failed</div></div></div><div class="form-content"><div class="form-body"><div class="body-column column-1 half"><div class="form-item"><div class="item-label">Buyer ID</div><div class="item-content"><div class="form-input"><input name="bid_buyer" id="bid_buyer" type="text" value="" tabindex="1"></div></div></div></div><div class="body-column column-2 half"><div class="form-item"><div class="item-label">Bid Price</div><div class="item-content"><div class="form-input"><input name="bid_price" id="bid_price" type="text" value="" tabindex="2"><input style="display:none;"name="form_field_values" id="form_field_values" type="text" value="'+data+'" tabindex="3"></div></div></div></div></div></div><div class="form-footer"><div class="form-specs"></div><div class="form-button" tabindex="3"><div class="button-label" id="submit_bid_button">Place Bid</div></div></div></div>';
 		$('.detail-body').html(masterHTML);
@@ -333,8 +369,8 @@ function tableApplication(){
 		//REPLACE THIS WITH DATA PARSER WITH MULTIPLE "populateFormField" CALLS FOR EACH INDIVIDUAL FIELD
 		//populateFormField(DATA LABEL, DATA CONTENT)
 		/*formApp.populateFormField('bid_auction', res[0]);
-		formApp.populateFormField('bid_price','120');*/
-
+		formApp.populateFormField('bid_price','120');
+		thisObj.populateDetailImage('img/item-001.jpg');*/
 		//END EXAMPLE CODE
 
 
@@ -396,7 +432,7 @@ RestCall = function (payload, method, functionName){
 	    {
 		//TODO: How to handle the limitation in chaincode REST response when container creation failed ?
 		if (method == "deploy") {
-			localStorage.isDeploySuccess = true;
+			//localStorage.isDeploySuccess = true;
 		}
 		//data - response from server
 		if (data["error"] && data["error"].message) {
