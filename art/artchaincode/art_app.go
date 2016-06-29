@@ -752,16 +752,17 @@ func CreateItemObject(args []string) (ItemObject, error) {
 	// Looks for file in current directory of application and must be fixed for other locations
 
 	// Validate Picture File exists based on the name provided
-		// Looks for file in current directory of application and must be fixed for other locations
-	        if _, err := os.Stat(ccPath + args[9]); err == nil {
-	                fmt.Println(ccPath + args[9], "  exists!")
-	        } else {
-	                fmt.Printf("CreateItemObject(): Cannot find or load Picture File = %s :  %s\n", args[9], err)
-	                return myItem, errors.New("CreateItemObject(): ART Picture File not found " + args[9])
-	        }
+	// Looks for file in current directory of application and must be fixed for other locations
+	imagePath := ccPath +args[9];
+	if _, err := os.Stat(imagePath); err == nil {
+	  fmt.Println(imagePath, "  exists!")
+	} else {
+	  fmt.Printf("CreateItemObject(): Cannot find or load Picture File = %s :  %s\n", imagePath, err)
+	  return myItem, errors.New("CreateItemObject(): ART Picture File not found " + imagePath)
+	}
 
 	// Get the Item Image and convert it to a byte array
-	imagebytes, fileType := imageToByteArray(args[9])
+	imagebytes, fileType := imageToByteArray(imagePath)
 
 	// Generate a new key and encrypt the image
 
