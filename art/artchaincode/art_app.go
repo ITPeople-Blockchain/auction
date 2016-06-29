@@ -2543,7 +2543,7 @@ func ShellCmdToCloseAuction(aucID string) error {
 	argStr := "'{\"Function\": \"CloseAuction\", \"Args\": [\"" + aucID + "\"," + "\"AUCREQ\"" + "]}'"
 	argStr = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/peer/peer chaincode invoke -l golang -n mycc -c %s", gopath, argStr)
 
-	fileHandle, _ := os.Create(fmt.Sprintf("%s/src/github.com/hyperledger/fabric/closeauction.sh", gopath))
+	fileHandle, _ := os.Create(fmt.Sprintf("%s/src/github.com/hyperledger/fabric/peer/closeauction.sh", gopath))
 	writer := bufio.NewWriter(fileHandle)
 	defer fileHandle.Close()
 
