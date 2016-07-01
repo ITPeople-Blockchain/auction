@@ -17,6 +17,7 @@ functionByRecType['USER'] = 'PostUser';
 functionByRecType['ARTINV'] = 'PostItem';
 functionByRecType['AUCREQ'] = 'PostAuctionRequest';
 functionByRecType['BID'] = 'PostBid';
+functionByRecType['OPENAUC'] = 'OpenAuctionForBids';
 
 var methodIdMap = {};
 methodIdMap['deploy'] = 1;
@@ -27,17 +28,16 @@ var auctionID = 0;
 function formApplication(){
 
 	var thisObj = this;
-  thisObj.itemID = '';
+    thisObj.itemID = '';
 	//thisObj.chaincodeHash = '';
 	thisObj.init = function(){
 		console.log('INIT FORM APPLICATION');
 		thisObj.setPrimaryEvents();
 		thisObj.formLoaded();
 
-		//if (!sessionStorage.isDeploySuccess) {
+		//localStorage.setItem("chaincodeHash",'');
 		//deployChaincode();
 		if (!localStorage.getItem("chaincodeHash") || localStorage.getItem("chaincodeHash") === '') {
-		//if (!thisObj.chaincodeHash && thisObj.chaincodeHash === '') {
 			deployChaincode();
 		}
 	}
@@ -94,6 +94,7 @@ function formApplication(){
 				break;
 		}
 */
+
 		if (!formButton) {
 			console.log("Invalid formButton Object");
 			return;
@@ -102,7 +103,9 @@ function formApplication(){
 		var functionName = '';
 		var recType = '';
 		var args = [];
-		// this is a special case where we need to Submit the current for auction
+		//console.log(actionForm.find("#hidden_aucid").val());
+		//console.log($('#hidden_aucid').text());
+		// this is a special case where we need to Submit selected Item for auction
 		if(formButton.children("div")[0] && formButton.children("div")[0].id == 'art_submit_auction' ) {
 			recType = 'AUCREQ';
 			functionName = functionByRecType[recType];
@@ -118,6 +121,7 @@ function formApplication(){
 			args.push(new Date().toString());
 			var str = ips[8].value;
 			args.push((parseInt(str.substring(1, str.length)) * 1.4).toString());
+			//How to handle this ?
 			args.push("0");//TODO: enable once BuyItNowPrice enabled from UI
 			args.push("INIT");
 			args.push(new Date().toString());
@@ -130,19 +134,16 @@ function formApplication(){
 			var fieldValue = '';
 			var args = [];
 			args.push(res[0])
-			//args.push("BID")
-			args.push(getUUID()) // TODO: auctionID+ItemID+buyer ID Generate Bid number
+			args.push(getUUID()) // auctionID+ItemID+buyer ID Generates Bid number
 			args.push(res[1]) //bid_price
 			var bid_buyer_val = actionForm.find("#bid_buyer").val();
 			var bid_price_val = actionForm.find("#bid_price").val();
 			if (!bid_buyer_val || !bid_price_val || bid_buyer_val === '' || bid_price_val === ''){
-				//TODO: update successful/failure
+				//TODO: update failure message ?
 				return;
 			}
 			args.push(bid_buyer_val) // GET BUYER ID FROM FORM //bid_buyer
 			args.push(bid_price_val) //GET THE PRICE //bid_price
-			//console.log(args)
-			//return;
 		} else if(formButton.children("div")[0] && formButton.children("div")[0].id == 'bid_submit_button'){
 			var actionForm = formButton.parents('.form-container');
 			recType = recordTypeByFormID[actionForm[0].id];
@@ -154,6 +155,7 @@ function formApplication(){
 				fieldValue = ips[i].value;
 				if (!fieldValue || fieldValue == '') {
 					console.log(" ###### Field values shouldn't be empty ###### ")
+					//TODO: Update error message
 					return;
 				}
 				if (i== 0) {
@@ -164,7 +166,21 @@ function formApplication(){
 				args.push(fieldValue);
 			}
 			//return;
-		} else {
+		} else if (actionForm.find("#hidden_aucid") && actionForm.find("#hidden_aucid").val()){
+			auctionId = actionForm.find("#hidden_aucid").val();
+			console.log('AUCTION ID: ' + auctionId);
+			recType = 'OPENAUC';
+			//OpenAuctionForBids "Args":["1111", "OPENAUC", "1"]}'
+			functionName = functionByRecType[recType];
+			var args = [];
+			args.push(auctionId);
+			args.push("OPENAUC");
+			var ips = $( ":input" );
+			args.push(ips[0].value); //Duration from text field
+			var payload = constructPayload("invoke",functionName , args);
+			RestCall(payload, "invoke", functionName, auctionId);
+			return;
+	  } else {
 			var actionForm = formButton.parents('.form-container');
 			recType = recordTypeByFormID[actionForm[0].id];
 			functionName = functionByRecType[recType];
@@ -184,6 +200,19 @@ function formApplication(){
 		args.splice(1, 0, recType);
 		console.log(args);
 		payloadHandler(functionName, recType, args);
+	}
+
+	//V2.1
+	thisObj.submitAltForm = function(formButton){
+		var actionForm = formButton.parents('.form-container');
+
+		var loadedForm = $('body').attr('name');
+
+		switch (loadedForm){
+			case 'list-bidding':
+				thisObj.submitItemBuy(actionForm);
+				break;
+		}
 	}
 
 	thisObj.formResult = function(actionForm,result){
@@ -241,6 +270,36 @@ function formApplication(){
 		//thisObj.formResult(actionForm,'error');
 	}
 
+	//V2.1
+	thisObj.submitItemBuy = function(actionForm){
+
+		console.log('SUBMIT ITEM BUY');
+		var res = (actionForm.find("#form_field_values").val()).split("-")
+		recType = 'BID';
+		var functionName = functionByRecType[recType];
+		var fieldValue = '';
+		var args = [];
+		args.push(res[0]);
+		args.push(recType);
+		args.push(getUUID()); // auctionID+ItemID+buyer ID Generates Bid number
+		args.push(res[1]);
+
+		var bid_buyer_val = actionForm.find("#bid_buyer").val();
+		if (!bid_buyer_val || bid_buyer_val === ''){
+			console.log('Please provide user ID ');
+			//TODO: update failure message ?
+			return;
+		}
+		args.push(bid_buyer_val) // GET BUYER ID FROM FORM //bid_buyer
+		var buyItNowPrice = (parseInt(res[3]) * 1.4).toString();
+		args.push(buyItNowPrice);  //BuyItNow bid_price
+
+		console.log(args);
+
+		payloadHandler(functionName, recType, args);
+
+	}
+
 	//V2.0
 	thisObj.submitOpenAuction = function(actionForm){
 
@@ -256,10 +315,6 @@ function formApplication(){
 		tableApp.finishTableAuction(auctionID);
 	}
 
-	thisObj.populateFormSpec = function(specName,specData){
-		$('.spec-item[name="'+specName+'"] .spec-content').html(specData);
-	}
-
 	thisObj.populateFormField = function(fieldID,fieldData){
 		$('#'+fieldID).val(fieldData);
 	}
@@ -273,7 +328,6 @@ function formApplication(){
 	thisObj.populateFormImage = function(imgURL){
 		//work around to get the image
 		imgURL = '../art/artchaincode/'+imgURL;
-		alert(imgURL);
 		$('.form-image .item-image').css('background-image','url('+imgURL+')')
 	}
 
@@ -281,16 +335,17 @@ function formApplication(){
 		var masterHTML = '<div class="indicator-item"><div class="indicator-label">'+labelVal+'</div><div class="indicator-content">'+contentVal+'</div></div>'
 		$('.form-indicators').append(masterHTML);
 	}
-	//TODO: Ratnakar, Want to use this for Current Bids ??
-	/*thisObj.populateFormSpec = function(labelVal,contentVal){
-		var masterHTML = '<div class="spec-item"><div class="spec-label">'+labelVal+'</div><div class="spec-content">'+contentVal+'</div></div>'
-		$('.form-specs').append(masterHTML);
-	}*/
+
 	//Ratnakar
-	thisObj.populateFormSpec = function(labelVal,contentVal){
+	/*thisObj.populateFormSpec = function(labelVal,contentVal){
 		var masterHTML = '<div class="spec-item"><div class="spec-label">'+labelVal+'</div><div class="spec-content"> $'+contentVal+'</div></div>'
 		//$('.form-specs').empty().append(masterHTML);
 		$('.form-specs').append(masterHTML);
+	}*/
+	//V2.1
+	thisObj.populateFormSpec = function(labelVal,contentVal,specPosition){
+		var masterHTML = '<div class="spec-item"><div class="spec-label">'+labelVal+'</div><div class="spec-content">'+contentVal+'</div></div>'
+		$('.form-spec.'+specPosition).append(masterHTML);
 	}
 
 
@@ -298,21 +353,18 @@ function formApplication(){
 
 	thisObj.urlParam = function(name){
 		var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-		//TODO : do we need this ?
 		/*if (!results || results.length == 0) {
 			return ''
 		}*/
 		return results[1] || 0;
-
-
 	}
 
 	thisObj.formLoaded = function(){
-
 		var loadedForm = $('body').attr('name');
 
 		switch (loadedForm){
 			case 'item-detail':
+
 				thisObj.getItemDetail();
 				break;
 			case 'item-register':
@@ -372,7 +424,7 @@ function formApplication(){
 		//RETURN API DATA TO "populateUserRegister" FUNCTION BELOW.
 		//REMOVE DEBUG LINE OF CODE BELOW IF USING API CALL
 		//LEAVE LINE OF CODE BELOW IF MANUALLY POPULATING OPTIONS USING "populateUserRegister"
-		thisObj.populateUserRegister({});
+		thisObj.populateUserRegister();
 
 	}
 
@@ -384,21 +436,10 @@ function formApplication(){
 
 		var formName = $('body').attr('name');
 		var itemID = thisObj.urlParam('item-id');
-		console.log('ITEM ID: ' + itemID);
-		console.log('formName: ' + formName);
-		/*var args = [];
-		args.push(itemID);
-		args.push("Shadows by Asppen");*/
+
 		//MAKE API CALL USING "itemID" variable here.
 		//RETURN API DATA TO "populateItemDetail" function below.
 		thisObj.populateFormField("bid_art_id", itemID);
-		//getQueryPayload (itemID, "BID", formName)
-    //thisObj.itemID = '';
-		//MAKE API CALL USING "itemID" variable here.
-		//RETURN API DATA TO "populateItemDetail" function below.
-		//REMOVE DEBUG LINE OF CODE BELOW
-		//thisObj.populateItemBid({});
-
 
 		//LEAVE THE CODE BELOW TO GET CURRENT BIDS
 		//ADJUST THE INTERVAL TO UPDATE THE CURRENT BIDS BELOW
@@ -408,7 +449,7 @@ function formApplication(){
 			//console.log(thisObj.itemID)
 
 			//Call this from REST call
-			//thisObj.getCurrentBids();
+			thisObj.getCurrentBids();
 		},bidInterval);
 
 	}
@@ -416,7 +457,7 @@ function formApplication(){
 	thisObj.getCurrentBids = function(){
 
 		var itemID = thisObj.urlParam('item-id');
-		console.log('ITEM ID: ' + itemID);
+		//console.log('ITEM ID: ' + itemID);
 
 		//MAKE API CALL USING "itemID" variable here.
 		//RETURN API DATA TO "populateCurrentBids" function below.
@@ -428,11 +469,8 @@ function formApplication(){
 
 	thisObj.populateItemDetail = function(data){
 		var obj = JSON.parse(data);
-		//PARSE DATA RETURNED FROM API
 		//USE "populateFormField" function above to add data to DOM
 
-		//EXAMPLE
-		//REPLACE THIS WITH DATA PARSER WITH MULTIPLE "populateFormField" CALLS FOR EACH INDIVIDUAL FIELD
 		thisObj.populateFormField('art_description', obj['ItemDesc']);
 		thisObj.populateFormField('art_artist', obj['ItemDetail']);
 		thisObj.populateFormField('art_date', obj['ItemDate']);
@@ -444,6 +482,12 @@ function formApplication(){
 		thisObj.populateFormField('art_owner', obj['CurrentOwnerID']);
 		var imgurl = '../art/artchaincode/'+obj['ItemPicFN'];
 		$('#art_image').css('background-image', 'url(' + imgurl+ ')');
+
+		// How do you decide this item is associated with which Auction ?
+		//peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfItemsOnAuc", "Args": ["2016"]}'
+		var method = "query";
+		var payload = constructPayload(method, "GetListOfItemsOnAuc", ["2016"]);
+		makeRestCall(payload, method, obj['ItemID']);
 	}
 
 	//V2.0
@@ -452,13 +496,23 @@ function formApplication(){
 		//PARSE DATA RETURNED FROM API
 		//USE "populateFormField" and/or "populateFormOption" function above to add data to DOM
 
-		//EXAMPLE START
-		thisObj.populateFormOption('art_type','Art Type 1');
-		thisObj.populateFormOption('art_subject','Subject 1');
-		thisObj.populateFormOption('art_media','Media 1');
-		thisObj.populateFormOption('art_image','Image 1');
-		//EXAMPLE END
-
+		thisObj.populateFormOption('art_image','Original');
+		thisObj.populateFormOption('art_image','Reprint');
+		thisObj.populateFormOption('art_owner','landscape');
+		thisObj.populateFormOption('art_owner','modern');
+		thisObj.populateFormOption('art_description','Acrylic');
+		thisObj.populateFormOption('art_description','Canvas');
+		thisObj.populateFormOption('art_description','Water Color');
+		//TODO: Its not the right way ...
+		thisObj.populateFormOption('art_size','sample.png');
+		for (var i=1;i<8;i++){
+			thisObj.populateFormOption('art_size','art'+i+'.png');
+		}
+		for (var i=1;i<=8;i++){
+			thisObj.populateFormOption('art_size','item-00'+i+'.jpg');
+		}
+		thisObj.populateFormOption('art_size','mad-fb.jpg');
+		thisObj.populateFormOption('art_size','people.gif');
 	}
 
 	//V2.0
@@ -467,12 +521,12 @@ function formApplication(){
 		//PARSE DATA RETURNED FROM API
 		//USE "populateFormField" and/or "populateFormOption" function above to add data to DOM
 
-		//EXAMPLE START
-		thisObj.populateFormOption('user_type','User Type 1');
-		thisObj.populateFormOption('user_type','User Type 2');
-		thisObj.populateFormOption('user_type','User Type 3');
-		//EXAMPLE END
-
+	  // Auction House (AH), Bank (BK), Buyer or Seller (TR), Shipper (SH), Appraiser (AP)
+		thisObj.populateFormOption('user_type','Buyer/Seller');
+		thisObj.populateFormOption('user_type','Auction House');
+		thisObj.populateFormOption('user_type','Shipper');
+		thisObj.populateFormOption('user_type','Bank');
+		thisObj.populateFormOption('user_type','Appraiser');
 	}
 
 	thisObj.populateItemAuction = function(data){
@@ -491,28 +545,29 @@ function formApplication(){
 		//EXAMPLE START
 		//REPLACE THIS EXAMPLE WITH DATA PARSER WITH MULTIPLE "populateFormField" CALLS FOR EACH INDIVIDUAL FIELD
 		//populateFormField(FIELD ID, FIELD CONTENT)
-		thisObj.populateFormField('bid_auction_id','1111');
-		thisObj.populateFormField('bid_art_id','1000');
+		//thisObj.populateFormField('bid_auction_id','1111');
+		//thisObj.populateFormField('bid_art_id','1000');
 
 		//EXAMPLE END
 
 	}
 
+	//V2.1
 	thisObj.populateCurrentBids = function(data){
 
 		console.log('UPDATED CURRENT BIDS');
 
 		//LEAVE THIS LINE OF CODE TO CLEAR SPECS BEFORE POPULATING NEW
-		$('.form-specs').html('');
+		$('.form-spec').html('');
 
 		//PARSE DATA RETURNED FROM API
 		//USE "populateFormSpec" function above to add data to DOM
 
 		//EXAMPLE START
 		//REPLACE THIS EXAMPLE WITH DATA PARSER WITH MULTIPLE "populateFormSpec" CALLS FOR EACH INDIVIDUAL FIELD
-		//populateFormField(SPEC LABEL, SPEC CONTENT)
-		thisObj.populateFormSpec('Highest Bid :','$67,890');
-		thisObj.populateFormSpec('Last Bid    :','$67,890');
+		//populateFormField(SPEC LABEL, SPEC CONTENT, SPEC POSITION)
+		thisObj.populateFormSpec('Highest Bid','$67,890','left');
+		thisObj.populateFormSpec('Last Bid','$67,890','right');
 		//EXAMPLE END
 
 	}
@@ -539,45 +594,19 @@ getQueryPayload = function (key, recType) {
 	//if (!thisObj.chaincodeHash && thisObj.chaincodeHash === '') {
 		return;
 	}
-	// recordType "ARTINV"
 	var method = "query";
 	var args = [key];
-	//args.push (key);
 	payload = constructPayload(method, "GetItem", args);
-	//payload = constructPayload(method, functionByRecType[recordType], args);
 	makeRestCall(payload, method, recType);
 }
 
-displayObj = function(object){
-	var output = '';
-	for (var property in object) {
-  		output += property + ': ' + object[property]+'; ';
-	}
-	return output;
-}
-
 payloadHandler = function(functionName, recordType, args ){
-	//console.log("In payloadHandler");
 	// TODO: determine query or invoke based on button type
 	var method = "invoke";
-	//args = constructArgsByFormID("userRegisterPage", recordType);
 	payload = constructPayload(method, functionName, args);
-	//payload = constructPayload(method, functionByRecType[recordType], args);
 	makeRestCall(payload, method, recordType);
-	//console.log(isSuccess);
 }
 
-userRegistrationHandler = function(args){
-	//console.log("In userRegistrationHandler");
-	//TODO: Can we do this better  (Don't hardcode record types )?
-	var recordType = "USER";
-	var functionName = "init";
-	var method = "invoke";
-	var functionName = "PostUser";
-	//args = constructArgsByFormID("userRegisterPage", recordType);
-	payload = constructPayload(method, functionName, args);
-	isSuccess = makeRestCall(payload, method, recordType);
-}
 /**
  * Construct Payload before making a Restcall
  */
@@ -594,10 +623,12 @@ function constructPayload(methodName, functionName, args){
 	if (Boolean(isInit)) {
 		payload.params.chaincodeID = {
 			"path": path,
+			//Don't use mycc as chaincode for net mode
+			"name": "mycc" //localStorage.getItem("chaincodeHash")
 		}
 	} else {
 		payload.params.chaincodeID = {
-			"name": localStorage.getItem("chaincodeHash")
+			"name": "mycc" //localStorage.getItem("chaincodeHash")
 		}
 	}
 
@@ -613,11 +644,9 @@ function constructPayload(methodName, functionName, args){
 
 //Make a rest call and parse the result based on Record Types {"USER" , "ARTINV", "AUCREQ", "POSTTRAN"}
 function makeRestCall(payload, method, recordType){
-	//$.blockUI();
 	console.log(JSON.stringify(payload));
-	//hideResults();
 	$.ajax({
-	    url : mainApp.URL,//"http://localhost:5000/chaincode",
+	    url : mainApp.URL,
 	    type: "POST",
 	    data : JSON.stringify(payload),
 	    success: function(data, textStatus, jqXHR)
@@ -641,7 +670,6 @@ function makeRestCall(payload, method, recordType){
 			return;
 		} else if (data["result"] && data["result"].message){
 			var res = data["result"].message
-
 			console.log("Results is "+res);
 			if (method == "deploy") {
 				// Store chaincode which is required for subsequent Invokes/Queries
@@ -650,37 +678,66 @@ function makeRestCall(payload, method, recordType){
 				console.log("Deloyment  Successful");
 			} else if (method == "invoke") {
 				console.log("################# Invoke Successful");
+				showSuccsessFailureMessage(true);
 				if (recordType == 'AUCREQ'){
 					formApp.populateFormIndicator("Auction ID", auctionID)
-					showSuccsessFailureMessage(true);
 				}
 				if (recordType == 'BID'){
 					console.log("Bid placed successfully !!")
-					showSuccsessFailureMessage(true);
+					//USE THIS FUCNTION IF SUCCESS
+					//TODO: How to get actionForm here ?
+					//formApp.formResult(actionForm,'success');
 				}
+				/*if (recordType === 'OPENAUC'){
+					tableApp.finishTableAuction(auctionID);
+				}*/
 
 			} else if (method == "query"){
 				console.log("################# Query is Successful !!");
 				if (recordType == 'ARTINV') {
 					//pass the result 'res'
 					formApp.populateItemDetail(res);
-				} /*else if (recordType == 'BID') {
+				} else if (recordType != '' && recordType.length > 0)  {
+					togglePutonAuctionButton(recordType, res);
+				}
+				/*else if (recordType == 'BID') {
 					formApp.populateItemBid(res);
 				}*/
 			} else {
 				console.log("Error : Invalid request")
 			}
-		} else {
+		} /*else {
 			console.log("Error : Check chaincode logs for more details")
 			//showSuccsessFailureMessage(false);
-		}
+		}*/
 	    },
 	    error: function (jqXHR, textStatus, errorThrown)
 	    {
-		showSuccsessFailureMessage(false);
-		console.log("Failure :"+textStatus);
+				if (recordType === 'BID') {
+					//USE THIS FUCNTION IF ERROR
+					//TODO: How to get actionForm here ?
+					//formApp.formResult(actionForm,'error');
+				}
+				showSuccsessFailureMessage(false);
+				console.log("Failure :"+textStatus);
 	    }
 	});
+}
+
+togglePutonAuctionButton = function(itemID, openAuctionObjs) {
+	var obj = JSON.parse(openAuctionObjs)
+	var isButtonHidden = false;
+	for (var i=0;i<obj.length;i++){
+		if (itemID === obj[i].ItemID) {
+			console.log("Item #"+itemID+" already opened for auction, Disable button...");
+			formApp.hideButton();
+			isButtonHidden = true;
+			break;
+		}
+	}
+	if (!isButtonHidden) {
+		console.log("Item #"+itemID+" not opened yet for auction");
+	}
 }
 
 showSuccsessFailureMessage = function(isSuccess){

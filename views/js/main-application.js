@@ -1,9 +1,10 @@
-function mainApplication(){
+function mainApplication(){ 
 
 	var thisObj = this;
 
 	thisObj.windowWidth = 0;
-  thisObj.windowHeight = 0;
+  	thisObj.windowHeight = 0;
+
   thisObj.menuId = '';
 
   thisObj.URL = 'http://localhost:5000/chaincode';
@@ -148,7 +149,7 @@ function mainApplication(){
 			formApp.loadForm(actionItem,'?item-id='+actionId);
 		});
 	}
-
+	
 
 
 	//MENUS
@@ -217,8 +218,11 @@ function mainApplication(){
 
 
 	//CATEGORY PAGE
+
 	thisObj.getCategoryList = function(){
+
 		var categoryName = $('body').attr('category');
+
 		//MAKE API CALL HERE USING "categoryName" VARIABLE TO GET LIST OF ITEMS FOR CATEGORY PAGE.
 		//RETURN API DATA TO "populateCategoryList" function below.
 		//REMOVE DEBUG LINE OF CODE BELOW
@@ -230,6 +234,7 @@ function mainApplication(){
 		//alert(categoryName)
 		//LEAVE THIS LINE
 		$('.category-content .item-view').html('');
+
 		//PARSE DATA RETURNED FROM API
 		//USE "populateCategoryItem" FUNCTION BELOW TO ADD ITEMS TO LIST
 
@@ -246,16 +251,28 @@ function mainApplication(){
 		thisObj.getItemsList(categoryName, false);
 	}
 
+	thisObj.populateCategoryItem = function(itemTitle,itemID,imgURL,auctionStart,currentBid,totalBids){
+
+		var masterHTML = '<div class="item" item-id="'+itemID+'"><div class="item-header"><div class="item-image" style="background-image:url('+imgURL+');"></div></div><div class="item-content"><div class="item-details"><div class="item-title item-detail"><div class="detail-label"></div><div class="detail-content">'+itemTitle+'</div></div><div class="item-date item-detail"><div class="detail-label">Auction Start</div><div class="detail-content">'+auctionStart+'</div></div><div class="item-bid item-detail"><div class="detail-label">Current Bid</div><div class="detail-content">'+currentBid+'</div></div><div class="item-bids item-detail"><div class="detail-label">Total Bids</div><div class="detail-content">'+totalBids+'</div></div></div></div><div class="item-footer"><div class="item-actions"><div class="action-button" form-name="item-bid" action-type="form"><div class="button-label">Bid</div></div><div class="action-button" form-name="item-detail" action-type="detail"><div class="button-label">Details</div></div></div></div></div>';
+
+		$('.category-content .item-view').append(masterHTML);
+
+	}
+
 
 	//FRONT VIEW
+
 	thisObj.getFrontList = function(){
+
 		//MAKE API CALL HERE TO GET LIST OF ITEMS FOR FRONT PAGE VIEW.
 		//RETURN API DATA TO "populateFrontList" function below.
 		//REMOVE DEBUG LINE OF CODE BELOW
 		thisObj.populateFrontList({});
+
 	}
 
 	thisObj.populateFrontList = function(){
+
 		//LEAVE THIS LINE
 		$('.front-header .item-view').html('');
 
@@ -330,6 +347,8 @@ function mainApplication(){
 		$('.front-header .item-view').append(masterHTML);
 
 	}
+	
+
 }
 //TODO:  Redundancy (DRY) with the RestCall, Can we generalize ?
 MainRestCall = function (payload, method, category, isHomePage){

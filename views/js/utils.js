@@ -7,11 +7,11 @@ constructArgsByFormID = function(formID, recordType){
 			//Chaincode expects record type as second argument (arg[1])
 			args.push (recordType);
 		}
-		//TODO: Handle spl cases for PostAuctionRequest 
+		//TODO: Handle spl cases for PostAuctionRequest
 		if (this.value.indexOf('.png') > 0){
 			args.push('/opt/gopath/src/github.com/hyperledger/fabric/examples/chaincode/go/artfun/'+this.value);
 		} else {
-			args.push(this.value);		     	
+			args.push(this.value);
 		}
 	});
 	return args;
@@ -51,7 +51,7 @@ showBootstrapAlert = function(type, mesg){
 		break;
 
 	case 'info' :
-		$('#result_mesg').removeClass('alert-success').removeClass('alert-danger').addClass('alert-'+type); 
+		$('#result_mesg').removeClass('alert-success').removeClass('alert-danger').addClass('alert-'+type);
 		break;
 	}
 	$('#result_mesg').html(mesg);

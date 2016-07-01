@@ -96,27 +96,32 @@
 }
 
 .form-specs {
+	display: inline-block;
+	background-color: rgba(255,255,255,.5);
+}
+
+.form-spec {
 	opacity: 1;
 	text-transform: uppercase;
 	font-weight: 700;
 	color: rgba(125,0,0,1);
 	text-align: left;
 	-webkit-transition: all 4s;
-	width: 60%;
+	display: inline-block;
 	pointer-events:none;
-	padding: 15px 30px;
+	text-align: center;
+	font-size: .8em;
 }
 
-.form-container.success .form-specs,
-.form-container.error .form-specs {
+.form-container.success .form-spec,
+.form-container.error .form-spec {
 	opacity: 0;
 	-webkit-transition: all .5s;
 }
 
-.form-specs .specs-title {
+.form-spec .specs-title {
 	display: inline-block;
 	margin-right: 25px;
-	font-size: 20px;
 }
 
 .form-indicators .indicator-item {
@@ -125,14 +130,13 @@
 	font-size: 15px;
 }
 
-.form-specs .spec-item {
-	margin-right: 10px;
-	font-size: 15px;
-	line-height: 25px;
+.form-spec .spec-item {
+	line-height: 50px;
+	padding:0 10px;
 }
 
-.form-specs .spec-label,
-.form-specs .spec-content,
+.form-spec .spec-label,
+.form-spec .spec-content,
 .form-indicators .indicator-label,
 .form-indicators .indicator-content {
 	display: inline-block;
@@ -142,12 +146,12 @@
 	margin-right: 10px;
 }
 
-.form-specs .spec-content,
+.form-spec .spec-content,
 .form-indicators .indicator-content {
 	font-weight:300;
 }
 
-.form-specs .spec-content {
+.form-spec .spec-content {
 	padding-left: 5px;
 }
 
@@ -157,38 +161,57 @@
 	border-top: 1px solid rgba(68,103,144,.2);
 	min-height: 50px;
 	position: relative;
+	text-align: right;
 }
 
-.form-button {
+.form-button,
+.form-button-alt {
 	font-family: "Montserrat", sans-serif;
 	font-weight: 700;
 	line-height: 50px;
 	padding: 0 15px;
 	background-color: rgba(68,103,144,1);
-	float: right;
 	margin-right: 50px;
 	color: #FFF;
 	text-transform: uppercase;
 	cursor: pointer;
 	height: 51px;
-	position: absolute;
-    top: 0;
-    right: 0px;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.form-button-alt {
+	background-color: rgba(34,118,216,1);
+	font-style: italic;
+	font-size:.8em;
+}
+
+.form-button-alt .button-label {
+	display: inline-block;
+}
+
+.form-button-alt .button-data {
+	margin-left: 6px;
+	font-style: normal;
+	font-weight: 400;
+	display: inline-block;
 }
 
 .form-button:hover,
-.form-button:focus {
+.form-button:focus,
+.form-button-alt:hover,
+.form-button-alt:focus {
 	outline: none;
 	background-color: rgba(215,23,8,1);
 }
 
 
 .form-indicators {
-	float: right;
+	display: inline-block;
 	line-height: 45px;
 	font-weight: 700;
 	font-size: 20px;
-	margin-right: 250px;
+	margin-right: 10px;
 	text-transform: uppercase;
 	color: rgba(68,103,144,1);
 }
@@ -238,7 +261,7 @@
 }
 
 .table-cell {
-	width: 25%;
+	width: 15%;
 	padding: 5px 10px;
 }
 
@@ -431,7 +454,7 @@
 }
 
 .form-item select {
-	-webkit-appearance: none;
+    -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
     background-image: url('img/icon-arrow-down.svg'); 
@@ -492,17 +515,23 @@
 	border: none;
 }
 
-.table-detail .form-button {
+.table-detail .form-button,
+.table-detail .form-button-alt {
 	margin: 0;
+}
+
+.table-detail .form-button,
+.table-detail .form-button-alt {
+	margin-left: 10px;
 }
 
 body[name="list-auctions"] .table-detail .form-body {
 	width: 50%;
 }
 
-body[name="list-auctions"] .table-detail .form-button {
-	right:auto;
-	left:15px;
+body[name="list-auctions"] .table-detail .form-footer {
+	text-align: left;
+	padding-left: 15px;
 }
 
 
