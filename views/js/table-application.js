@@ -11,7 +11,7 @@ function tableApplication(){
 	}
 
 	thisObj.setPrimaryEvents = function(){
-		
+
 
 	}
 
@@ -29,8 +29,17 @@ function tableApplication(){
 			thisObj.actionFunctions[functionName](actionItem);
 		});
 
+		//STARTS THE AUCTION TIMERS
+		//ADJUST THE INTERVAL TO UPDATE THE CURRENT BIDS BELOW
+		//CURRENTLY SET TO 5 SECONDS
+		var bidInterval = 1000;
+		var updateBids = setInterval(function(){
+			thisObj.UpdateAuctionTimers();
+		},bidInterval);
+
 	}
 
+	//V2.1
 	thisObj.setDetailEvents = function(){
 
 		$('.list-page .form-button').click(function(){
@@ -39,6 +48,11 @@ function tableApplication(){
 			formApp.submitForm(actionItem);
 		});
 
+		$('.list-page .form-button-alt').click(function(){
+			console.log('FORM BUTTON ALT SUBMIT');
+			var actionItem = $(this);
+			formApp.submitAltForm(actionItem);
+		});
 	}
 
 	thisObj.actionFunctions['table-auction'] = function(actionItem){
@@ -121,19 +135,7 @@ function tableApplication(){
 
 	//V2.0
 	thisObj.openTableAuction = function(auctionID){
-
-		console.log('AUCTION ID: ' + auctionID);
-		//TODO ??? thisObj.populateAuctionForm(); //}
-
-		//TODO: OpenAuctionForBids "Args":["1111", "OPENAUC", "1"]}'
-		var args = [];
-		args.push(auctionID);
-		args.push("OPENAUC");
-		args.push("5"); //TODO: get this from text field
-		var payload = constructPayload("invoke", "OpenAuctionForBids", args)
-		RestCall(payload, "invoke");
-		//MAKE API CALL HERE TO OPEN AUCTION BASED ON "auctionID" VARIABLE
-
+    thisObj.populateAuctionForm(auctionID);
 	}
 
 	//V2.0
@@ -161,12 +163,7 @@ function tableApplication(){
 
 	thisObj.openTableBid = function(multiIds){
 
-		console.log('Multiple IDS: ' + multiIds);
-		//alert(multiIds)
 		//TODO: Split the value to AuctionID+ ItemID + Current Ownerra ID : 7967-1000-200
-		//MAKE API CALL HERE TO OPEN BID FORM BASED ON "itemID" VARIABLE
-		//RETURN API DATA TO "populateBiddingForm" FUNCTION BELOW.
-		//REMOVE DEBUG LINE BELOW
 		thisObj.populateBiddingForm(multiIds);
 
 	}
@@ -174,7 +171,7 @@ function tableApplication(){
 
 	thisObj.populateDetailItem = function(detailLabel,detailContent){
 
-		console.log('DETAIL BODY: ' + $('.table-detail.active .detail-body').attr('class'));
+		//console.log('DETAIL BODY: ' + $('.table-detail.active .detail-body').attr('class'));
 
 		var masterHTML = '<div class="detail-item"><div class="item-label">'+detailLabel+'</div><div class="item-content">'+detailContent+'</div></div>';
 
@@ -189,21 +186,19 @@ function tableApplication(){
 		for (prop in obj){
 			if (prop == 'RecType' || prop == 'ItemImage'){
 				continue;
+			} else if (prop === 'ItemPicFN') {
+				//TODO: Disable when Auction/User details selected
+				thisObj.populateDetailImage('../art/artchaincode/'+obj[prop]);
+			} else {
+				thisObj.populateDetailItem(prop,obj[prop]);
 			}
-			thisObj.populateDetailItem(prop,obj[prop]);
 		}
 	}
 
+	//V2.0
 	thisObj.populateTableDetails = function(id, functionName){
 
 		//$('.detail-body').html('');
-
-		//PARSE DATA RETURNED FROM API
-		//USE "populateDetailItem" FUNCTION ABOVE TO ADD DATA TO DOM
-
-		//START EXAMPLE CODE
-		//REPLACE THIS WITH DATA PARSER WITH MULTIPLE "populateDetailItem" CALLS FOR EACH INDIVIDUAL FIELD
-		//populateDetailItem(DATA LABEL, DATA CONTENT)
 		/*thisObj.populateDetailItem('Item ID','001');*/
 		var payload = constructPayload("query", functionName, [id])
 		RestCall(payload, "query",functionName);
@@ -219,6 +214,14 @@ function tableApplication(){
 		$('.table-detail.active .detail-image').html(masterHTML);
 
 	}
+
+	//V2.1
+	thisObj.populateButtonData = function(buttonName,buttonData){
+
+		$('.form-button-alt[name="'+buttonName+'"] .button-data').html(buttonData);
+
+	}
+
 
 
 
@@ -244,9 +247,6 @@ function tableApplication(){
 		if(indexInt%2 == 0) {
 			oddClass = ' odd';
 		}
-
-		/*var masterHTML = '<tr class="table-row'+oddClass+'"><td class="table-cell action-cell" action-type="function" function-name="table-auction">'+auctionID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-item">'+itemID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-owner">'+ownerID+'</td><td class="table-cell">'+description+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="auction-open" auction-id="'+auctionID+'">Open Auction</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="5"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"><div class="button-label">Close</div></div></div></div><div class="detail-content"><div class="detail-body"></div></div><div class="detail-footer"></div></td></tr>';*/
-	    //var masterHTML = '<tr class="table-row'+oddClass+'"><td class="table-cell action-cell" action-type="function" function-name="table-auction">'+auctionID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-item">'+itemID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-owner">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="auction-open" auction-id="'+auctionID+'">Open Auction</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="5"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"><div class="button-label">Close</div></div></div></div><div class="detail-content"><div class="detail-body"></div></div><div class="detail-footer"></div></td></tr>';
 		var masterHTML = '<tr auction-id="'+auctionID+'" class="table-row'+oddClass+'"><td class="table-cell action-cell" action-type="function" function-name="table-auction">'+auctionID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-item">'+itemID+'</td><td class="table-cell action-cell" action-type="function" function-name="table-owner">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="auction-open" auction-id="'+auctionID+'">Open Auction</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="4"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"></div></div></div><div class="detail-content"><div class="detail-body"></div><div class="detail-image"></div></div><div class="detail-footer"></div></td></tr>';
 		$('.table-body').append(masterHTML)
 
@@ -262,11 +262,11 @@ function tableApplication(){
 		var functionName = "GetListOfItemsOnAuc";
 		var payload = constructPayload("query",functionName , ["2016"])
 		RestCall(payload, "query", functionName);
-		//thisObj.populateTable({});
+		//thisObj.populateAuctionsTable({});
 	}
 
 
-	thisObj.populateTable = function(data){
+	thisObj.populateAuctionsTable = function(data){
 		//console.log(data);
 		var obj = JSON.parse(data)
 		var count = 0;
@@ -280,35 +280,63 @@ function tableApplication(){
 		//PARSE DATA RETURNED FROM API
 		//USE "populateTableRow" FUNCTION ABOVE TO ADD DATA TO DOM
 
-		//START EXAMPLE CODE
-		//REPLACE THIS WITH DATA PARSER WITH MULTIPLE "populateTableRow" CALLS FOR EACH INDIVIDUAL FIELD
-		//populateTableRow(AUCTION ID, ITEM ID, OWNER ID, DESCRIPTION, INDEX)
-		//thisObj.populateTableRow('1111','001','200','1969 Ford Mustang Boss 429 Fastback',0);
-		//thisObj.populateTableRow('1111','002','200','1967 Chevy Camero SS',1);
-		//thisObj.populateTableRow('1111','001','200',0);
-		//thisObj.populateTableRow('1111','002','200',1);
-		//END EXAMPLE CODE
-
 		//LEAVE THIS LINE AFTER DATA PARSING CODE HAS CALLED ALL "populateTableRow" FUNCTIONS
-		//thisObj.setDetailEvents();
 		thisObj.setTableEvents();
-		thisObj.setDetailEvents();
+		//thisObj.setDetailEvents();
 
 	}
 
-	//V2.0
-	thisObj.populateBiddingRow = function(auctionID, itemID, ownerID, description, index){
+	//V2.1
+	thisObj.populateBiddingRow = function(auctionID, itemID, ownerID, endTime, index, reservedPrice){
 
 		var indexInt = parseInt(index);
 		var oddClass = ' even';
 		if(indexInt%2 == 0) {
 			oddClass = ' odd';
 		}
-		//var masterHTML = '<tr class="table-row'+oddClass+'"><td class="table-cell">'+auctionID+'</td><td class="table-cell">'+itemID+'</td><td class="table-cell">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="bid-open" item-id="'+auctionID+"-"+itemID+"-"+ownerID+'">Bid Now</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="5"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"><div class="button-label">Close</div></div></div></div><div class="detail-content"><div class="detail-body"></div></div><div class="detail-footer"></div></td></tr>';
-        var masterHTML = '<tr auction-id="'+auctionID+'" class="table-row'+oddClass+'"><td class="table-cell">'+auctionID+'</td><td class="table-cell">'+itemID+'</td><td class="table-cell">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="bid-open" item-id="'+itemID+'">Bid Now</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="4"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"></div></div></div><div class="detail-content"><div class="detail-body"></div><div class="detail-image"></div></div><div class="detail-footer"></div></td></tr>';
+        //var masterHTML = '<tr auction-id="'+auctionID+'" class="table-row'+oddClass+'"><td class="table-cell">'+auctionID+'</td><td class="table-cell">'+itemID+'</td><td class="table-cell">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="bid-open" item-id="'+itemID+'">Bid Now</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="4"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"></div></div></div><div class="detail-content"><div class="detail-body"></div><div class="detail-image"></div></div><div class="detail-footer"></div></td></tr>';
+		var masterHTML = '<tr auction-id="'+auctionID+'" class="table-row'+oddClass+'"><td class="table-cell">'+auctionID+'</td><td class="table-cell">'+itemID+'</td><td class="table-cell">'+ownerID+'</td><td class="table-cell" name="timer-display" end-time="'+endTime+'"></td><td class="table-cell action-cell button-cell" action-type="function" function-name="bid-open" item-id="'+auctionID+"-"+itemID+"-"+ownerID+"-"+reservedPrice+'">Bid Now</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="5"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"></div></div></div><div class="detail-content"><div class="detail-body"></div><div class="detail-image"></div></div><div class="detail-footer"></div></td></tr>';
 
 		$('.table-body').append(masterHTML)
 
+	}
+
+	//V2.1
+	thisObj.UpdateAuctionTimers = function(){
+
+		$('.table-cell[name="timer-display"]').each(function(index){
+			var endTime = parseInt($(this).attr('end-time'));
+			var endTimeDiff = (new Date(endTime).getTime())-(new Date().getTime());
+			if (endTimeDiff <= 0) {
+				//console.log('Oops !!! Time is over ...  No more bids accepted');
+				$(this).html('<b>Auction Closed</b>');
+				// Hide Bid Now button
+				$(this).next().hide();
+				// Remove Item from list after 2 seconds
+				/*var loop_handle = setTimeout(function() {
+					//$(this).parent().remove();
+				},'2000');*/
+
+				return;
+			}
+			var endTimeDisplay = thisObj.getTimeDisplay(endTimeDiff);
+			$(this).html(endTimeDisplay);
+		});
+
+	}
+
+	//V2.1
+	thisObj.getTimeDisplay = function(duration){
+	    var milliseconds = parseInt((duration%1000)/100)
+	        , seconds = parseInt((duration/1000)%60)
+	        , minutes = parseInt((duration/(1000*60))%60)
+	        , hours = parseInt((duration/(1000*60*60))%24);
+
+	    hours = (hours < 10) ? "0" + hours : hours;
+	    minutes = (minutes < 10) ? "0" + minutes : minutes;
+	    seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+	    return hours + ":" + minutes + ":" + seconds;
 	}
 
 
@@ -323,28 +351,29 @@ function tableApplication(){
 		//thisObj.populateBidding({});
 
 	}
+	//V2.0
+	thisObj.populateAuctionForm = function(data){
+		//LEAVE THIS CODE TO ADD AUCTION FORM TO TABLE DROP DOWN
+		//var masterHTML = '<div class="form-container"><div class="form-header"><div class="form-title">Set Auction Duration</div><div class="form-messages"><div class="form-message success">Auction opened successfully</div><div class="form-message error">Auction opening failed</div></div></div><div class="form-content"><div class="form-body"><div class="body-column column-1 half"><div class="form-item"><div class="item-label">Auction Duration</div><div class="item-content"><div class="form-input"><input name="auction_duration" id="auction_duration" type="text" value="" tabindex="1"><input style="visibility: hidden;" hidden_aucid="'+data+'" type="text"></div></div></div></div></div></div><div class="form-footer"><div class="form-specs"><div class="form-spec left"></div><div class="form-spec right"></div></div><div class="form-button" tabindex="2"><div class="button-label">Open Auction</div></div></div></div>';
+		var masterHTML = '<div class="form-container"><div class="form-header"><div class="form-title">Set Auction Duration</div><div class="form-messages"><div class="form-message success">Auction opened successfully</div><div class="form-message error">Auction opening failed</div></div></div><div class="form-content"><div class="form-body"><div class="body-column column-1 half"><div class="form-item"><div class="item-label">Auction Duration</div><div class="item-content"><div class="form-input"> <input name="auction_duration" id="auction_duration" type="text" value="" tabindex="1"> <input style="visibility: hidden;" id="hidden_aucid" value="'+data+'" type="text"></div></div></div></div></div></div><div class="form-footer"><div class="form-specs"><div class="form-spec left"></div><div class="form-spec right"></div></div><div class="form-button" tabindex="2"><div class="button-label">Open Auction</div></div></div></div>';
+		$('.table-detail.active .detail-body').html(masterHTML);
 
+		//LEAVE THIS LINE AFTER DATA PARSING CODE HAS CALLED ALL "populateFormField" FUNCTIONS
+		thisObj.setDetailEvents();
+	}
 
+	//V2.1
 	thisObj.populateBidding = function(data){
-
-		//PARSE DATA RETURNED FROM API
-		//USE "populateBiddingRow" FUNCTION ABOVE TO ADD DATA TO DOM
-
-		//START EXAMPLE CODE
-		//REPLACE THIS WITH DATA PARSER WITH MULTIPLE "populateBiddingRow" CALLS FOR EACH INDIVIDUAL FIELD
-		//populateBiddingRow(AUCTION ID, ITEM ID, OWNER ID, INDEX)
-		//thisObj.populateBiddingRow('1111','001','200',0);
-		//END EXAMPLE CODE
 		var obj = JSON.parse(data)
 		var count = 0;
+		//console.log(new Date());
 		for (var property in obj) {
-			//console.log(obj[count]);
 			//thisObj.populateTableRow('1111','001','200',0);
-			//TODO: Ratnakar :What user should we use AuctionHouseID ?
-			thisObj.populateBiddingRow(obj[count].AuctionID, obj[count].ItemID,obj[count].AuctionHouseID , count);
+			var endDate = new Date(new Date(obj[count].CloseDate).toISOString()).getTime();
+			//console.log(new Date(obj[count].CloseDate) + " -- " + new Date(obj[count].CloseDate).getTime() + " -- "+ endDate);
+			thisObj.populateBiddingRow(obj[count].AuctionID, obj[count].ItemID, obj[count].AuctionHouseID, endDate, count, obj[count].ReservePrice);
 			count++;
 		}
-		//LEAVE THIS LINE AFTER DATA PARSING CODE HAS CALLED ALL "populateBiddingRow" FUNCTIONS
 		thisObj.setTableEvents();
     thisObj.setDetailEvents();
 	}
@@ -354,42 +383,28 @@ function tableApplication(){
 	thisObj.populateBiddingForm = function(data){
     //TODO: Split the value to AuctionID+ ItemID + Current Ownerra ID : 7967-1000-200
 		var res = data.split("-");
-		//LEAVE THIS CODE TO ADD BID FORM TO TABLE DROP DOWN
-		 //TODO: Adam's code
-        /*var masterHTML = '<div class="form-container"><div class="form-header"><div class="form-title">Bid on Item</div><div class="form-messages"><div class="form-message success">Bid submitted successfully</div><div class="form-message error">Bid submission failed</div></div></div><div class="form-content"><div class="form-body"><div class="body-column column-1 half"><div class="form-item"><div class="item-label">Auction ID</div><div class="item-content"><div class="form-input"><input name="bid_auction" id="bid_auction" type="text" value="" tabindex="1"></div></div></div><div class="form-item"><div class="item-label">Item ID</div><div class="item-content"><div class="form-input"><input name="bid_item" id="bid_item" type="text" value="" tabindex="3"></div></div></div><div class="form-item"><div class="item-label">Current Owner ID</div><div class="item-content"><div class="form-input"><input name="bid_owner" id="bid_owner" type="text" value="" tabindex="5"></div></div></div><div class="form-item"><div class="item-label">Bid Time</div><div class="item-content"><div class="form-input"><input name="bid_time" id="bid_time" type="text" value="" tabindex="7"></div></div></div></div><div class="body-column column-2 half"><div class="form-item"><div class="item-label">Bid ID</div><div class="item-content"><div class="form-input"><input name="bid_id" id="bid_id" type="text" value="" tabindex="2"></div></div></div><div class="form-item"><div class="item-label">Buyer ID</div><div class="item-content"><div class="form-input"><input name="bid_buyer" id="bid_buyer" type="text" value="" tabindex="4"></div></div></div><div class="form-item"><div class="item-label">Bid Price</div><div class="item-content"><div class="form-input"><input name="bid_price" id="bid_price" type="text" value="" tabindex="6"></div></div></div></div></div></div><div class="form-footer"><div class="form-specs"></div><div class="form-button" tabindex="8"><div class="button-label">Place Bid</div></div></div></div>';
-		$('.table-detail.active .detail-body').html(masterHTML);*/
-		//TODO: Its a dirty fix, change this
-		var masterHTML = '<div class="form-container"><div class="form-header"><div class="form-title">Bid on Item</div><div class="form-messages"><div class="form-message success">Bid submitted successfully</div><div class="form-message error">Bid submission failed</div></div></div><div class="form-content"><div class="form-body"><div class="body-column column-1 half"><div class="form-item"><div class="item-label">Buyer ID</div><div class="item-content"><div class="form-input"><input name="bid_buyer" id="bid_buyer" type="text" value="" tabindex="1"></div></div></div></div><div class="body-column column-2 half"><div class="form-item"><div class="item-label">Bid Price</div><div class="item-content"><div class="form-input"><input name="bid_price" id="bid_price" type="text" value="" tabindex="2"><input style="display:none;"name="form_field_values" id="form_field_values" type="text" value="'+data+'" tabindex="3"></div></div></div></div></div></div><div class="form-footer"><div class="form-specs"></div><div class="form-button" tabindex="3"><div class="button-label" id="submit_bid_button">Place Bid</div></div></div></div>';
-		$('.detail-body').html(masterHTML);
-		thisObj.auctionID = res[0]
-		//PARSE DATA RETURNED FROM API
-		//USE "populateDetailItem" FUNCTION ABOVE TO ADD DATA TO DOM
-
-		//START EXAMPLE CODE
-		//REPLACE THIS WITH DATA PARSER WITH MULTIPLE "populateFormField" CALLS FOR EACH INDIVIDUAL FIELD
-		//populateFormField(DATA LABEL, DATA CONTENT)
-		/*formApp.populateFormField('bid_auction', res[0]);
-		formApp.populateFormField('bid_price','120');
-		thisObj.populateDetailImage('img/item-001.jpg');*/
-		//END EXAMPLE CODE
-
-
-		//LEAVE THE CODE BELOW TO GET CURRENT BIDS
+		//var masterHTML = '<div class="form-container"><div class="form-header"><div class="form-title">Bid on Item</div><div class="form-messages"><div class="form-message success">Bid submitted successfully</div><div class="form-message error">Bid submission failed</div></div></div><div class="form-content"><div class="form-body"><div class="body-column column-1 half"><div class="form-item"><div class="item-label">Auction ID</div><div class="item-content"><div class="form-input"><input name="bid_auction" id="bid_auction" type="text" value="" tabindex="1"></div></div></div><div class="form-item"><div class="item-label">Item ID</div><div class="item-content"><div class="form-input"><input name="bid_item" id="bid_item" type="text" value="" tabindex="3"></div></div></div><div class="form-item"><div class="item-label">Current Owner ID</div><div class="item-content"><div class="form-input"><input name="bid_owner" id="bid_owner" type="text" value="" tabindex="5"></div></div></div><div class="form-item"><div class="item-label">Bid Time</div><div class="item-content"><div class="form-input"><input name="bid_time" id="bid_time" type="text" value="" tabindex="7"></div></div></div></div><div class="body-column column-2 half"><div class="form-item"><div class="item-label">Bid ID</div><div class="item-content"><div class="form-input"><input name="bid_id" id="bid_id" type="text" value="" tabindex="2"></div></div></div><div class="form-item"><div class="item-label">Buyer ID</div><div class="item-content"><div class="form-input"><input name="bid_buyer" id="bid_buyer" type="text" value="" tabindex="4"></div></div></div><div class="form-item"><div class="item-label">Bid Price</div><div class="item-content"><div class="form-input"><input name="bid_price" id="bid_price" type="text" value="" tabindex="6"></div></div></div></div></div></div><div class="form-footer"><div class="form-specs"><div class="form-spec left"></div><div class="form-spec right"></div></div><div class="form-button" tabindex="8"><div class="button-label">Place Bid</div></div><div name="buy-now" class="form-button-alt" tabindex="8"><div class="button-label">Buy Now</div><div class="button-data"></div></div></div></div>';
+		var masterHTML = '<div class="form-container"><div class="form-header"><div class="form-title">Bid on Item</div><div class="form-messages"><div class="form-message success">Bid submitted successfully</div><div class="form-message error">Bid submission failed</div></div></div><div class="form-content"><div class="form-body"><div class="body-column column-1 half"><div class="form-item"><div class="item-label">Buyer ID</div><div class="item-content"><div class="form-input"><input name="bid_buyer" id="bid_buyer" type="text" value="" tabindex="1"></div></div></div></div><div class="body-column column-2 half"><div class="form-item"><div class="item-label">Bid Price</div><div class="item-content"><div class="form-input"><input name="bid_price" id="bid_price" type="text" value="" tabindex="2"><input style="display:none;"name="form_field_values" id="form_field_values" type="text" value="'+data+'" tabindex="3"></div></div></div></div></div></div><div class="form-footer"><div class="form-specs"></div><div class="form-button" tabindex="3"><div class="button-label" id="submit_bid_button">Place Bid</div></div><div name="buy-now" class="form-button-alt" tabindex="8"><div class="button-label">Buy Now</div><div class="button-data"></div></div></div></div>';
+		$('.table-detail.active .detail-body').html(masterHTML);
+		thisObj.auctionID = res[0];
+		thisObj.populateButtonData('buy-now', '$ '+(parseInt(res[3]) * 1.4).toString());
 		//ADJUST THE INTERVAL TO UPDATE THE CURRENT BIDS BELOW
 		//CURRENTLY SET TO 10 SECONDS
 		var bidInterval = 10000;
 		var updateBids = setInterval(function(){
-			//Ratnakar
 			//TODO: Make a rest call here
-			if (thisObj.auctionID){
+
+			if (thisObj.auctionID ){
 				console.log(thisObj.auctionID);
 				var method = "query";
 				var args = [thisObj.auctionID];
 				//args.push (key);
-				payload = constructPayload(method, "GetLastBid", args);
-				RestCall(payload, method, "GetLastBid");
-				payload = constructPayload(method, "GetHighestBid", args);
-				RestCall(payload, method, "GetHighestBid");
+				var functionName = "GetLastBid";
+				payload = constructPayload(method, functionName, args);
+				RestCall(payload, method, functionName);
+				functionName = "GetHighestBid";
+				payload = constructPayload(method, functionName, args);
+				RestCall(payload, method, functionName);
 			}
 			//thisObj.getCurrentBids();
 		},bidInterval);
@@ -397,6 +412,7 @@ function tableApplication(){
 		//LEAVE THIS LINE AFTER DATA PARSING CODE HAS CALLED ALL "populateFormField" FUNCTIONS
 		thisObj.setDetailEvents();
 	}
+
 
 	thisObj.getCurrentBids = function(){
 
@@ -409,6 +425,8 @@ function tableApplication(){
 		formApp.populateCurrentBids({});
 
 	}
+
+
 	/*thisObj.populateFormSpec = function(specName,specData){
 	$('.spec-item[name="'+specName+'"] .spec-content').html(specData);
   }
@@ -422,7 +440,7 @@ function tableApplication(){
 }*/
 }
 
-RestCall = function (payload, method, functionName){
+RestCall = function (payload, method, functionName, auctionID){
 	console.log(JSON.stringify(payload));
 	$.ajax({
 	    url : mainApp.URL,//"http://localhost:5000/chaincode",
@@ -452,9 +470,10 @@ RestCall = function (payload, method, functionName){
 						tableApp.populateSubTable(res);
 						break;
 					case "GetListOfItemsOnAuc":
-						tableApp.populateTable(res);
+						tableApp.populateAuctionsTable(res);
 						break;
 					case "GetListOfOpenAucs":
+					  console.log(res);
 						tableApp.populateBidding(res);
 						break;
 					case "GetHighestBid":
@@ -467,19 +486,23 @@ RestCall = function (payload, method, functionName){
 						break;
 				}
 			} else if (method == "invoke"){
-				console.log("Open Auction is successful !")
+				if ( functionName === 'OpenAuctionForBids'){
+					console.log("Open Auction for BIDS is successful !!");
+					tableApp.finishTableAuction(auctionID);
+				}
 			}else {
 				console.log("Error : Invalid request")
 			}
-		} else {
+		}
+		/*else {
 			console.log("Error : Check chaincode logs for more details")
 			showSuccsessFailureMessage(false);
-		}
+		}*/
 	    },
 	    error: function (jqXHR, textStatus, errorThrown)
 	    {
-		showSuccsessFailureMessage(false);
-		console.log("Failure :"+textStatus);
+				showSuccsessFailureMessage(false);
+				console.log("Failure :"+textStatus);
 	    }
 	});
 }

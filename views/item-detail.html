@@ -85,18 +85,18 @@
 			<div class="form-header">
 				<div class="form-title">Item Details</div>
 				<div class="form-messages">
-					<div class="form-message success">Item registered successfully</div>
-					<div class="form-message error">Item registered failed</div>
+					<div class="form-message success">Item submitted for Auction successfully</div>
+					<div class="form-message error">Item submitted for Auction failed</div>
 				</div>
 			</div>
 			<div class="form-content">
 				<div class="form-body">
 					<div class="body-column column-1 half">
 						<div class="form-item">
-							<div class="item-label">Item Identifier</div>
+							<div class="item-label">Auction Item #</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="art_id" id="art_id" type="text" value="" tabindex="1">
+									<input disabled name="art_id" id="art_id" type="text" value="" tabindex="1">
 								</div>
 							</div>
 						</div>
@@ -157,7 +157,7 @@
 							</div>
 						</div>
 						<div class="form-item noedit">
-							<div class="item-label">Purchase Price in $</div>
+							<div class="item-label">Purchase Price</div>
 							<div class="item-content">
 								<div class="form-input">
 									<input disabled name="art_price" id="art_price" type="text" value="" tabindex="9">
@@ -181,10 +181,10 @@
 				</div>
 			</div>
 			<div class="form-footer">
+				<div class="form-indicators"></div>
 				<div class="form-button" tabindex="10">
 					<div class="button-label" id='art_submit_auction'>Put on Auction</div>
 				</div>
-				<div class="form-indicators"></div>
 			</div>
 		</div>
 	</div>

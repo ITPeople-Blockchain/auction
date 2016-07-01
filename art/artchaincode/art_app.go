@@ -285,7 +285,10 @@ func main() {
 	fmt.Println("Starting Item Auction Application chaincode ver 20 Dated 2016-06-27 13.45.00: ")
 
 	gopath = os.Getenv("GOPATH")
-	ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
+	//PATH for NET MODE
+	//ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
+	//For DEV MODE
+	ccPath = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/auction/art/artchaincode/", gopath)
 	// Start the shim -- running the fabric
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
@@ -1537,7 +1540,7 @@ func JSONtoItemLog(ithis []byte) (ItemLog, error) {
 	item := ItemLog{}
 	err := json.Unmarshal(ithis, &item)
 	if err != nil {
-		fmt.Println("JSONtoAucReq error: ", err)
+		fmt.Println("JSONtoItemLog error: ", err)
 		return item, err
 	}
 	return item, err
@@ -1591,7 +1594,7 @@ func JSONtoBid(areq []byte) (Bid, error) {
 	myHand := Bid{}
 	err := json.Unmarshal(areq, &myHand)
 	if err != nil {
-		fmt.Println("JSONtoAucReq error: ", err)
+		fmt.Println("JSONtoBid error: ", err)
 		return myHand, err
 	}
 	return myHand, err
@@ -1924,8 +1927,8 @@ func QueryLedger(stub *shim.ChaincodeStub, tableName string, args []string) ([]b
 	}
 
 	//fmt.Println("User Query Response:", row)
-	jsonResp := "{\"Owner\":\"" + string(row.Columns[nCol].GetBytes()) + "\"}"
-	fmt.Println("User Query Response:%s\n", jsonResp)
+	//jsonResp := "{\"Owner\":\"" + string(row.Columns[nCol].GetBytes()) + "\"}"
+	//fmt.Println("User Query Response:%s\n", jsonResp)
 
 	Avalbytes := row.Columns[nCol].GetBytes()
 
