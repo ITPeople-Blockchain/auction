@@ -287,6 +287,98 @@ This is a function designed specifically for Bluemix situations where the peer a
 
 ./peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseOpenAuctions", "Args": ["2016", "CLAUC"]}'
 
+###Query APIs and Usage
+
+**GetItem**:
+
+Retrieves an Asset record by asset ID.
+   
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItem", "Args": ["1000"]}'
+ 
+**GetUser**:
+
+Retrieves an user record by user or stakeholder ID.
+   
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetUser", "Args": ["100"]}'
+   
+**GetAuctionRequest**:
+
+Retrieves an auction request by auction request ID.
+
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetAuctionRequest", "Args": ["1111"]}'
+
+**GetTransaction**:
+
+Retrieves an transaction posted against an auction by auction request ID and asset ID.
+   
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetTransaction", "Args": ["1111", "1000"]}'
+
+**GetBid**:
+
+Retrieves a single bid by auction ID and bid number
+   
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetBid",  "Args": ["1111", "5"]}'
+   
+**GetLastBid**:
+
+Retrieves the last submitted bid. Since bids are submitted in random , and the only requirement is that the bid price be higher than the reserve price, the last received bid need not be the highest bid.
+   
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid","Args": ["1111"]}'
+
+**GetHighestBid**:
+
+Retrieves the highest bid submitted against the auction thus far. If the auction has expired, then the highest bid is the highest bid for the auction.
+
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetHighestBid", "Args": ["1111"]}'
+   
+**GetNoOfBidsReceived**:
+
+Retrieves the total number of bids received at any point in time. If the auction has expired, it represents the total number of bids received against that auction.
+
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "getNoOfBidsReceived", "Args": ["1111"]}'
+
+**GetListOfBids**:
+   
+Retrievs all the bids received against an auction. each row in the list represents a bid object.   
+   
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfBids", "Args": ["1111"]}'
+
+**GetItemLog**:
+
+Retrieves the history of an asset. The log is updated when an asset is registered, put on auction, post auction, transfered etc.
+
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemLog","Args": ["1000"]}'
+   
+**GetItemListByCat**:
+
+Retrieves a list of assets by asset category. If only the first key is provided, the query retrieves all assets. "2016" is hard-coded as a fixed first key. This is a band-aid solution to retrieve all records. This is a band-aid solution to retrieve all records. The following query retrieves all assets of category "modern".
+
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "modern"]}'
+
+**GetUserListByCat**:
+
+Retrieves a list of stakeholders or account holders by stakeholder type. If only the first key is provided, the query retrieves all assets. "2016" is hard-coded as a fixed first key. This is a band-aid solution to retrieve all records. The following query retrieves all stakeholders of type "AH" or auction houses.
+
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "AH"]}'
+
+**GetListOfInitAucs**:
+
+This query retrieves all assets which have been submitted for auction. Their status is "Init". The "2016" is a fixed key to denote all auctions in 2016.
+
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfInitAucs","Args": ["2016"]}'
+   
+**GetListOfOpenAucs**:
+
+Thsi query retrieves a list of all assets whose auctions have been "OPEN"ed for receiving bids. The "2016" is a fixed key to denote all auctions in 2016.
+
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfOpenAucs", "Args": ["2016"]}'
+   
+**ValidateItemOwnership**:
+
+Validates the ownership of an asset. Checks for valid account id, asset id and retrieves asset from blockchain using the owners's key.
+
+   * ./peer chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership",   "Args": ["1000", "500", "avQX6JfTnELAY4mkRhOr8P7vmz0H3aAIuFGsGiSD5UQ="]}'
+
 ## Runnning the Application using the Web Browser
 
 The chaincode functions can be accessed via the browser. To kick off the application, load the index.html file via the browser. We have tested the application by pre-loading some data via the CLI and using the browser to fire up a simple auction
