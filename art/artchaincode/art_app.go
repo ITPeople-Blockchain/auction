@@ -287,6 +287,7 @@ func main() {
 	gopath = os.Getenv("GOPATH")
 	//PATH for NET MODE
 	//ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
+	ccPath = fmt.Sprintf("%s/src/github.com/ratnakar-asara/auction/art/artchaincode/", gopath)
 	//For DEV MODE
 	ccPath = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/auction/art/artchaincode/", gopath)
 	// Start the shim -- running the fabric
