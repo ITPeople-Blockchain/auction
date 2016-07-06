@@ -8,20 +8,18 @@ function mainApplication(){
   thisObj.menuId = '';
 
   thisObj.URL = 'http://localhost:5000/chaincode';
+	//thisObj.URL = 'https://a7640456-e643-4225-9d72-e6c332443b1b_vp1-api.blockchain.ibm.com:443/chaincode';
 
 	// Please Uncomment any of the below combinations if the above doesn't work
 
-  	//thisObj.URL = 'http://localhost:3000/chaincode';
-
-  	//thisObj.URL = 'http://127.0.0.1:5000/chaincode';
-
-  	//thisObj.URL = 'http://127.0.0.1:3000/chaincode';
+  	//thisObj.URL = 'http://localhost:5000/chaincode';
 
 	thisObj.init = function(){
 		console.log('INIT MAIN APPLICATION');
 		thisObj.setPrimaryEvents();
 
 		if($('body').attr('name')=='front'){
+
 			thisObj.getFrontList();
 		}
 
@@ -149,7 +147,7 @@ function mainApplication(){
 			formApp.loadForm(actionItem,'?item-id='+actionId);
 		});
 	}
-	
+
 
 
 	//MENUS
@@ -263,11 +261,10 @@ function mainApplication(){
 	//FRONT VIEW
 
 	thisObj.getFrontList = function(){
-
 		//MAKE API CALL HERE TO GET LIST OF ITEMS FOR FRONT PAGE VIEW.
 		//RETURN API DATA TO "populateFrontList" function below.
 		//REMOVE DEBUG LINE OF CODE BELOW
-		thisObj.populateFrontList({});
+		thisObj.populateFrontList();
 
 	}
 
@@ -293,10 +290,6 @@ function mainApplication(){
 	}
 
 	thisObj.getItemsList = function(category, isHomePage){
-		//if (!localStorage.getItem("chaincodeHash") || localStorage.getItem("chaincodeHash") === '' || formApp.chaincodeHash === '' ){
-		if (!localStorage.getItem("chaincodeHash") || localStorage.getItem("chaincodeHash") === '') {
-			return;
-		}
 		var args = [];
 		var method = "query"
 		if (category == 'All') { //Get List of all items
@@ -334,20 +327,20 @@ function mainApplication(){
 
 		thisObj.populateCategoryItem = function(itemTitle,itemID,imgURL,itemDetail,itemSubject,itemMedia, itemBasePrice){
 			//work around to get the image
-			imgURL = '../art/artchaincode/'+imgURL;
+			imgURL = '../imgs/'+imgURL;
       var masterHTML = '<div class="item" item-id="'+itemID+'"><div class="item-header"><div class="item-image" style="background-image:url('+imgURL+');"></div></div><div class="item-content"><div class="item-details"><div class="item-title item-detail"><div class="detail-label"></div><div class="detail-content">'+itemTitle+'</div></div><div class="item-date item-detail"><div class="detail-label">Details</div><div class="detail-content">'+itemDetail+'</div></div><div class="item-bid item-detail"><div class="detail-label">Media</div><div class="detail-content">'+itemMedia+'</div></div><div class="item-bids item-detail"><div class="detail-label">Price</div><div class="detail-content">'+itemBasePrice+'</div></div></div></div><div class="item-footer"><div class="item-actions"><div class="action-button" form-name="item-bid" action-type="form"><div class="button-label">Bid</div></div><div class="action-button" form-name="item-detail" action-type="detail"><div class="button-label">Details</div></div></div></div></div>';
 			$('.category-content .item-view').append(masterHTML);
 
 		}
 	thisObj.populateFrontItem = function(itemTitle,itemID,imgURL){
 		//work around to get the image
-		imgURL = '../art/artchaincode/'+imgURL;
+		imgURL = '../imgs/'+imgURL;
 		var masterHTML = '<div class="item" item-id="'+itemID+'"><div class="item-header"><div class="item-image" style="background-image:url('+imgURL+');"></div></div><div class="item-content"><div class="item-details"><div class="item-title item-detail"><div class="detail-label"></div><div class="detail-content">'+itemTitle+'</div></div></div></div><div class="item-footer"><div class="item-actions"><div class="action-button" form-name="item-bid" action-type="form"><div class="button-label">Bid</div></div><div class="action-button" form-name="item-detail" action-type="detail"><div class="button-label">Details</div></div></div></div></div>';
 
 		$('.front-header .item-view').append(masterHTML);
 
 	}
-	
+
 
 }
 //TODO:  Redundancy (DRY) with the RestCall, Can we generalize ?
