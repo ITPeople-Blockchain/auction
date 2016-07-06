@@ -1941,7 +1941,17 @@ func QueryLedger(stub *shim.ChaincodeStub, tableName string, args []string) ([]b
 		jsonResp := "{\"QueryLedger() Error\":\" Cannot create Object for key " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
+	var dat map[string]interface{}
 
+	if err := json.Unmarshal(Avalbytes, &dat); err != nil {
+		panic(err)
+	}
+	if (tableName == "ItemTable") {
+		dat["ItemImage"] = []byte{};
+		data, _  := json.Marshal(dat)
+		fmt.Println(string(data))
+		Avalbytes = data;
+	}
 	return Avalbytes, nil
 }
 
