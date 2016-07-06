@@ -29,21 +29,17 @@ function formApplication(){
 
 	var thisObj = this;
     thisObj.itemID = '';
-	//thisObj.chaincodeHash = '';
-	thisObj.init = function(){
-		console.log('INIT FORM APPLICATION');
+	  thisObj.init = function(){
+		//console.log('INIT FORM APPLICATION');
 		thisObj.setPrimaryEvents();
 		thisObj.formLoaded();
 
-		//localStorage.setItem("chaincodeHash",'');
-		//deployChaincode();
 		if (!localStorage.getItem("chaincodeHash") || localStorage.getItem("chaincodeHash") === '') {
 			deployChaincode();
 		}
 	}
 
 	thisObj.setPrimaryEvents = function(){
-
 		//FORMS
 		$('.form-page .form-button').click(function(){
 			var actionItem = $(this);
@@ -103,8 +99,6 @@ function formApplication(){
 		var functionName = '';
 		var recType = '';
 		var args = [];
-		//console.log(actionForm.find("#hidden_aucid").val());
-		//console.log($('#hidden_aucid').text());
 		// this is a special case where we need to Submit selected Item for auction
 		if(formButton.children("div")[0] && formButton.children("div")[0].id == 'art_submit_auction' ) {
 			recType = 'AUCREQ';
@@ -320,14 +314,15 @@ function formApplication(){
 	}
 
 	thisObj.populateFormOption = function(selectID,optionData){
-		console.log('POPULATE FORM OPTION');
+		//console.log('POPULATE FORM OPTION');
 		var masterHTML = '<option value="'+optionData+'">'+optionData+'</option>'
 		$('#'+selectID).append(masterHTML);
 	}
 
 	thisObj.populateFormImage = function(imgURL){
 		//work around to get the image
-		imgURL = '../art/artchaincode/'+imgURL;
+		//imgURL = '../art/artchaincode/'+imgURL;
+		imgURL = '../imgs/'+imgURL;
 		$('.form-image .item-image').css('background-image','url('+imgURL+')')
 	}
 
@@ -364,7 +359,6 @@ function formApplication(){
 
 		switch (loadedForm){
 			case 'item-detail':
-
 				thisObj.getItemDetail();
 				break;
 			case 'item-register':
@@ -480,12 +474,14 @@ function formApplication(){
 		thisObj.populateFormField('art_size', obj['ItemSize']);
 		thisObj.populateFormField('art_price', obj['ItemBasePrice']);
 		thisObj.populateFormField('art_owner', obj['CurrentOwnerID']);
-		var imgurl = '../art/artchaincode/'+obj['ItemPicFN'];
+		var imgurl = '../imgs/'+obj['ItemPicFN'];
+		//alert(imgurl);
 		$('#art_image').css('background-image', 'url(' + imgurl+ ')');
 
 		// How do you decide this item is associated with which Auction ?
-		//peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfItemsOnAuc", "Args": ["2016"]}'
+		//peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfInitAucs", "Args": ["2016"]}'
 		var method = "query";
+		//var payload = constructPayload(method, "GetListOfInitAucs", ["2016"]);
 		var payload = constructPayload(method, "GetListOfItemsOnAuc", ["2016"]);
 		makeRestCall(payload, method, obj['ItemID']);
 	}
@@ -623,12 +619,13 @@ function constructPayload(methodName, functionName, args){
 	if (Boolean(isInit)) {
 		payload.params.chaincodeID = {
 			"path": path,
-			//Don't use mycc as chaincode for net mode
-			"name": "mycc" //localStorage.getItem("chaincodeHash")
+			//Uncomment for DEV mode
+			//"name": "mycc" //localStorage.getItem("chaincodeHash")
 		}
 	} else {
 		payload.params.chaincodeID = {
-			"name": "mycc" //localStorage.getItem("chaincodeHash")
+			// "name" : "mycc" //Use this for DEV mode
+			"name": localStorage.getItem("chaincodeHash")
 		}
 	}
 
@@ -636,6 +633,8 @@ function constructPayload(methodName, functionName, args){
 		"function" : functionName,
 	  	"args": args,
 	}
+	//Get this from Nodejs
+	payload.params.secureContext = mainApp.userID;//"dashboarduser_type0_f4df8e532c";
 	// get the payload ID based on method name
 	payload.id = getPayloadID(methodName);
 	console.log(payload);
@@ -664,7 +663,7 @@ function makeRestCall(payload, method, recordType){
 				console.log ("Query is failed !! <br/><b>Error:</b> "+data["error"].message)
 				return;
 			} else if (method == "invoke") {
-				console.log('################### is Invoke failed ?');
+				console.log('################### is Invoke failed ? Err : '+data["error"].message);
 				showSuccsessFailureMessage(false);
 			}
 			return;
@@ -756,7 +755,6 @@ showSuccsessFailureMessage = function(isSuccess){
 }
 
 deployChaincode = function() {
-	//$.blockUI({ message: '<h1><img src="img/busy1.gif" /> Just a moment...</h1>' });
 	var method = "deploy";
 	var functionName = "init";
 	var args = ["INITIALIZE"];

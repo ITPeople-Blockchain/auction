@@ -188,7 +188,8 @@ function tableApplication(){
 				continue;
 			} else if (prop === 'ItemPicFN') {
 				//TODO: Disable when Auction/User details selected
-				thisObj.populateDetailImage('../art/artchaincode/'+obj[prop]);
+				thisObj.populateDetailImage('../imgs/'+obj[prop]);
+
 			} else {
 				thisObj.populateDetailItem(prop,obj[prop]);
 			}
@@ -259,7 +260,7 @@ function tableApplication(){
 		//RETURN API DATA TO "populateTable" FUNCTION BELOW.
 		//REMOVE DEBUG LINE BELOW
 		//call the below when response received
-		var functionName = "GetListOfItemsOnAuc";
+		var functionName = "GetListOfInitAucs";
 		var payload = constructPayload("query",functionName , ["2016"])
 		RestCall(payload, "query", functionName);
 		//thisObj.populateAuctionsTable({});
@@ -443,7 +444,7 @@ function tableApplication(){
 RestCall = function (payload, method, functionName, auctionID){
 	console.log(JSON.stringify(payload));
 	$.ajax({
-	    url : mainApp.URL,//"http://localhost:5000/chaincode",
+	    url : "http://localhost:5000/chaincode",
 	    type: "POST",
 	    data : JSON.stringify(payload),
 	    success: function(data, textStatus, jqXHR)
@@ -469,7 +470,7 @@ RestCall = function (payload, method, functionName, auctionID){
 					case "GetUser":
 						tableApp.populateSubTable(res);
 						break;
-					case "GetListOfItemsOnAuc":
+					case "GetListOfInitAucs":
 						tableApp.populateAuctionsTable(res);
 						break;
 					case "GetListOfOpenAucs":
