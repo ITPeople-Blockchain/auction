@@ -2127,6 +2127,7 @@ func GetItemListByCat(stub *shim.ChaincodeStub, function string, args []string) 
 			fmt.Println("() Failed : Ummarshall error")
 			return nil, fmt.Errorf("GetItemListByCat() operation failed. %s", err)
 		}
+		io.ItemImage = []byte{}
 		tlist[i] = io
 	}
 
