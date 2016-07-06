@@ -59,7 +59,7 @@ import (
 // which used a record type field. The array below holds a list of valid record types.
 // This could be stored on a blockchain table or an application
 //////////////////////////////////////////////////////////////////////////////////////////////////
-var recType = []string{"ARTINV", "USER", "BID", "AUCREQ", "POSTTRAN", "OPENAUC", "CLAUC", "XFER"}
+var recType = []string{"ARTINV", "USER", "BID", "AUCREQ", "POSTTRAN", "OPENAUC", "CLAUC", "XFER", "VERIFY"}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // The following array holds the list of tables that should be created
@@ -266,6 +266,7 @@ func QueryFunction(fname string) func(stub *shim.ChaincodeStub, function string,
 		"GetListOfInitAucs":     GetListOfInitAucs,
 		"GetListOfOpenAucs":     GetListOfOpenAucs,
 		"ValidateItemOwnership": ValidateItemOwnership,
+		"IsItemOnAuction":       IsItemOnAuction,
 	}
 	return QueryFunc[fname]
 }
@@ -274,8 +275,10 @@ func QueryFunction(fname string) func(stub *shim.ChaincodeStub, function string,
 
 type SimpleChaincode struct {
 }
+
 var gopath string
 var ccPath string
+
 ////////////////////////////////////////////////////////////////////////////////
 // Chain Code Kick-off Main function
 ////////////////////////////////////////////////////////////////////////////////
@@ -283,13 +286,22 @@ func main() {
 
 	// maximize CPU usage for maximum performance
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	fmt.Println("Starting Item Auction Application chaincode BlueMix ver 21 Dated 2016-07-02 09.45.00: ")
+	fmt.Println("Starting Item Auction Application chaincode BlueMix ver 24 Dated 2016-07-06 05.30.00 ")
 
 	gopath = os.Getenv("GOPATH")
-	//PATH for NET MODE
-	ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
-	//For DEV MODE
-	//ccPath = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/auction/art/artchaincode/", gopath)
+	if len(os.Args) < 2 {
+		fmt.Println("----------------- STARTED IN NET MODE -------------------- ")
+		//set chaincode path for NET MODE
+		ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
+	} else if len(os.Args) == 2 && strings.EqualFold(os.Args[1], "DEV") {
+		fmt.Println("----------------- STARTED IN DEV MODE -------------------- ")
+		//set chaincode path for DEV MODE
+		ccPath = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/auction/art/artchaincode/", gopath)
+	} else {
+		fmt.Println(" Invalid Arguments ")
+		return;
+	}
+
 	// Start the shim -- running the fabric
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
@@ -452,6 +464,12 @@ func GetItem(stub *shim.ChaincodeStub, function string, args []string) ([]byte, 
 	}
 
 	fmt.Println("GetItem() : Response : Successfull ")
+
+	// Masking ItemImage binary data
+	itemObj, _ := JSONtoAR(Avalbytes)
+	itemObj.ItemImage = []byte{}
+	Avalbytes, _ = ARtoJSON(itemObj)
+
 	return Avalbytes, nil
 }
 
@@ -757,12 +775,12 @@ func CreateItemObject(args []string) (ItemObject, error) {
 
 	// Validate Picture File exists based on the name provided
 	// Looks for file in current directory of application and must be fixed for other locations
-	imagePath := ccPath +args[9];
+	imagePath := ccPath + args[9]
 	if _, err := os.Stat(imagePath); err == nil {
-	  fmt.Println(imagePath, "  exists!")
+		fmt.Println(imagePath, "  exists!")
 	} else {
-	  fmt.Println("CreateItemObject(): Cannot find or load Picture File = %s :  %s\n", imagePath, err)
-	  return myItem, errors.New("CreateItemObject(): ART Picture File not found " + imagePath)
+		fmt.Println("CreateItemObject(): Cannot find or load Picture File = %s :  %s\n", imagePath, err)
+		return myItem, errors.New("CreateItemObject(): ART Picture File not found " + imagePath)
 	}
 
 	// Get the Item Image and convert it to a byte array
@@ -776,7 +794,7 @@ func CreateItemObject(args []string) (ItemObject, error) {
 	// Append the AES Key, The Encrypted Image Byte Array and the file type
 	myItem = ItemObject{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], AES_enc, AES_key, fileType, args[10], args[11]}
 
-	fmt.Println("CreateItemObject(): Item Object created: ID# ", myItem.ItemID,"\n AES Key: ", myItem.AES_Key)
+	fmt.Println("CreateItemObject(): Item Object created: ID# ", myItem.ItemID, "\n AES Key: ", myItem.AES_Key)
 
 	// Code to Validate the Item Object)
 	// If User presents Crypto Key then key is used to validate the picture that is stored as part of the title
@@ -850,9 +868,9 @@ func TransferItem(stub *shim.ChaincodeStub, function string, args []string) ([]b
 
 	// Let us make sure that the Item is not on Auction
 	err = VerifyIfItemIsOnAuction(stub, args[0])
-        if err != nil {
-                fmt.Println("TransferItem() : Failed Item is either initiated or opened for Auction ", args[0])
-                return nil, err
+	if err != nil {
+		fmt.Println("TransferItem() : Failed Item is either initiated or opened for Auction ", args[0])
+		return nil, err
 	}
 
 	// Validate New Owner's ID
@@ -920,59 +938,82 @@ func TransferItem(stub *shim.ChaincodeStub, function string, args []string) ([]b
 // The function return the Auction ID and the Status = OPEN or INIT
 ////////////////////////////////////////////////////////////////////////////////////
 
-func VerifyIfItemIsOnAuction(stub *shim.ChaincodeStub, itemID string) (error) {
+func VerifyIfItemIsOnAuction(stub *shim.ChaincodeStub, itemID string) error {
 
 	rows, err := GetListOfOpenAucs(stub, "AucOpenTable", []string{"2016"})
-        if err != nil {
-                return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. Error retrieving values from AucOpenTable: %s", err)
-        }
+	if err != nil {
+		return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. Error retrieving values from AucOpenTable: %s", err)
+	}
 
-        tlist := make([]AuctionRequest, len(rows))
-        err = json.Unmarshal([]byte(rows), &tlist)
-        if err != nil {
-                fmt.Println("VerifyIfItemIsOnAuction: Unmarshal failed : ", err)
-                return  fmt.Errorf("VerifyIfItemIsOnAuction: operation failed. Error un-marshaling JSON: %s", err)
-        }
+	tlist := make([]AuctionRequest, len(rows))
+	err = json.Unmarshal([]byte(rows), &tlist)
+	if err != nil {
+		fmt.Println("VerifyIfItemIsOnAuction: Unmarshal failed : ", err)
+		return fmt.Errorf("VerifyIfItemIsOnAuction: operation failed. Error un-marshaling JSON: %s", err)
+	}
 
-        for i := 0; i < len(tlist); i++ {
-                ar := tlist[i]
+	for i := 0; i < len(tlist); i++ {
+		ar := tlist[i]
 
-                // Compare Auction IDs
-                if ar.ItemID == itemID {
-                     fmt.Println("VerifyIfItemIsOnAuction() Failed : Ummarshall error")
-                     return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. %s", itemID)
-                }
-        }
+		// Compare Auction IDs
+		if ar.ItemID == itemID {
+			fmt.Println("VerifyIfItemIsOnAuction() : Item Exists")
+			return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. %s", itemID)
+		}
+	}
 
-        // Now Check if an Auction Has been inititiated
+	// Now Check if an Auction Has been inititiated
 	// If so , it has to be removed from Auction for a Transfer
 
-        rows, err = GetListOfInitAucs(stub, "AucInitTable", []string{"2016"})
-        if err != nil {
-                return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. Error retrieving values from AucInitTable: %s", err)
-        }
+	rows, err = GetListOfInitAucs(stub, "AucInitTable", []string{"2016"})
+	if err != nil {
+		return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. Error retrieving values from AucInitTable: %s", err)
+	}
 
-        tlist = make([]AuctionRequest, len(rows))
-        err = json.Unmarshal([]byte(rows), &tlist)
-        if err != nil {
-                fmt.Println("VerifyIfItemIsOnAuction() Unmarshal failed : ", err)
-                return fmt.Errorf("VerifyIfItemIsOnAuction: operation failed. Error un-marshaling JSON: %s", err)
-        }
+	tlist = make([]AuctionRequest, len(rows))
+	err = json.Unmarshal([]byte(rows), &tlist)
+	if err != nil {
+		fmt.Println("VerifyIfItemIsOnAuction() Unmarshal failed : ", err)
+		return fmt.Errorf("VerifyIfItemIsOnAuction: operation failed. Error un-marshaling JSON: %s", err)
+	}
 
-        for i := 0; i < len(tlist); i++ {
-                ar := tlist[i]
-                if err != nil {
-                        fmt.Println("VerifyIfItemIsOnAuction() Failed : Ummarshall error")
-                        return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. %s", err)
-                }
+	for i := 0; i < len(tlist); i++ {
+		ar := tlist[i]
+		if err != nil {
+			fmt.Println("VerifyIfItemIsOnAuction() Failed : Ummarshall error")
+			return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. %s", err)
+		}
 
-                // Compare Auction IDs
-                if ar.ItemID == itemID {
-                        return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed." )
-                }
-        }
+		// Compare Auction IDs
+		if ar.ItemID == itemID {
+			return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed.")
+		}
+	}
 
-        return nil
+	return nil
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Checks if an Item is available on auction or not
+// Input ItemID # 1000
+// See Sample data
+// ./peer chaincode query -l golang -n mycc -c '{"Function": "IsItemOnAuction", "Args": ["1000", "VERIFY"]}'
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+func IsItemOnAuction(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+	if len(args) < 2 {
+		fmt.Println("IsItemOnAuction() : Requires 2 arguments Item#, RecordType")
+		return nil, errors.New("IsItemOnAuction() : Requires 2 arguments Item#, RecordType")
+	}
+
+	itemExists := false
+	err := VerifyIfItemIsOnAuction(stub, args[0])
+	if err != nil {
+		fmt.Println("IsItemOnAuction() : Failed Item# ",args[0]," is either initiated or opened for Auction ")
+		itemExists = true
+	}
+	fmt.Println("Is Item# ", args[0]," on-auction : ", itemExists)
+	ie, _ := json.Marshal(itemExists)
+	return ie, nil
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1021,13 +1062,12 @@ func PostAuctionRequest(stub *shim.ChaincodeStub, function string, args []string
 		return nil, err
 	}
 
-        // Let us make sure that the Item is not on Auction
-        err = VerifyIfItemIsOnAuction(stub, ar.ItemID)
-        if err != nil {
-                fmt.Println("PostAuctionRequest() : Failed Item is either initiated or opened for Auction ", args[0])
-                return nil, err
-        }
-
+	// Let us make sure that the Item is not on Auction
+	err = VerifyIfItemIsOnAuction(stub, ar.ItemID)
+	if err != nil {
+		fmt.Println("PostAuctionRequest() : Failed Item is either initiated or opened for Auction ", args[0])
+		return nil, err
+	}
 
 	// Validate Auction House to check it is a registered User
 	aucHouse, err := ValidateMember(stub, ar.AuctionHouseID)
@@ -1260,18 +1300,18 @@ func PostBid(stub *shim.ChaincodeStub, function string, args []string) ([]byte, 
 	///////////////////////////////////////////////////////////////////
 	// Reject Bid if the time bid was received is > Auction Close Time
 	///////////////////////////////////////////////////////////////////
-        if tCompare(bid.BidTime, aucR.CloseDate) == false {
-               fmt.Println("PostBid() Failed : BidTime past the Auction Close Time")
-               return nil, fmt.Errorf("PostBid() Failed : BidTime past the Auction Close Time %s, %s", bid.BidTime, aucR.CloseDate)
-        }
+	if tCompare(bid.BidTime, aucR.CloseDate) == false {
+		fmt.Println("PostBid() Failed : BidTime past the Auction Close Time")
+		return nil, fmt.Errorf("PostBid() Failed : BidTime past the Auction Close Time %s, %s", bid.BidTime, aucR.CloseDate)
+	}
 
 	//////////////////////////////////////////////////////////////////
 	// Reject Bid if Item ID on Bid does not match Item ID on Auction
 	//////////////////////////////////////////////////////////////////
-        if aucR.ItemID != bid.ItemID {
-               fmt.Println("PostBid() Failed : Item ID mismatch on bid. Bid Rejected")
-               return nil, errors.New("PostBid() : Item ID mismatch on Bid. Bid Rejected")
-        }
+	if aucR.ItemID != bid.ItemID {
+		fmt.Println("PostBid() Failed : Item ID mismatch on bid. Bid Rejected")
+		return nil, errors.New("PostBid() : Item ID mismatch on Bid. Bid Rejected")
+	}
 
 	//////////////////////////////////////////////////////////////////////
 	// Reject Bid if Bid Price is less than Reserve Price
@@ -1279,8 +1319,8 @@ func PostBid(stub *shim.ChaincodeStub, function string, args []string) ([]byte, 
 	//////////////////////////////////////////////////////////////////////
 	bp, err := strconv.Atoi(bid.BidPrice)
 	if err != nil {
-               fmt.Println("PostBid() Failed : Bid price should be an integer")
-	       return nil, errors.New("PostBid() : Bid price should be an integer")
+		fmt.Println("PostBid() Failed : Bid price should be an integer")
+		return nil, errors.New("PostBid() : Bid price should be an integer")
 	}
 
 	hp, err := strconv.Atoi(aucR.ReservePrice)
@@ -1600,21 +1640,21 @@ func GetKeyValue(Avalbytes []byte, key string) string {
 //////////////////////////////////////////////////////////
 func tCompare(t1 string, t2 string) bool {
 
-        layout := "2006-01-02 15:04:05"
-        bidTime, err := time.Parse(layout, t1)
-        if err != nil {
-               fmt.Println("tCompare() Failed : time Conversion error on t1")
-               return false
-        }
+	layout := "2006-01-02 15:04:05"
+	bidTime, err := time.Parse(layout, t1)
+	if err != nil {
+		fmt.Println("tCompare() Failed : time Conversion error on t1")
+		return false
+	}
 
-        aucCloseTime, err := time.Parse(layout, t2)
-        if err != nil {
-               fmt.Println("tCompare() Failed : time Conversion error on t2")
-               return false
-        }
+	aucCloseTime, err := time.Parse(layout, t2)
+	if err != nil {
+		fmt.Println("tCompare() Failed : time Conversion error on t2")
+		return false
+	}
 
 	if bidTime.Before(aucCloseTime) {
-	   return true
+		return true
 	}
 
 	return false
@@ -2067,17 +2107,6 @@ func QueryLedger(stub *shim.ChaincodeStub, tableName string, args []string) ([]b
 		jsonResp := "{\"QueryLedger() Error\":\" Cannot create Object for key " + args[0] + "\"}"
 		return nil, errors.New(jsonResp)
 	}
-	var dat map[string]interface{}
-
-	if err := json.Unmarshal(Avalbytes, &dat); err != nil {
-		panic(err)
-	}
-	//TODO: Masking Image binary data, Need a clean solution ?
-	if (tableName == "ItemTable") {
-		dat["ItemImage"] = []byte{}
-		data, _  := json.Marshal(dat)
-		Avalbytes = data;
-	}
 	return Avalbytes, nil
 }
 
@@ -2529,7 +2558,7 @@ func ProcessQueryResult(stub *shim.ChaincodeStub, Avalbytes []byte, args []strin
 			return err
 		}
 		fmt.Println("ProcessRequestType() : Image conversion from byte[] to file successfull ")
-		err = ByteArrayToImage(image, ccPath + "copy."+ar.ItemPicFN)
+		err = ByteArrayToImage(image, ccPath+"copy."+ar.ItemPicFN)
 		if err != nil {
 
 			fmt.Println("ProcessRequestType() : Image conversion from byte[] to file failed ")
@@ -2571,6 +2600,8 @@ func ProcessQueryResult(stub *shim.ChaincodeStub, Avalbytes []byte, args []strin
 	case "DEFAULT":
 		return nil
 	case "XFER":
+		return nil
+	case "VERIFY":
 		return nil
 	default:
 
@@ -2719,39 +2750,39 @@ func exe_cmd(cmd string) error {
 
 func CloseOpenAuctions(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
-        rows, err := GetListOfOpenAucs(stub, "AucOpenTable", []string{"2016"})
-        if err != nil {
-                return nil, fmt.Errorf("GetListOfOpenAucs operation failed. Error marshaling JSON: %s", err)
-        }
+	rows, err := GetListOfOpenAucs(stub, "AucOpenTable", []string{"2016"})
+	if err != nil {
+		return nil, fmt.Errorf("GetListOfOpenAucs operation failed. Error marshaling JSON: %s", err)
+	}
 
-        tlist := make([]AuctionRequest, len(rows))
+	tlist := make([]AuctionRequest, len(rows))
 	err = json.Unmarshal([]byte(rows), &tlist)
 	if err != nil {
 		fmt.Println("Unmarshal failed : ", err)
 	}
 
-        for i := 0; i < len(tlist); i++ {
-                ar := tlist[i]
-                if err != nil {
-                        fmt.Println("CloseOpenAuctions() Failed : Ummarshall error")
-                        return nil, fmt.Errorf("GetListOfOpenAucs() operation failed. %s", err)
-                }
+	for i := 0; i < len(tlist); i++ {
+		ar := tlist[i]
+		if err != nil {
+			fmt.Println("CloseOpenAuctions() Failed : Ummarshall error")
+			return nil, fmt.Errorf("GetListOfOpenAucs() operation failed. %s", err)
+		}
 
-                fmt.Println("CloseOpenAuctions() ", ar)
+		fmt.Println("CloseOpenAuctions() ", ar)
 
 		// Compare Auction Times
-        	if tCompare(time.Now().Format("2006-01-02 15:04:05"), ar.CloseDate) == false {
+		if tCompare(time.Now().Format("2006-01-02 15:04:05"), ar.CloseDate) == false {
 
-                	// Request Closing Auction
-                	_, err := CloseAuction(stub,"CloseAuction", []string{ar.AuctionID})
-                	if err != nil {
-                       		 fmt.Println("CloseOpenAuctions() Failed : Ummarshall error")
-                       		 return nil, fmt.Errorf("GetListOfOpenAucs() operation failed. %s", err)
-                	}
+			// Request Closing Auction
+			_, err := CloseAuction(stub, "CloseAuction", []string{ar.AuctionID})
+			if err != nil {
+				fmt.Println("CloseOpenAuctions() Failed : Ummarshall error")
+				return nil, fmt.Errorf("GetListOfOpenAucs() operation failed. %s", err)
+			}
 		}
-        }
+	}
 
-        return rows, nil
+	return rows, nil
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -2809,15 +2840,15 @@ func CloseAuction(stub *shim.ChaincodeStub, function string, args []string) ([]b
 
 	// Process Final Bid - Turn it into a Transaction
 	Avalbytes, err = GetHighestBid(stub, "GetHighestBid", []string{args[0]})
-        if Avalbytes == nil {
-                fmt.Println("CloseAuction(): No bids available, no change in Item Status - PostTransaction() Completed Successfully ")
-        	return Avalbytes, nil
+	if Avalbytes == nil {
+		fmt.Println("CloseAuction(): No bids available, no change in Item Status - PostTransaction() Completed Successfully ")
+		return Avalbytes, nil
 	}
 
-        if err != nil {
-                fmt.Println("CloseAuction(): No bids available, error encountered - PostTransaction() failed ")
-                return nil, err
-        }
+	if err != nil {
+		fmt.Println("CloseAuction(): No bids available, error encountered - PostTransaction() failed ")
+		return nil, err
+	}
 
 	bid, _ := JSONtoBid(Avalbytes)
 	fmt.Println("CloseAuction(): Proceeding to process the highest bid ", bid)
