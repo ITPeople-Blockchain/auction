@@ -134,7 +134,7 @@ Please review instructions on setting up the [Development Environment](https://g
 ```
  cd $GOPATH/src/github.com/hyperledger/fabric/auction/art/artchaincode
  go build
- CORE_CHAINCODE_ID_NAME=mycc CORE_PEER_ADDRESS=0.0.0.0:30303 ./artchaincode
+ CORE_CHAINCODE_ID_NAME=mycc CORE_PEER_ADDRESS=0.0.0.0:30303 ./artchaincode dev
 ```
 ###Terminal 3
 ```
@@ -357,7 +357,7 @@ Retrieves the total number of bids received at any point in time. If the auction
 
 **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "getNoOfBidsReceived", "Args": ["1111"]}'
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetNoOfBidsReceived", "Args": ["1111"]}'
 
 **GetListOfBids**:
    
