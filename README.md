@@ -23,7 +23,7 @@ This application deals with auctioning ART on the block chain. The blockchain ma
 * Artists (ART)
 
 The typical business process is shown below
-![Business Process](docs/images/art_process.png)
+![Business Process](movee2016/auction/tree/master/docs/images)
 
 ###Registering Stakeholder Accounts
 
@@ -32,9 +32,10 @@ Artists, Traders, Dealers own **Assets** (Items). Auction Houses, Banks, Insuran
 ###Registering Assets or Items
 
 The Seller (Trader) who owns **Assets** must register the asset on the block chain in order to conduct business. When an **Asset** is submitted for registration, the chaincode does the following:
-    * Checks if the owner has a registered account
-    * Converts any presented "Certificate of Authenticity" or a credibly issued image to a byte stream, generates a key, encrypts the byte stream using the key and stores the image on the BC. It provides the key to the **owner** for safe keeping and future reference
-    * Makes entries into the Item History so that the lifecycle of the Asset can be reviewed at any time
+   * Checks if the owner has a registered account
+   * Converts any presented "Certificate of Authenticity" or a credibly issued image to a byte stream, generates a key, encrypts the byte stream using the key and stores the image on the BC 
+   * Provides the key to the **owner** for safe keeping and future reference
+   * Makes entries into the Item History so that the lifecycle of the Asset can be reviewed at any time
 
 ###Making a Request to Auction an Asset
 
@@ -59,8 +60,8 @@ Bids are accepted from buyers if
 
 When a buyer chooses this option, the chain code does the following
     * Validates the Buyer
-    * Checks if there are any bidders whose bid is higher than the ** "Buy It Now" ** price. If so, the offer is rejected
-    * If the **"Buy It Now"** price is applicable, it immediately ** "CLOSES" ** the auctions, creates a **transaction**
+    * Checks if there are any bidders whose bid is higher than the **"Buy It Now"** price. If so, the offer is rejected
+    * If the **"Buy It Now"** price is applicable, it immediately **"CLOSES"** the auctions, creates a **transaction**
     * It assigns the Asset to the new owner
     * It also generates a new **Key**, re-encrypts the "Certificate of Ownership or Image", and provides the key to the new buyer
     * The new price of the Asset is set to the **"Buy It Now"** price if not higher
@@ -209,219 +210,240 @@ After the timer expires, the Close auction should get invoked and the highest bi
 ## Invoke APIs and usage
 **PostUser**:
 
-This function is used to register an Account for any of the stakeholders defined earlier
+   This function is used to register an Account for any of the stakeholders defined earlier
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["100", "USER", "Ashley Hart", "TRD",  "Morrisville Parkway, #216, Morrisville, NC 27560", "9198063535", "ashley@itpeople.com", "SUNTRUST", "00017102345", "0234678"]}'
+   The call takes 9 arguments: User ID, Record Type, Name, Type, Address, Phone, Email, Bank Name, Account#, Routing#
+   
+   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["100", "USER", "Ashley Hart", "TRD",  "Morrisville Parkway, #216, Morrisville, NC 27560", "9198063535", "ashley@itpeople.com", "SUNTRUST", "00017102345", "0234678"]}'
 
 **PostItem**:
 
-This function is used to register an Asset with the blockchain. The owner of the Asset must have a registered account prior to registering the Asset. No validation of the "User Type" is done by the chaincode and should be managed outside by the client. The name of the image (f6.png) is uploaded by the chaincode from a pre-determined directory, converted to []byte, encrypted using AES and stored in the blockchain.
+   This function is used to register an Asset with the blockchain. The owner of the Asset must have a registered account prior to registering the Asset. No validation of the "User Type" is done by the chaincode and should be managed outside by the client. The name of the image (f6.png) is uploaded by the chaincode from a pre-determined directory, converted to []byte, encrypted using AES and stored in the blockchain.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1400", "ARTINV", "Nature", "James Thomas", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "f6.png","$1800", "100"]}'
+   The call takes 12 arguments: Item ID, Record Type, Description, Detail, Date of Origin, Original or Reprint, Subject, Media, Size, Image File, Price, Current Owner ID
+   
+   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1400", "ARTINV", "Nature", "James Thomas", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "f6.png","$1800", "100"]}'
 
 **PostAuctionRequest**:
 
-This function is used by the owner of an Asset to request an Auction House to accept the Asset for auction. The Auction House ID, the owner ID and the asset ID are all validated before a request can be posted. Posting a request does not mean bids can be accepted. The auction has to be opened in order for bids to be accepted or "Buy It Now" to happen.
+   This function is used by the owner of an Asset to request an Auction House to accept the Asset for auction. The Auction House ID, the owner ID and the asset ID are all validated before a request can be posted. Posting a request does not mean bids can be accepted. The auction has to be opened in order for bids to be accepted or "Buy It Now" to happen.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostAuctionRequest", "Args":["1113", "AUCREQ", "1000", "200", "400", "04012016", "15000", "16000", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]}'
+   This call takes 11 argumnets: Auction ID, Record Type, Item ID, Auction House ID, Owner ID, Date of Request, Reserve Price, Buy-It-Now Price, Status, Dummy Open Date, Dummy Close Date
+   
+   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostAuctionRequest", "Args":["1113", "AUCREQ", "1000", "200", "400", "04012016", "15000", "16000", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]}'
 
-The Auction Opendate and CloseDate are dummy dates and will be set when the auction is opened. The Auction ID must be unique and cannot be repeated. We assume that the client will generate a unique auction id prior to posting the request. The state of the Auction is "INIT" at this point.
+   The Auction Opendate and CloseDate are dummy dates and will be set when the auction is opened. The Auction ID must be unique and cannot be repeated. We assume that the client will generate a unique auction id prior to posting the request. The state of the Auction is "INIT" at this point.
 
 **OpenAuctionForBids**:
 
-This function is assumed to be invoked by the role of "Auction House" which is one of the types of accounts registered using PostUser. It allows the auctioner to open an auction for bids. The auction request must be in "INIT" state to be "OPEN"ed. When the auction is opened for bids, both the open and close date and time are set. The following example opens the bid for 3 minutes. Auction open durations are currently provided in minutes to support testing.
+   This function is assumed to be invoked by the role of "Auction House" which is one of the types of accounts registered using PostUser. It allows the auctioner to open an auction for bids. The auction request must be in "INIT" state to be "OPEN"ed. When the auction is opened for bids, both the open and close date and time are set. The following example opens the bid for 3 minutes. Auction open durations are currently provided in minutes to support testing.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "OpenAuctionForBids", "Args":["1111", "OPENAUC", "3"]}'
+   The call takes 3 arguments: Auction ID, Record Type, Duration in Minutes
+   
+   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "OpenAuctionForBids", "Args":["1111", "OPENAUC", "3"]}'
 
 **PostBid**:
 
-This function allows a potential buyer to bid on the Asset once the auction is open. Every bid is checked for valid auction ID, asset ID and buyer ID. Bids must be higher than reserve price. Bids are accepted as long as the auction is "OPEN". Bid numbers must be unique and generated by the client.
+   This function allows a potential buyer to bid on the Asset once the auction is open. Every bid is checked for valid auction ID, asset ID and buyer ID. Bids must be higher than reserve price. Bids are accepted as long as the auction is "OPEN". Bid numbers must be unique and generated by the client.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "5", "1000", "400", "5000"]}'
+   This call takes 6 arguments: Auction ID, Record Type, Bid Number, Item ID, Buyer ID, Buyer Offer Price
+   
+   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "5", "1000", "400", "5000"]}'
 
 **PostTransaction**:
 
-Even though the Transaction is automatically generated and posted either when the 
+   Even though the Transaction is automatically generated and posted when one of the following events occur: 
    * Auction closes after the auction timer expires (Only CLI Mode)
    * A message to close all expired auctions are close is issued by the client via "CloseOpenAuctions"
    * A "BuyItNow" call is made which goes through 
-this function is exposed as a matter of convenience just in case transactions don't get posted properly. When a Transaction is posted, it updates the Asset with the new buyer ID, re-generates a new key and encrypts the image/certificate and updates the asset price to the "Hammer Price". It also adds a new entry into the item history table.
+   this function is exposed as a matter of convenience just in case transactions don't get posted properly. 
+   When a Transaction is posted, it updates the Asset with the new buyer ID, re-generates a new key and encrypts the image/certificate and updates the asset price to the "Hammer Price". It also adds a new entry into the item history table.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "POSTTRAN", "1000", "SALE","500", "2016-05-24 11:00:00","2016-05-23 14:25:00", "12000"]}'
+   This call takes 8 arguments: Auction ID, Record Type, Item ID, Transaction Type, Buyer ID, Transaction Time, Hammer Time, Hammer Price
+   
+   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "POSTTRAN", "1000", "SALE","500", "2016-05-24 11:00:00","2016-05-23 14:25:00", "12000"]}'
 
 **BuyItNow**:
 
-Sometimes, an asset owner can specify a "Buy It Now" price in addition to the "Reserve Price" while posting an auction request. If an asset has a "Buy It Now" price, a buyer can issue a "BuyItNow" call. If there are no bids higher than the "BuyItNow" price, the request will be rejected. If the request goes through, the auction is closed and a transaction is posted against the buyer. 
+   Sometimes, an asset owner can specify a "Buy It Now" price in addition to the "Reserve Price" while posting an auction request. If an asset has a "Buy It Now" price, a buyer can issue a "BuyItNow" call. If there are no bids higher than the "BuyItNow" price, the request will be rejected. If the request goes through, the auction is closed and a transaction is posted against the buyer. 
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "BuyItNow", "Args":["1111", "BID", "1", "1000", "300", "1800"]}'
+   This call is similar to the PostBid, except the price is set to the Buy-It-Now price.
+
+   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "BuyItNow", "Args":["1111", "BID", "1", "1000", "300", "1800"]}'
 
 **TransferItem**:
 
-At any time, the current owner of an asset can transfer the item at no additional cost or change in value to another user, provided the asset is not initiated for auctions, or is in the process of an auction. Smart contract rules may have to be written to comply with local regulations and taxes. The current owner has to prove ownership by providing his key. The owner id, item id and the key are all validated before transfer can take place. The new owner will receive a new key.
+   At any time, the current owner of an asset can transfer the item at no additional cost or change in value to another user, provided the asset is not initiated for auctions, or is in the process of an auction. Smart contract rules may have to be written to comply with local regulations and taxes. The current owner has to prove ownership by providing his key. The owner id, item id and the key are all validated before transfer can take place. The new owner will receive a new key.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "TransferItem", "Args": ["1000", "100", "218MC/ipIsIrDhE9TKXqG2NsWl7KSE59Y3UmwBzSrQo=", "300", "XFER"]}'
+   This call takes 5 arguments: Item ID, Current Owner ID, Owner Key, Transferee ID, Record Type
+   
+   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "TransferItem", "Args": ["1000", "100", "218MC/ipIsIrDhE9TKXqG2NsWl7KSE59Y3UmwBzSrQo=", "300", "XFER"]}'
 
 **CloseAuction**:
 
-This function call closes an auction once the time expires. This call is automatically issued in "CLI" mode since the "OpenAuctionForBids" call triggers a go routine that sleeps for the duration of the auction and the automatically issues a "CloseAuction" call. This functions closes the auction request, picks the highest bid and creates a transaction an then posts the transaction.
+   This function call closes an auction once the time expires. This call is automatically issued in "CLI" mode since the "OpenAuctionForBids" call triggers a go routine that sleeps for the duration of the auction and the automatically issues a "CloseAuction" call. This functions closes the auction request, picks the highest bid and creates a transaction an then posts the transaction.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseAuction", "Args": ["1111","AUCREQ"]}'
+   This call takes two arguments: Auction ID, Record Type
+   
+   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseAuction", "Args": ["1111","AUCREQ"]}'
 
 **CloseOpenAuctions**:
 
-This is a function designed specifically for Bluemix situations where the peer and the chaincode run in different containers, hence a call as shown in each of "Usage (CLI mode)" will not work. This function is issued periodically by the client (UI or applications consuming the blockchain) as a REST call. The functions checks for auctions whose time has run-out and closes them.
+   This is a function designed specifically for Bluemix situations where the peer and the chaincode run in different containers, hence a call as shown in each of "Usage (CLI mode)" will not work. This function is issued periodically by the client (UI or applications consuming the blockchain) as a REST call. The functions checks for auctions whose time has run-out and closes them.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-./peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseOpenAuctions", "Args": ["2016", "CLAUC"]}'
+   This call takes two arguments: 2016, Record Type
+   
+   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseOpenAuctions", "Args": ["2016", "CLAUC"]}'
 
 ###Query APIs and Usage
 
 **GetItem**:
 
-Retrieves an Asset record by asset ID.
+   Retrieves an Asset record by asset ID.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItem", "Args": ["1000"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItem", "Args": ["1000"]}'
  
 **GetUser**:
 
-Retrieves an user record by user or stakeholder ID.
+   Retrieves an user record by user or stakeholder ID.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetUser", "Args": ["100"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetUser", "Args": ["100"]}'
    
 **GetAuctionRequest**:
 
-Retrieves an auction request by auction request ID.
+   Retrieves an auction request by auction request ID.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetAuctionRequest", "Args": ["1111"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetAuctionRequest", "Args": ["1111"]}'
 
 **GetTransaction**:
 
-Retrieves an transaction posted against an auction by auction request ID and asset ID.
+   Retrieves an transaction posted against an auction by auction request ID and asset ID.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetTransaction", "Args": ["1111", "1000"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetTransaction", "Args": ["1111", "1000"]}'
 
 **GetBid**:
 
-Retrieves a single bid by auction ID and bid number
+   Retrieves a single bid by auction ID and bid number
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetBid",  "Args": ["1111", "5"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetBid",  "Args": ["1111", "5"]}'
    
 **GetLastBid**:
 
-Retrieves the last submitted bid. Since bids are submitted in random , and the only requirement is that the bid price be higher than the reserve price, the last received bid need not be the highest bid.
+   Retrieves the last submitted bid. Since bids are submitted in random , and the only requirement is that the bid price be higher than the reserve price, the last received bid need not be the highest bid.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid","Args": ["1111"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid","Args": ["1111"]}'
 
 **GetHighestBid**:
 
-Retrieves the highest bid submitted against the auction thus far. If the auction has expired, then the highest bid is the highest bid for the auction.
+   Retrieves the highest bid submitted against the auction thus far. If the auction has expired, then the highest bid is the highest bid for the auction.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetHighestBid", "Args": ["1111"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetHighestBid", "Args": ["1111"]}'
    
 **GetNoOfBidsReceived**:
 
-Retrieves the total number of bids received at any point in time. If the auction has expired, it represents the total number of bids received against that auction.
+   Retrieves the total number of bids received at any point in time. If the auction has expired, it represents the total number of bids received against that auction.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetNoOfBidsReceived", "Args": ["1111"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetNoOfBidsReceived", "Args": ["1111"]}'
 
 **GetListOfBids**:
    
-Retrievs all the bids received against an auction. each row in the list represents a bid object.   
+   Retrieves all the bids received against an auction. each row in the list represents a bid object.   
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfBids", "Args": ["1111"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfBids", "Args": ["1111"]}'
 
 **GetItemLog**:
 
-Retrieves the history of an asset. The log is updated when an asset is registered, put on auction, post auction, transfered etc.
+   Retrieves the history of an asset. The log is updated when an asset is registered, put on auction, post auction, transfered etc.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemLog","Args": ["1000"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemLog","Args": ["1000"]}'
    
 **GetItemListByCat**:
 
-Retrieves a list of assets by asset category. If only the first key is provided, the query retrieves all assets. "2016" is hard-coded as a fixed first key. This is a band-aid solution to retrieve all records. This is a band-aid solution to retrieve all records. The following query retrieves all assets of category "modern".
+   Retrieves a list of assets by asset category. If only the first key is provided, the query retrieves all assets. "2016" is hard-coded as a fixed first key. This is a band-aid solution to retrieve all records. This is a band-aid solution to retrieve all records. The following query retrieves all assets of category "modern".
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "modern"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "modern"]}'
 
 **GetUserListByCat**:
 
-Retrieves a list of stakeholders or account holders by stakeholder type. If only the first key is provided, the query retrieves all assets. "2016" is hard-coded as a fixed first key. This is a band-aid solution to retrieve all records. The following query retrieves all stakeholders of type "AH" or auction houses.
+   Retrieves a list of stakeholders or account holders by stakeholder type. If only the first key is provided, the query retrieves all assets. "2016" is hard-coded as a fixed first key. This is a band-aid solution to retrieve all records. The following query retrieves all stakeholders of type "AH" or auction houses.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "AH"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "AH"]}'
 
 **GetListOfInitAucs**:
 
-This query retrieves all assets which have been submitted for auction. Their status is "Init". The "2016" is a fixed key to denote all auctions in 2016.
+   This query retrieves all assets which have been submitted for auction. Their status is "Init". The "2016" is a fixed key to denote all auctions in 2016.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfInitAucs","Args": ["2016"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfInitAucs","Args": ["2016"]}'
    
 **GetListOfOpenAucs**:
 
-Thsi query retrieves a list of all assets whose auctions have been "OPEN"ed for receiving bids. The "2016" is a fixed key to denote all auctions in 2016.
+   This query retrieves a list of all assets whose auctions have been "OPEN"ed for receiving bids. The "2016" is a fixed key to denote all auctions in 2016.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfOpenAucs", "Args": ["2016"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfOpenAucs", "Args": ["2016"]}'
    
 **ValidateItemOwnership**:
 
-Validates the ownership of an asset. Checks for valid account id, asset id and retrieves asset from blockchain using the owners's key.
+   Validates the ownership of an asset. Checks for valid account id, asset id and retrieves asset from blockchain using the owners's key. The arguments are Item ID, Current Owner ID and Owner's Key.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership",   "Args": ["1000", "500", "avQX6JfTnELAY4mkRhOr8P7vmz0H3aAIuFGsGiSD5UQ="]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership",   "Args": ["1000", "500", "avQX6JfTnELAY4mkRhOr8P7vmz0H3aAIuFGsGiSD5UQ="]}'
 
 **IsItemOnAuction**:
 
-Checks whether an Asset has an **auction request** posted, or currently on auction and returns a boolean true or false.
+   Checks whether an Asset has an **auction request** posted, or currently on auction and returns a boolean true or false.
 
-**Usage (CLI mode)**
+   **Usage (CLI mode)**
 
-   ./peer chaincode query -l golang -n mycc -c '{"Function": "IsItemOnAuction", "Args": ["1999", "VERIFY"]}'
+      ./peer chaincode query -l golang -n mycc -c '{"Function": "IsItemOnAuction", "Args": ["1999", "VERIFY"]}'
 
 ##Open Items
 
