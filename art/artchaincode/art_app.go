@@ -289,17 +289,15 @@ func main() {
 	fmt.Println("Starting Item Auction Application chaincode BlueMix ver 24 Dated 2016-07-06 05.30.00 ")
 
 	gopath = os.Getenv("GOPATH")
-	if len(os.Args) < 2 {
-		fmt.Println("----------------- STARTED IN NET MODE -------------------- ")
-		//set chaincode path for NET MODE
-		ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
-	} else if len(os.Args) == 2 && strings.EqualFold(os.Args[1], "DEV") {
+	if len(os.Args) == 2 && strings.EqualFold(os.Args[1], "DEV") {
 		fmt.Println("----------------- STARTED IN DEV MODE -------------------- ")
 		//set chaincode path for DEV MODE
 		ccPath = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/auction/art/artchaincode/", gopath)
 	} else {
-		fmt.Println(" Invalid Arguments ")
-		return;
+		fmt.Println("----------------- STARTED IN NET MODE -------------------- ")
+		//set chaincode path for NET MODE
+		//ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
+		ccPath = fmt.Sprintf("%s/src/github.com/ratnakar-asara/auction/art/artchaincode/", gopath)
 	}
 
 	// Start the shim -- running the fabric
