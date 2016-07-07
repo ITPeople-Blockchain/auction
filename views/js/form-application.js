@@ -113,9 +113,10 @@ function formApplication(){
 			args.push(ips[9].value);
 			args.push(new Date().toString());
 			var str = ips[8].value;
-			args.push((parseInt(str.substring(1, str.length)) * 1.4).toString());
+			var reservedPrice = (Math.round( parseInt(str) * 1.4)).toString()
+			args.push(reservedPrice);
 			//How to handle this ?
-			args.push("0");//TODO: enable once BuyItNowPrice enabled from UI
+			args.push("0");//TODO: enable once BuyItNowPrice enabled from UI ?
 			args.push("INIT");
 			args.push(new Date().toString());
 			args.push(new Date().toString());
@@ -284,7 +285,7 @@ function formApplication(){
 			return;
 		}
 		args.push(bid_buyer_val) // GET BUYER ID FROM FORM //bid_buyer
-		var buyItNowPrice = (parseInt(res[3]) * 1.4).toString();
+		var buyItNowPrice = (Math.round(parseInt(res[3]) * 1.4)).toString();
 		args.push(buyItNowPrice);  //BuyItNow bid_price
 
 		console.log(args);
@@ -336,12 +337,6 @@ function formApplication(){
 		//$('.form-specs').empty().append(masterHTML);
 		$('.form-specs').append(masterHTML);
 	}*/
-	//V2.1
-	thisObj.populateFormSpec = function(labelVal,contentVal,specPosition){
-		var masterHTML = '<div class="spec-item"><div class="spec-label">'+labelVal+'</div><div class="spec-content">'+contentVal+'</div></div>'
-		$('.form-spec.'+specPosition).append(masterHTML);
-	}
-
 
 	//API
 
@@ -572,7 +567,9 @@ function formApplication(){
 	//TODO: Combine the below two functions
 	thisObj.populateHeighestBid = function(data){
 		var obj = JSON.parse(data)
-		thisObj.populateFormSpec('Highest Bid :', obj.BidPrice);
+		console.log(obj);
+		thisObj.populateFormSpec('Highest Bid :', obj.BidPrice, 'left');
+		thisObj.populateFormSpec('Last Bid :', obj.BidPrice, 'right');
 	}
 
 	//V2.0
@@ -584,6 +581,14 @@ function formApplication(){
 	thisObj.populateLastBid = function(data){
 		var obj = JSON.parse(data)
 		thisObj.populateFormSpec('Last Bid :', obj.BidPrice);
+	}
+
+	//V2.1
+	thisObj.populateFormSpec = function(labelVal,contentVal,specPosition){
+		var masterHTML = '<div class="spec-item"><div class="spec-label">'+labelVal+'</div><div class="spec-content">'+contentVal+'</div></div>'
+		var obj = $('.form-spec .'+specPosition);
+		console.log(obj);
+		$('.form-spec .'+specPosition).append(masterHTML);
 	}
 }
 
@@ -725,7 +730,6 @@ function makeRestCall(payload, method, recordType){
 }
 
 togglePutonAuctionButton = function(isItemOnAuc) {
-	console.log(isItemOnAuc)
 	if (isItemOnAuc === 'true') {
 		console.log("Item is already placed on auction, Disable button...");
 		formApp.hideButton();

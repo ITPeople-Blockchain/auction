@@ -309,9 +309,6 @@ function mainApplication(){
   thisObj.iterateItems = function(data, isHomePage){
 		var obj = JSON.parse(data);
 		for (var i=0;i<obj.length;i++){
-			/*console.log(obj[i].ItemDesc)
-			console.log(obj[i].ItemID)
-			console.log(obj[i].ItemPicFN)*/
 		  if (Boolean(isHomePage)){
 				thisObj.populateFrontItem(obj[i].ItemDesc,obj[i].ItemID,obj[i].ItemPicFN)
 			} else {
