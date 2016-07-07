@@ -33,7 +33,6 @@ function formApplication(){
 		//console.log('INIT FORM APPLICATION');
 		thisObj.setPrimaryEvents();
 		thisObj.formLoaded();
-
 		if (!localStorage.getItem("chaincodeHash") || localStorage.getItem("chaincodeHash") === '') {
 			deployChaincode();
 		}
@@ -322,7 +321,7 @@ function formApplication(){
 	thisObj.populateFormImage = function(imgURL){
 		//work around to get the image
 		//imgURL = '../art/artchaincode/'+imgURL;
-		imgURL = '../imgs/'+imgURL;
+		imgURL = './imgs/'+imgURL;
 		$('.form-image .item-image').css('background-image','url('+imgURL+')')
 	}
 
@@ -474,7 +473,7 @@ function formApplication(){
 		thisObj.populateFormField('art_size', obj['ItemSize']);
 		thisObj.populateFormField('art_price', obj['ItemBasePrice']);
 		thisObj.populateFormField('art_owner', obj['CurrentOwnerID']);
-		var imgurl = '../imgs/'+obj['ItemPicFN'];
+		var imgurl = './imgs/'+obj['ItemPicFN'];
 		//alert(imgurl);
 		$('#art_image').css('background-image', 'url(' + imgurl+ ')');
 
@@ -482,8 +481,11 @@ function formApplication(){
 		//peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfInitAucs", "Args": ["2016"]}'
 		var method = "query";
 		//var payload = constructPayload(method, "GetListOfInitAucs", ["2016"]);
-		var payload = constructPayload(method, "GetListOfItemsOnAuc", ["2016"]);
-		makeRestCall(payload, method, obj['ItemID']);
+    var args = [];
+		args.push(obj['ItemID'])
+		args.push("VERIFY")
+		var payload = constructPayload(method, "IsItemOnAuction", args);
+		makeRestCall(payload, method, args[1]);
 	}
 
 	//V2.0
@@ -634,10 +636,9 @@ function constructPayload(methodName, functionName, args){
 	  	"args": args,
 	}
 	//Get this from Nodejs
-	payload.params.secureContext = mainApp.userID;//"dashboarduser_type0_f4df8e532c";
+	//payload.params.secureContext = mainApp.userID;//"dashboarduser_type0_f4df8e532c";
 	// get the payload ID based on method name
 	payload.id = getPayloadID(methodName);
-	console.log(payload);
 	return payload;
 }
 
@@ -696,8 +697,8 @@ function makeRestCall(payload, method, recordType){
 				if (recordType == 'ARTINV') {
 					//pass the result 'res'
 					formApp.populateItemDetail(res);
-				} else if (recordType != '' && recordType.length > 0)  {
-					togglePutonAuctionButton(recordType, res);
+				} else if (recordType === 'VERIFY') {
+					togglePutonAuctionButton(res);
 				}
 				/*else if (recordType == 'BID') {
 					formApp.populateItemBid(res);
@@ -723,19 +724,13 @@ function makeRestCall(payload, method, recordType){
 	});
 }
 
-togglePutonAuctionButton = function(itemID, openAuctionObjs) {
-	var obj = JSON.parse(openAuctionObjs)
-	var isButtonHidden = false;
-	for (var i=0;i<obj.length;i++){
-		if (itemID === obj[i].ItemID) {
-			console.log("Item #"+itemID+" already opened for auction, Disable button...");
-			formApp.hideButton();
-			isButtonHidden = true;
-			break;
-		}
-	}
-	if (!isButtonHidden) {
-		console.log("Item #"+itemID+" not opened yet for auction");
+togglePutonAuctionButton = function(isItemOnAuc) {
+	console.log(isItemOnAuc)
+	if (isItemOnAuc === 'true') {
+		console.log("Item is already placed on auction, Disable button...");
+		formApp.hideButton();
+	} else {
+		console.log("Item is not yet available on auction");
 	}
 }
 

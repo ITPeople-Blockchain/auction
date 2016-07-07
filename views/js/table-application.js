@@ -33,10 +33,23 @@ function tableApplication(){
 		//ADJUST THE INTERVAL TO UPDATE THE CURRENT BIDS BELOW
 		//CURRENTLY SET TO 5 SECONDS
 		var bidInterval = 1000;
-		var updateBids = setInterval(function(){
+		var updateAuctionTimer = setInterval(function(){
 			thisObj.UpdateAuctionTimers();
 		},bidInterval);
 
+		//TODO: Change the polling time
+		//Polling time is set to 3 minutes
+		var closeAuctionsPoll = setInterval(function(){
+			thisObj.CloseAuctionsPoll();
+		}, 60000);
+	}
+
+	thisObj.CloseAuctionsPoll = function(){
+		var method = "invoke";
+		var args = ["2016", "CLAUC"];
+		var functionName = "CloseOpenAuctions";
+		payload = constructPayload(method, functionName, args);
+		RestCall(payload, method, functionName);
 	}
 
 	//V2.1
@@ -188,7 +201,7 @@ function tableApplication(){
 				continue;
 			} else if (prop === 'ItemPicFN') {
 				//TODO: Disable when Auction/User details selected
-				thisObj.populateDetailImage('../imgs/'+obj[prop]);
+				thisObj.populateDetailImage('./imgs/'+obj[prop]);
 
 			} else {
 				thisObj.populateDetailItem(prop,obj[prop]);
@@ -295,11 +308,9 @@ function tableApplication(){
 		if(indexInt%2 == 0) {
 			oddClass = ' odd';
 		}
-        //var masterHTML = '<tr auction-id="'+auctionID+'" class="table-row'+oddClass+'"><td class="table-cell">'+auctionID+'</td><td class="table-cell">'+itemID+'</td><td class="table-cell">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="bid-open" item-id="'+itemID+'">Bid Now</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="4"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"></div></div></div><div class="detail-content"><div class="detail-body"></div><div class="detail-image"></div></div><div class="detail-footer"></div></td></tr>';
+    //var masterHTML = '<tr auction-id="'+auctionID+'" class="table-row'+oddClass+'"><td class="table-cell">'+auctionID+'</td><td class="table-cell">'+itemID+'</td><td class="table-cell">'+ownerID+'</td><td class="table-cell action-cell button-cell" action-type="function" function-name="bid-open" item-id="'+itemID+'">Bid Now</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="4"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"></div></div></div><div class="detail-content"><div class="detail-body"></div><div class="detail-image"></div></div><div class="detail-footer"></div></td></tr>';
 		var masterHTML = '<tr auction-id="'+auctionID+'" class="table-row'+oddClass+'"><td class="table-cell">'+auctionID+'</td><td class="table-cell">'+itemID+'</td><td class="table-cell">'+ownerID+'</td><td class="table-cell" name="timer-display" end-time="'+endTime+'"></td><td class="table-cell action-cell button-cell" action-type="function" function-name="bid-open" item-id="'+auctionID+"-"+itemID+"-"+ownerID+"-"+reservedPrice+'">Bid Now</td></tr><tr class="table-detail odd"><td class="detail-container" colspan="5"><div class="detail-header"><div class="detail-actions"><div class="action-button" function-name="detail-close" action-type="function"></div></div></div><div class="detail-content"><div class="detail-body"></div><div class="detail-image"></div></div><div class="detail-footer"></div></td></tr>';
-
 		$('.table-body').append(masterHTML)
-
 	}
 
 	//V2.1
@@ -307,7 +318,9 @@ function tableApplication(){
 
 		$('.table-cell[name="timer-display"]').each(function(index){
 			var endTime = parseInt($(this).attr('end-time'));
-			var endTimeDiff = (new Date(endTime).getTime())-(new Date().getTime());
+			var now = new Date();
+			var currentUtcTime = new Date(now.getTime() + now.getTimezoneOffset() * 60000).getTime();
+			var endTimeDiff = new Date(endTime).getTime()-currentUtcTime;
 			if (endTimeDiff <= 0) {
 				//console.log('Oops !!! Time is over ...  No more bids accepted');
 				$(this).html('<b>Auction Closed</b>');
@@ -315,7 +328,7 @@ function tableApplication(){
 				$(this).next().hide();
 				// Remove Item from list after 2 seconds
 				/*var loop_handle = setTimeout(function() {
-					//$(this).parent().remove();
+					$(this).parent().remove();
 				},'2000');*/
 
 				return;
@@ -390,8 +403,8 @@ function tableApplication(){
 		thisObj.auctionID = res[0];
 		thisObj.populateButtonData('buy-now', '$ '+(parseInt(res[3]) * 1.4).toString());
 		//ADJUST THE INTERVAL TO UPDATE THE CURRENT BIDS BELOW
-		//CURRENTLY SET TO 10 SECONDS
-		var bidInterval = 10000;
+		//CURRENTLY SET TO 30 SECONDS
+		var bidInterval = 30000; // TODO: Change the polling time
 		var updateBids = setInterval(function(){
 			//TODO: Make a rest call here
 
@@ -490,6 +503,8 @@ RestCall = function (payload, method, functionName, auctionID){
 				if ( functionName === 'OpenAuctionForBids'){
 					console.log("Open Auction for BIDS is successful !!");
 					tableApp.finishTableAuction(auctionID);
+				} else if (functionName === 'CloseOpenAuctions'){
+					console.log("Checking if any auctions can be closed	");
 				}
 			}else {
 				console.log("Error : Invalid request")
