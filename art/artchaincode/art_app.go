@@ -296,8 +296,7 @@ func main() {
 	} else {
 		fmt.Println("----------------- STARTED IN NET MODE -------------------- ")
 		//set chaincode path for NET MODE
-		//ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
-		ccPath = fmt.Sprintf("%s/src/github.com/ratnakar-asara/auction/art/artchaincode/", gopath)
+		ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
 	}
 
 	// Start the shim -- running the fabric
