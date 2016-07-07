@@ -27,22 +27,22 @@ The typical business process is shown below
 
 ###Registering Stakeholder Accounts
 
-Artists, Traders, Dealers own **Assets** (Items). Auction Houses, Banks, Insurance Companies and Service Providers play a role in the auction process. To conduct business on the block chain, the stakeholder has to open an account on the block chain. In the production world, prior to opening an account, all of the stake-holder details may be authenticated by another blockchain like an IDaaS (Identity-as-a-Service). There are various types of stake holders as listed above, each with a different interest.
+Artists, Traders, Dealers own **Assets** (Items). Auction Houses, Banks, Insurance Companies and Service Providers play a role in the auction process. To conduct business on the block chain, the stakeholder has to open an account on the block chain. In the production world, prior to opening an account, all of the stake-holder details may be authenticated by another blockchain like an IDaaS (Identity-as-a-Service). There are various stake holders as listed above, each with a different interest.
 
 ###Registering Assets or Items
 
 The Seller (Trader) who owns **Assets** must register the asset on the block chain in order to conduct business. When an **Asset** is submitted for registration, the chaincode does the following:
-    * Checks if the owner is registered
+    * Checks if the owner has a registered account
     * Converts any presented "Certificate of Authenticity" or a credibly issued image to a byte stream, generates a key, encrypts the byte stream using the key and stores the image on the BC. It provides the key to the **owner** for safe keeping and future reference
     * Makes entries into the Item History so that the lifecycle of the Asset can be reviewed at any time
 
 ###Making a Request to Auction an Asset
 
-When the owner of an Asset sees an opportunity to make money, they would like to auction the Asset. They engage an Auction House and make a **request to auction** the Asset. The request always specifies a **Reserve Price"**. Sometimes, the seller (owner) may additionally specify a **"Buy It Now"** price as well. When the request is made, the item, owner and the auction house are all validated. (The chaincode simply validates that they are all registered on the BC).
+When the owner of an Asset sees an opportunity to make money, they would like to auction the Asset. They engage an Auction House and make a **request to auction** the Asset. The request always specifies a **"Reserve Price"**. Sometimes, the owner may additionally specify a **"Buy It Now"** price as well. When the request is made, the item, owner and the auction house are all validated. (The chaincode simply validates that they are all registered on the BC).
 
-The Auction House will most likely get the Asset authenticated and valued before deciding to accept the item. One of the ways by which they could do some preliminary authentication is to request the **seller** to enter his **private key**, account-id and the registered item number. While the item number and account identifier is a straight validation, the key will be used to decrypt and view the stored "certificate of authenticity or image". The state of the Auction is set to **INIT** at this point, until it is **OPENED**.
+The Auction House will most likely, behind the scene, get the Asset authenticated and determine the valuation before deciding to accept the item. One of the ways by which they could do some preliminary authentication is to request the **seller** to enter his **private key**, account-id and the registered item number into the client application. While the item number and account identifier is a straight validation, the key will be used to decrypt and retrieve the stored "certificate of authenticity or image". The state of the Auction is set to **INIT** at this point, until the Auction House is ready to **OPEN** the Asset for bids.
 
-###Opening the Auction Item for Bids
+###Opening the Auction for Bids
 
 The Auction House will choose a time frame to place the item on auction and **OPEN** it up for accepting bids from potential Buyers. They may, if applicable, advertise the **BuyItNow** price.
 
@@ -109,8 +109,10 @@ The following Invoke and Query APIs are available from both CLI and REST, and ha
                 * GetListOfItemsOnAuc
                 * GetListOfOpenAucs
                 * ValidateItemOwnership
+                * IsItemOnAuction
 
 ##Environment Setup
+
 Please review instructions on setting up the [Development Environment](https://github.com/hyperledger/fabric/blob/master/docs/dev-setup/devnet-setup.md) as well as the setting up the [Sandbox Environment](https://github.com/hyperledger/fabric/blob/master/docs/API/SandboxSetup.md) to execute the chaincode.
 
 ## Running the Application
@@ -141,7 +143,10 @@ Please review instructions on setting up the [Development Environment](https://g
 ```
 ###Run the following shell scripts
 
+The scripts are provided for the convenience of understanding how to use the application as well as testing in your specific cloned environment. The scripts execute all API calles in CLI mode. In CLI mode, the peer and the chaincode live within the same container. However, these scripts will not work well in NET mode. To test the application in NET mode, follow the instructions on using the UI to make the API calls.
+
 #### PostUsers
+
 The PostUsers script inserts a set of users into the database. Today, the only validation done is to check if the user 
 ID is an integer.
 TODO: In a future version, the user identity will be validated against the IDaaS Blockchain prior to 
@@ -150,6 +155,7 @@ inserting into the database
 `./PostUsers`
 
 #### PostItems
+
 The PostItems script inserts a set of ART ASSETS into the database. Before inserting the asset the chaincode checks 
 if the CurrentOwner is registered as a User. Based on the image file name (in future this could be a title or some
 ownership document) is retrieved and converted to a byte array ([]byte). An AES Key is generated, the byte array is encrypted
@@ -292,42 +298,56 @@ This is a function designed specifically for Bluemix situations where the peer a
 **GetItem**:
 
 Retrieves an Asset record by asset ID.
-   
+
+**Usage (CLI mode)**
+
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItem", "Args": ["1000"]}'
  
 **GetUser**:
 
 Retrieves an user record by user or stakeholder ID.
-   
+
+**Usage (CLI mode)**
+
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetUser", "Args": ["100"]}'
    
 **GetAuctionRequest**:
 
 Retrieves an auction request by auction request ID.
 
+**Usage (CLI mode)**
+
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetAuctionRequest", "Args": ["1111"]}'
 
 **GetTransaction**:
 
 Retrieves an transaction posted against an auction by auction request ID and asset ID.
-   
+
+**Usage (CLI mode)**
+
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetTransaction", "Args": ["1111", "1000"]}'
 
 **GetBid**:
 
 Retrieves a single bid by auction ID and bid number
-   
+
+**Usage (CLI mode)**
+
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetBid",  "Args": ["1111", "5"]}'
    
 **GetLastBid**:
 
 Retrieves the last submitted bid. Since bids are submitted in random , and the only requirement is that the bid price be higher than the reserve price, the last received bid need not be the highest bid.
-   
+
+**Usage (CLI mode)**
+
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid","Args": ["1111"]}'
 
 **GetHighestBid**:
 
 Retrieves the highest bid submitted against the auction thus far. If the auction has expired, then the highest bid is the highest bid for the auction.
+
+**Usage (CLI mode)**
 
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetHighestBid", "Args": ["1111"]}'
    
@@ -335,17 +355,23 @@ Retrieves the highest bid submitted against the auction thus far. If the auction
 
 Retrieves the total number of bids received at any point in time. If the auction has expired, it represents the total number of bids received against that auction.
 
+**Usage (CLI mode)**
+
    ./peer chaincode query -l golang -n mycc -c '{"Function": "getNoOfBidsReceived", "Args": ["1111"]}'
 
 **GetListOfBids**:
    
 Retrievs all the bids received against an auction. each row in the list represents a bid object.   
-   
+
+**Usage (CLI mode)**
+
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfBids", "Args": ["1111"]}'
 
 **GetItemLog**:
 
 Retrieves the history of an asset. The log is updated when an asset is registered, put on auction, post auction, transfered etc.
+
+**Usage (CLI mode)**
 
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemLog","Args": ["1000"]}'
    
@@ -353,11 +379,15 @@ Retrieves the history of an asset. The log is updated when an asset is registere
 
 Retrieves a list of assets by asset category. If only the first key is provided, the query retrieves all assets. "2016" is hard-coded as a fixed first key. This is a band-aid solution to retrieve all records. This is a band-aid solution to retrieve all records. The following query retrieves all assets of category "modern".
 
+**Usage (CLI mode)**
+
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "modern"]}'
 
 **GetUserListByCat**:
 
 Retrieves a list of stakeholders or account holders by stakeholder type. If only the first key is provided, the query retrieves all assets. "2016" is hard-coded as a fixed first key. This is a band-aid solution to retrieve all records. The following query retrieves all stakeholders of type "AH" or auction houses.
+
+**Usage (CLI mode)**
 
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "AH"]}'
 
@@ -365,11 +395,15 @@ Retrieves a list of stakeholders or account holders by stakeholder type. If only
 
 This query retrieves all assets which have been submitted for auction. Their status is "Init". The "2016" is a fixed key to denote all auctions in 2016.
 
+**Usage (CLI mode)**
+
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfInitAucs","Args": ["2016"]}'
    
 **GetListOfOpenAucs**:
 
 Thsi query retrieves a list of all assets whose auctions have been "OPEN"ed for receiving bids. The "2016" is a fixed key to denote all auctions in 2016.
+
+**Usage (CLI mode)**
 
    ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfOpenAucs", "Args": ["2016"]}'
    
@@ -377,8 +411,23 @@ Thsi query retrieves a list of all assets whose auctions have been "OPEN"ed for 
 
 Validates the ownership of an asset. Checks for valid account id, asset id and retrieves asset from blockchain using the owners's key.
 
-   * ./peer chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership",   "Args": ["1000", "500", "avQX6JfTnELAY4mkRhOr8P7vmz0H3aAIuFGsGiSD5UQ="]}'
+**Usage (CLI mode)**
 
-## Runnning the Application using the Web Browser
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership",   "Args": ["1000", "500", "avQX6JfTnELAY4mkRhOr8P7vmz0H3aAIuFGsGiSD5UQ="]}'
+
+**IsItemOnAuction**:
+
+Checks whether an Asset has an **auction request** posted, or currently on auction and returns a boolean true or false.
+
+**Usage (CLI mode)**
+
+   ./peer chaincode query -l golang -n mycc -c '{"Function": "IsItemOnAuction", "Args": ["1999", "VERIFY"]}'
+
+##Open Items
+
+* Once an auction request is posted or an auction is open for bids, there is no api to remove the auction request or close the auction prematurely and rejecting all bids received
+* In the current version, the image is encrypted and stored in the blockchain. However, in future, it is envisioned that only the hash of the image  along with the URI to the location of the image will be saved
+
+##Runnning the Application using the Web Browser
 
 The chaincode functions can be accessed via the browser. To kick off the application, load the index.html file via the browser. We have tested the application by pre-loading some data via the CLI and using the browser to fire up a simple auction
