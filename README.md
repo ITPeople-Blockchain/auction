@@ -3,6 +3,8 @@
 #Art Auction Blockchain Application
 Credits: Ratnakar Asara, Nishi Nidamarty, Ramesh Thoomu, Adam Gordon and Mohan Venkataraman
 
+**Disclaimer:** The images used in this sample PoC application have been downloaded from publicly available images on the internet, and the copyright belongs to the respective owners. The usage here is strictly for non-commercial purposes as sample data. We recommend that users create their own sample data as appropriate. All names, addresses and accounts numbers used in the sample data are fictitous. The information provided in this README.md is subject to change.
+
 ##Introduction
 
 This Hyperledger/Fabric is an implementation of blockchain technology, leveraging familiar and proven technologies. It is a modular architecture allowing pluggable implementations of various function. It features powerful container technology to host any mainstream language for smart contracts development. Chaincode (smart contracts) or blockchain applications run on the fabric. Chaincode is written in Go language 
@@ -444,10 +446,12 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
       ./peer chaincode query -l golang -n mycc -c '{"Function": "IsItemOnAuction", "Args": ["1999", "VERIFY"]}'
 
-##Open Items
+##Notes
 
 * Once an auction request is posted or an auction is open for bids, there is no api to remove the auction request or close the auction prematurely and rejecting all bids received
 * In the current version, the image is encrypted and stored in the blockchain. However, in future, it is envisioned that only the hash of the image  along with the URI to the location of the image will be saved
+* Not all the API calls have been implemented on the UI which will have a fuller version in coming releases
+* Even though the chaincode allows the user to specify a "Reserve Price" and a "Buy-it-Now Price" , the current UI automatically calculates "Reserve Price" as 40% of the "Item price", and "Buy-it-Now Price" as 40% of "Reserve Price"
 
 ##Runnning the Application using the Web Browser
 
