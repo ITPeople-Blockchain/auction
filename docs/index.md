@@ -24,7 +24,7 @@ This application deals with auctioning ART on the block chain. The blockchain ma
 * Artists (ART)
 
 The typical business process is shown below
-![Business Process](docs/images/art_process.png)
+![Business Process](/docs/images/art_process.png)
 
 ###Registering Stakeholder Accounts
 
@@ -453,6 +453,6 @@ After the timer expires, the Close auction should get invoked and the highest bi
 * Not all the API calls have been implemented on the UI which will have a fuller version in coming releases
 * Even though the chaincode allows the user to specify a "Reserve Price" and a "Buy-it-Now Price" , the current UI automatically calculates "Reserve Price" as 40% of the "Item price", and "Buy-it-Now Price" as 40% of "Reserve Price"
 
-##Runnning the Application using the Web Browser
+##Running the Application using the Web Browser
 
 The chaincode functions can be accessed via the browser. To kick off the application, load the index.html file via the browser. We have tested the application by pre-loading some data via the CLI and using the browser to fire up a simple auction
