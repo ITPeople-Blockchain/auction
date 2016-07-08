@@ -23,7 +23,7 @@ This application deals with auctioning ART on the block chain. The blockchain ma
 * Artists (ART)
 
 The typical business process is shown below
-![Business Process](movee2016/auction/tree/master/docs/images)
+![Business Process](docs/images/art_process.png)
 
 ###Registering Stakeholder Accounts
 
