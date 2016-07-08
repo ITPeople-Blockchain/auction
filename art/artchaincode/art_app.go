@@ -267,6 +267,7 @@ func QueryFunction(fname string) func(stub *shim.ChaincodeStub, function string,
 		"GetListOfOpenAucs":     GetListOfOpenAucs,
 		"ValidateItemOwnership": ValidateItemOwnership,
 		"IsItemOnAuction":       IsItemOnAuction,
+		"GetVersion":            GetVersion,
 	}
 	return QueryFunc[fname]
 }
@@ -329,6 +330,11 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 		if err != nil {
 			return nil, fmt.Errorf("Init(): InitLedger of %s  Failed ", val)
 		}
+	}
+	// Update the ledger with the Application version
+	err = stub.PutState("version", []byte(strconv.Itoa(23)))
+	if err != nil {
+		return nil, err
 	}
 
 	fmt.Println("Init() Initialization Complete  : ", args)
@@ -407,6 +413,35 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 		return nil, errors.New("Query() : Object not found : " + args[0])
 	}
 	return buff, err
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Retrieve Auction applications version Information
+// This API is to check whether application has been deployed successfully or not
+// example:
+// ./peer chaincode query -l golang -n mycc -c '{"Function": "GetVersion", "Args": ["version"]}'
+//
+//////////////////////////////////////////////////////////////////////////////////////////
+func GetVersion(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+	if len(args) < 1 {
+		fmt.Println("GetVersion() : Requires 1 argument 'version'")
+		return nil, errors.New("GetVersion() : Requires 1 argument 'version'")
+	}
+	// Get version from the ledger
+	version, err := stub.GetState(args[0])
+	if err != nil {
+		jsonResp := "{\"Error\":\"Failed to get state for version\"}"
+		return nil, errors.New(jsonResp)
+	}
+
+	if version == nil {
+		jsonResp := "{\"Error\":\" auction application version is invalid\"}"
+		return nil, errors.New(jsonResp)
+	}
+
+	jsonResp := "{\"version\":\"" + string(version) + "\"}"
+	fmt.Printf("Query Response:%s\n", jsonResp)
+	return version, nil
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
