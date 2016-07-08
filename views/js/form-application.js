@@ -312,7 +312,9 @@ function formApplication(){
 	thisObj.populateFormField = function(fieldID,fieldData){
 		$('#'+fieldID).val(fieldData);
 	}
-
+	thisObj.clearFormOptions = function(selectID){
+	    $('#'+selectID).html('');
+	}
 	thisObj.populateFormOption = function(selectID,optionData){
 		//console.log('POPULATE FORM OPTION');
 		var masterHTML = '<option value="'+optionData+'">'+optionData+'</option>'
@@ -327,6 +329,7 @@ function formApplication(){
 	}
 
 	thisObj.populateFormIndicator = function(labelVal,contentVal){
+		$('.form-indicators').html('');
 		var masterHTML = '<div class="indicator-item"><div class="indicator-label">'+labelVal+'</div><div class="indicator-content">'+contentVal+'</div></div>'
 		$('.form-indicators').append(masterHTML);
 	}
@@ -476,7 +479,7 @@ function formApplication(){
 		//peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfInitAucs", "Args": ["2016"]}'
 		var method = "query";
 		//var payload = constructPayload(method, "GetListOfInitAucs", ["2016"]);
-    var args = [];
+        var args = [];
 		args.push(obj['ItemID'])
 		args.push("VERIFY")
 		var payload = constructPayload(method, "IsItemOnAuction", args);
@@ -488,6 +491,10 @@ function formApplication(){
 
 		//PARSE DATA RETURNED FROM API
 		//USE "populateFormField" and/or "populateFormOption" function above to add data to DOM
+		thisObj.clearFormOptions('art_image');
+		thisObj.clearFormOptions('art_owner');
+		thisObj.clearFormOptions('art_description');
+		thisObj.clearFormOptions('art_size');
 
 		thisObj.populateFormOption('art_image','Original');
 		thisObj.populateFormOption('art_image','Reprint');
@@ -513,7 +520,7 @@ function formApplication(){
 
 		//PARSE DATA RETURNED FROM API
 		//USE "populateFormField" and/or "populateFormOption" function above to add data to DOM
-
+		thisObj.clearFormOptions('user_type');
 	  // Auction House (AH), Bank (BK), Buyer or Seller (TR), Shipper (SH), Appraiser (AP)
 		thisObj.populateFormOption('user_type','Buyer/Seller');
 		thisObj.populateFormOption('user_type','Auction House');
@@ -568,7 +575,7 @@ function formApplication(){
 	thisObj.populateHeighestBid = function(data){
 		var obj = JSON.parse(data)
 		thisObj.populateFormSpec('Highest Bid :', obj.BidPrice, 'left');
-		thisObj.populateFormSpec('Last Bid :', obj.BidPrice, 'right');
+		//thisObj.populateFormSpec('Last Bid :', obj.BidPrice, 'right');
 	}
 
 	//V2.0
@@ -579,15 +586,15 @@ function formApplication(){
 
 	thisObj.populateLastBid = function(data){
 		var obj = JSON.parse(data)
-		thisObj.populateFormSpec('Last Bid :', obj.BidPrice);
+
+		//thisObj.populateFormSpec('Last Bid :', obj.BidPrice);
 	}
 
 	//V2.1
 	thisObj.populateFormSpec = function(labelVal,contentVal,specPosition){
+		$('.form-spec.'+specPosition).html('');
 		var masterHTML = '<div class="spec-item"><div class="spec-label">'+labelVal+'</div><div class="spec-content">'+contentVal+'</div></div>'
-		var obj = $('.form-spec .'+specPosition);
-		console.log(obj);
-		$('.form-spec .'+specPosition).append(masterHTML);
+		$('.form-spec.'+specPosition).append(masterHTML);
 	}
 }
 
@@ -625,7 +632,7 @@ function constructPayload(methodName, functionName, args){
 	if (Boolean(isInit)) {
 		payload.params.chaincodeID = {
 			"path": path,
-			//Uncomment for DEV mode
+			//Don't use mycc as chaincode for net mode
 			//"name": "mycc" //localStorage.getItem("chaincodeHash")
 		}
 	} else {
