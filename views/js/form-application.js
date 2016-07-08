@@ -567,7 +567,6 @@ function formApplication(){
 	//TODO: Combine the below two functions
 	thisObj.populateHeighestBid = function(data){
 		var obj = JSON.parse(data)
-		console.log(obj);
 		thisObj.populateFormSpec('Highest Bid :', obj.BidPrice, 'left');
 		thisObj.populateFormSpec('Last Bid :', obj.BidPrice, 'right');
 	}
