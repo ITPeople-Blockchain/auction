@@ -7,10 +7,9 @@ Credits: Ratnakar Asara, Nishi Nidamarty, Ramesh Thoomu, Adam Gordon and Mohan V
 
 This Hyperledger/Fabric is an implementation of blockchain technology, leveraging familiar and proven technologies. It is a modular architecture allowing pluggable implementations of various function. It features powerful container technology to host any mainstream language for smart contracts development. Chaincode (smart contracts) or blockchain applications run on the fabric. Chaincode is written in Go language 
 
-The original intention of this application was to understand how to write a Go application on the Hyperledger/Fabric. This initial version was written to understand the different chaincode api's, the boundary that separates what goes into the blockchain and what lives within the enterprise application, usage of database features, error management etc.
+The original intention of this application was to understand how to write a Go application on the Hyperledger/Fabric. This initial version was written to understand the different chaincode api's, the boundary that separates what goes into the blockchain and what lives within the enterprise application, usage of database features, error management etc. <br> </br>
 
-![auction_chain](docs/images/auction_chain.png)
-
+<img src="docs/images/auction_chain.png" width="700">
 ## Application Description
 
 This application deals with auctioning ART on the block chain. The blockchain makes sense here as there are many different stakeholders and can leverage the benefits of the "Network Effect". This application deals with the following stake holders:
