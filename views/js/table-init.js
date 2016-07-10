@@ -1,1 +1,0 @@
-var tableApp = new tableApplication();

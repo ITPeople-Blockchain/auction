@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta content="initial-scale=1.0, user-scalable=no" name="viewport">
+	<meta charset="utf-8">
+
+	<title>IT People :: IBM Blockchain Application</title>
+	<link href='https://fonts.googleapis.com/css?family=Lato:400,100,100italic,300,300italic,400italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
+	<link href='https://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
+	<link href="style/style.css" media="screen" rel="stylesheet" type="text/css">
+	<link href="style/style-form-list.css" media="screen" rel="stylesheet" type="text/css">
+	<script src="js/jquery-2.2.4.min.js"></script>
+	<script src="js/jquery-mousewheel.js"></script>
+	<script src="js/main.js"></script>
+	<script src="js/main-application.js"></script>
+	<script src="js/main-init.js"></script>
+	<script src="js/form.js"></script>
+	<script src="js/form-application.js"></script>
+	<script src="js/form-init.js"></script>
+	<script src="js/table.js"></script>
+  <script src="js/table-application.js"></script>
+  <script src="js/table-init.js"></script>
+</head>
+
+<body class="form-page" name="item-auction">
+
+<div class="site-header">
+	<div class="header-left">
+		<div class="header-branding"></div>
+	</div>
+	<div class="header-right">
+		<div class="header-menu">
+			<div class="menu-item action-load-form" form-name="user-register">
+				<div class="item-label">Create Account</div>
+			</div>
+			<div class="menu-item">
+				<div class="item-label primary-event" menu-name="actions">Actions</div>
+				<div class="item-content">
+					<div class="sub-menu">
+						<div class="menu-item action-load-form" form-name="item-register">
+							<div class="item-label">Register Item</div>
+						</div>
+						<!--div class="menu-item action-load-form" form-name="item-auction">
+							<div class="item-label">Auction Item</div>
+						</div-->
+						<div class="menu-item action-load-form" form-name="list-bidding">
+							<div class="item-label">Bid on Item</div>
+						</div>
+						<div class="menu-item action-load-list" list-name="list-auctions">
+							<div class="item-label">Auctions</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="menu-item">
+				<div class="item-label primary-event" menu-name="categories">Categories</div>
+				<div class="item-content">
+					<div class="sub-menu">
+						<div class="menu-item action-load-page" page-name="category-paintings" id="modern">
+							<div class="item-label">Modern</div>
+						</div>
+						<div class="menu-item action-load-page" page-name="category-paintings" id="landscape">
+							<div class="item-label">Landscape</div>
+						</div>
+						<!--div class="menu-item">
+							<div class="item-label">Category Two</div>
+						</div>
+						<div class="menu-item">
+							<div class="item-label">Category Three</div>
+						</div>
+						<div class="menu-item">
+							<div class="item-label">Category Four</div>
+						</div>
+						<div class="menu-item">
+							<div class="item-label">Category Five</div>
+						</div-->
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- ["1111", "AUCREQ", "1000", "200", "100", "04012016", "1200", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]
+	AuctionID      string
+	RecType        string // AUCREQ
+	ItemID         string
+	AuctionHouseID string // ID of the Auction House managing the auction
+	SellerID       string // ID Of Seller - to verified against the Item CurrentOwnerId
+	RequestDate    string // Date on which Auction Request was filed
+	ReservePrice   string // reserver price > previous purchase price
+	Status         string // INIT, OPEN, CLOSED (To be Updated by Trgger Auction)
+	OpenDate       string // Date on which auction will occur (To be Updated by Trigger Auction)
+	CloseDate      string // Date and time when Auction will close (To be Updated by Trigger Auction)
+
+-->
+<div class="site-main">
+	<div class="main-content">
+		<div class="form-container" id="item-auction">
+			<div class="form-header">
+				<div class="form-title">Auction Item</div>
+				<div class="form-messages">
+					<div class="form-message success">Item submitted for auction successfully</div>
+					<div class="form-message error">Item submission failed</div>
+				</div>
+			</div>
+			<div class="form-content">
+				<div class="form-body">
+					<div class="body-column column-1 half">
+						<div class="form-item">
+							<div class="item-label">Aution ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="auction_id" id="auction_id" type="text" value="1111" tabindex="1">
+								</div>
+							</div>
+						</div>
+						<div class="form-item">
+							<div class="item-label">Item ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="auction_house" id="auction_house" type="text" value="1000" tabindex="2">
+								</div>
+							</div>
+						</div>
+						<div class="form-item">
+							<div class="item-label">Auction House ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="auction_house" id="auction_house" type="text" value="200" tabindex="3">
+								</div>
+							</div>
+						</div>
+						<div class="form-item">
+							<div class="item-label">Seller ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="auction_seller" id="auction_seller" type="text" value="100" tabindex="4">
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="body-column column-2 half">
+						<div class="form-item">
+							<div class="item-label">Request Date</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="auction_date" id="auction_date" type="text" value="04012016" tabindex="5">
+								</div>
+							</div>
+						</div>
+						<div class="form-item">
+							<div class="item-label">Reserve Price</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="auction_reserve" id="auction_reserve" type="text" value="3200" tabindex="6">
+								</div>
+							</div>
+						</div>
+						<div class="form-item" style="visibility: hidden;">
+							<div class="item-label">Art ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="auction_status" id="auction_status" type="text" value="INIT" tabindex="7">
+								</div>
+							</div>
+						</div>
+						<div class="form-item" style="visibility: hidden;">
+							<div class="item-label">Art ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="auction_opendate" id="auction_opendate" type="text" value="2016-05-20 11:00:00.3 +0000 UTC" tabindex="8">
+								</div>
+							</div>
+						</div>
+						<div class="form-item" style="visibility: hidden;">
+							<div class="item-label">Art ID</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="auction_closedate" id="auction_closedate" type="text" value="2016-05-23 11:00:00.3 +0000 UTC" tabindex="9">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="form-footer">
+				<div class="form-button" tabindex="10">
+					<div class="button-label">Register</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<div class="site-footer">
+	<div class="footer-right">Blockchain app designed and developed by IT People</div>
+</div>
+
+</body>
+</html>

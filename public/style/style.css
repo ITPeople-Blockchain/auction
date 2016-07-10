@@ -1,0 +1,197 @@
+body,
+html {
+	padding:0;
+	margin:0;
+	width: 100%;
+	height: 100%;
+	font-family: "Lato", sans-serif;
+	overflow-x: hidden;
+}
+
+body {
+	background-image: url('img/bkg-main-dark.jpg');
+    background-position: 50% 100%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment:fixed;
+}
+
+.site-header {
+	width: 100%;
+	height: 100px;
+	position: absolute;
+	color: #FFF;
+	font-size: 20px;
+	z-index: 1;
+	background-color: #123d70;
+}
+
+.site-header .header-branding {
+	width:60%;
+	height: 60px;
+	position: absolute;
+	top: 20%;
+	left: 20px;
+	background-image: url('img/logo-white-large.svg');
+	background-size: auto 100%;
+	background-position: 0 50%;
+	background-repeat: no-repeat;
+	cursor: pointer;
+}
+
+.site-header .header-right {
+	position: absolute;
+	right: 0;
+}
+
+.header-menu {
+	font-family: "Montserrat", sans-serif;
+	padding: 0 30px;
+	line-height: 100px;
+	text-transform: uppercase;
+	font-weight: 300;
+}
+
+.header-menu .menu-item {
+	display: inline-block;
+	padding-right: 20px;
+	margin-right: 20px;
+	cursor: pointer;
+	position: relative;
+}
+
+.header-menu .menu-item .item-label:hover {
+	text-decoration: underline;
+}
+
+.header-menu .item-content {
+	display: none;
+	position: absolute;
+	top: 100px;
+	background-color: rgba(68,103,144,.8);
+	font-size: 15px;
+	line-height: 20px;
+	width: auto;
+	right: 0;
+	padding: 10px 0;
+}
+
+.header-menu .menu-item.active .item-content {
+	display: inline-block;
+}
+
+.header-menu .sub-menu {
+	font-family: "Lato", sans-serif;
+	text-align: right;
+	white-space: nowrap;
+}
+
+.header-menu .sub-menu .menu-item {
+	display: block;
+	margin: 0;
+	padding: 10px 20px 10px 30px;
+}
+
+.header-menu .sub-menu .menu-item:hover {
+	background-color: rgba(255,255,255,.1);
+}
+
+.header-menu .sub-menu .menu-item .item-label:hover {
+	text-decoration: none;
+}
+
+.site-header .menu-item[form-name="user-register"]{
+	padding-left: 40px;
+	background-image: url('img/icon-user-add.svg');
+	background-size: 35px 35px;
+	background-position: 0 50%;
+	background-repeat: no-repeat;
+}
+
+.site-header .item-label[menu-name="actions"]{
+	padding-left: 32px;
+	background-image: url('img/icon-actions.svg');
+	background-size: 25px 25px;
+	background-position: 0 50%;
+	background-repeat: no-repeat;
+}
+
+.site-header .item-label[menu-name="categories"]{
+	padding-left: 31px;
+	background-image: url('img/icon-categories.svg');
+	background-size: 23px 23px;
+	background-position: 0 50%;
+	background-repeat: no-repeat;
+}
+
+
+
+
+
+.site-main {
+    
+    position: relative;
+    z-index: 0;
+    height: 100%;
+}
+
+.main-content {
+	max-width: 1200px;
+    margin: auto;
+    padding: 30px;
+    padding-top: 120px;
+    padding-bottom: 120px;
+}
+
+
+
+
+
+
+
+
+
+
+.site-footer {
+	height: 75px;
+	position: absolute;
+	width: 100%;
+	bottom: 0;
+	background-color: #123d70;
+	padding: 0;
+}
+
+.site-footer .footer-left,
+.site-footer .footer-right {
+	line-height: 75px;
+	color: #FFF;
+	text-transform: uppercase;
+	font-size: 13px;
+	padding: 0 30px
+}
+
+.site-footer .footer-left {
+	float: left;
+}
+
+.site-footer .footer-right {
+	float: right;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,1 +1,0 @@
-var mainApp = new mainApplication();
