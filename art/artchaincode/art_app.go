@@ -287,7 +287,7 @@ func main() {
 
 	// maximize CPU usage for maximum performance
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	fmt.Println("Starting Item Auction Application chaincode BlueMix ver 24 Dated 2016-07-06 05.30.00 ")
+	fmt.Println("Starting Item Auction Application chaincode BlueMix ver 0.25 Dated 2016-07-17 15.20.00 ")
 
 	gopath = os.Getenv("GOPATH")
 	if len(os.Args) == 2 && strings.EqualFold(os.Args[1], "DEV") {
@@ -1040,10 +1040,10 @@ func IsItemOnAuction(stub *shim.ChaincodeStub, function string, args []string) (
 	itemExists := false
 	err := VerifyIfItemIsOnAuction(stub, args[0])
 	if err != nil {
-		fmt.Println("IsItemOnAuction() : Failed Item# ",args[0]," is either initiated or opened for Auction ")
+		fmt.Println("IsItemOnAuction() : Failed Item# ", args[0], " is either initiated or opened for Auction ")
 		itemExists = true
 	}
-	fmt.Println("Is Item# ", args[0]," on-auction : ", itemExists)
+	fmt.Println("Is Item# ", args[0], " on-auction : ", itemExists)
 	ie, _ := json.Marshal(itemExists)
 	return ie, nil
 }
@@ -1774,20 +1774,20 @@ func JSONtoAucReq(areq []byte) (AuctionRequest, error) {
 }
 
 //////////////////////////////////////////////////////////
-// Converts an BID to a JSON String
+// Converts BID Object to JSON String
 //////////////////////////////////////////////////////////
 func BidtoJSON(myHand Bid) ([]byte, error) {
 
 	ajson, err := json.Marshal(myHand)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("BidtoJSON error: ", err)
 		return nil, err
 	}
 	return ajson, nil
 }
 
 //////////////////////////////////////////////////////////
-// Converts an User Object to a JSON String
+// Converts JSON String to BID Object
 //////////////////////////////////////////////////////////
 func JSONtoBid(areq []byte) (Bid, error) {
 
@@ -1822,10 +1822,10 @@ func JSONtoUser(user []byte) (UserObject, error) {
 	ur := UserObject{}
 	err := json.Unmarshal(user, &ur)
 	if err != nil {
-		fmt.Println("UsertoJSON error: ", err)
+		fmt.Println("JSONtoUser error: ", err)
 		return ur, err
 	}
-	fmt.Println("UsertoJSON created: ", ur)
+	fmt.Println("JSONtoUser created: ", ur)
 	return ur, err
 }
 
@@ -2912,24 +2912,38 @@ func BuyItNow(stub *shim.ChaincodeStub, function string, args []string) ([]byte,
 
 	// Process Final Bid - Turn it into a Transaction
 	Avalbytes, err := GetHighestBid(stub, "GetHighestBid", []string{args[0]})
-	bid, err := JSONtoBid(Avalbytes)
-	if err != nil {
-		return nil, errors.New("BuyItNow() : JSONtoBid Error")
+	hBidFlag := true
+	if Avalbytes == nil {
+		fmt.Println("BuyItNow(): No bids available, no change in Item Status - PostTransaction() Completed Successfully ")
+		hBidFlag = false
 	}
 
-	// Check if BuyItNow Price > Highest Bid so far
-	binP, err := strconv.Atoi(args[5])
 	if err != nil {
-		return nil, errors.New("BuyItNow() : Invalid BuyItNow Price")
+		fmt.Println("BuyItNow(): No bids available, error encountered - PostTransaction() failed ")
+		hBidFlag = false
 	}
 
-	hbP, err := strconv.Atoi(bid.BidPrice)
-	if err != nil {
-		return nil, errors.New("BuyItNow() : Invalid Highest Bid Price")
-	}
+	//If there are some bids then do validations
+	if hBidFlag == true {
+		bid, err := JSONtoBid(Avalbytes)
+		if err != nil {
+			return nil, errors.New("BuyItNow() : JSONtoBid Error")
+		}
 
-	if hbP > binP {
-		return nil, errors.New("BuyItNow() : Highest Bid Price > BuyItNow Price - BuyItNow Rejected")
+		// Check if BuyItNow Price > Highest Bid so far
+		binP, err := strconv.Atoi(args[5])
+		if err != nil {
+			return nil, errors.New("BuyItNow() : Invalid BuyItNow Price")
+		}
+
+		hbP, err := strconv.Atoi(bid.BidPrice)
+		if err != nil {
+			return nil, errors.New("BuyItNow() : Invalid Highest Bid Price")
+		}
+
+		if hbP > binP {
+			return nil, errors.New("BuyItNow() : Highest Bid Price > BuyItNow Price - BuyItNow Rejected")
+		}
 	}
 
 	// Close The Auction -  Fetch Auction Object
