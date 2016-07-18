@@ -450,8 +450,6 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
 * Once an auction request is posted or an auction is open for bids, there is no api to remove the auction request or close the auction prematurely and rejecting all bids received
 * In the current version, the image is encrypted and stored in the blockchain. However, in future, it is envisioned that only the hash of the image  along with the URI to the location of the image will be saved
-* Not all the API calls have been implemented on the UI which will have a fuller version in coming releases
-* Even though the chaincode allows the user to specify a "Reserve Price" and a "Buy-it-Now Price" , the current UI automatically calculates "Reserve Price" as 40% of the "Item price", and "Buy-it-Now Price" as 40% of "Reserve Price"
 
 ##Runnning the Application using the Web Browser
 
