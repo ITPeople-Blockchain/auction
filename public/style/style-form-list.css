@@ -1,3 +1,27 @@
+.site-notifications {
+	margin-top: 100px;
+	margin-bottom: -100px;
+	position: relative;
+	z-index: 1000;
+}
+
+.site-notifications .notification {
+	color: #FFF;
+	background-color: #339933;
+	background-image: url('img/icon-error-white-trans.svg');
+    background-position: 99% 50%;
+    background-size: auto 60%;
+    background-repeat: no-repeat;
+    padding:8px 6% 8px 1%;
+    border-bottom: 1px solid #70C470;
+    cursor: pointer;
+}
+
+.site-notifications .notification:hover {
+	background-color: #44A244;
+	background-image: url('img/icon-error-white.svg');
+}
+
 .form-container,
 .table-container {
 	background-color: #FFF;
@@ -461,7 +485,6 @@
     background-position:98% 50%;
     background-repeat: no-repeat;
     background-size: auto 50%;
-
 }
 
 .form-image {
@@ -476,6 +499,7 @@
 	background-size: contain;
 	background-position: 50% 0%;
 	background-repeat: no-repeat;
+	min-height: 300px;
 }
 
 .form-image .item-image:hover {

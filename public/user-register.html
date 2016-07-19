@@ -33,27 +33,27 @@
 			<div class="menu-item action-load-form" form-name="user-register">
 				<div class="item-label">Create Account</div>
 			</div>
-			<div class="menu-item">
-				<div class="item-label primary-event" menu-name="actions">Actions</div>
+			<div class="menu-item" menu-name="actions">
+				<div class="item-label primary-event">Actions</div>
 				<div class="item-content">
 					<div class="sub-menu">
 						<div class="menu-item action-load-form" form-name="item-register">
 							<div class="item-label">Register Item</div>
 						</div>
-						<!--div class="menu-item action-load-form" form-name="item-auction">
-							<div class="item-label">Auction Item</div>
-						</div-->
 						<div class="menu-item action-load-form" form-name="list-bidding">
 							<div class="item-label">Bid on Item</div>
 						</div>
 						<div class="menu-item action-load-list" list-name="list-auctions">
 							<div class="item-label">Auctions</div>
 						</div>
+						<div class="menu-item action-load-form" form-name="item-transfer">
+							<div class="item-label">Transfer Item</div>
+						</div>
 					</div>
 				</div>
 			</div>
-			<div class="menu-item">
-				<div class="item-label primary-event" menu-name="categories">Categories</div>
+			<div class="menu-item" menu-name="categories">
+				<div class="item-label primary-event">Categories</div>
 				<div class="item-content">
 					<div class="sub-menu">
 						<div class="menu-item action-load-page" page-name="category-paintings" id="modern">
@@ -79,14 +79,14 @@
 </div>
 
 
-<div class="site-main">
+<div class="site-notifications"></div><div class="site-main">
 	<div class="main-content">
 		<div class="form-container" id="user-register">
 			<div class="form-header">
 				<div class="form-title">Create Account</div>
 				<div class="form-messages">
-					<div class="form-message success">User registeration successful</div>
-					<div class="form-message error">User registeration failed</div>
+					<div class="form-message success">User registration successful</div>
+					<div class="form-message error">User registration failed</div>
 				</div>
 			</div>
 			<div class="form-content">
@@ -96,7 +96,7 @@
 							<div class="item-label">User ID</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_id" id="user_id" type="text" value="100" tabindex="1">
+									<input name="User ID" id="user_id" type="text" value="" tabindex="1">
 								</div>
 							</div>
 						</div>
@@ -104,7 +104,7 @@
 							<div class="item-label">Name</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_name" id="user_name" type="text" value="Ashley Hart" tabindex="2">
+									<input name="Name" id="user_name" type="text" value="" tabindex="2">
 								</div>
 							</div>
 						</div>
@@ -112,7 +112,7 @@
 							<div class="item-label">User Type</div>
 							<div class="item-content">
 								<div class="form-input">
-									<select name="user_type" id="user_type" type="text" value="PERSON" tabindex="3"></select>
+									<select name="User Type" id="user_type" type="text" value="" tabindex="3"></select>
 								</div>
 							</div>
 						</div>
@@ -120,7 +120,7 @@
 							<div class="item-label">Address</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_address" id="user_address" type="text" value="One Copley Parkway, #216, Morrisville, NC 27560" tabindex="4">
+									<input name="Address" id="user_address" type="text" value="" tabindex="4">
 								</div>
 							</div>
 						</div>
@@ -128,7 +128,7 @@
 							<div class="item-label">Phone</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_phone" id="user_phone" type="text" value="9198063535" tabindex="5">
+									<input name="Phone" id="user_phone" type="text" value="" tabindex="5">
 								</div>
 							</div>
 						</div>
@@ -138,7 +138,7 @@
 							<div class="item-label">Email</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_email" id="user_email" type="text" value="admin@itpeople.com" tabindex="6">
+									<input name="Email" id="user_email" type="text" value="" tabindex="6">
 								</div>
 							</div>
 						</div>
@@ -146,15 +146,15 @@
 							<div class="item-label">Bank</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_bank" id="user_bank" type="text" value="SUNTRUST" tabindex="7">
+									<input name="Bank" id="user_bank" type="text" value="" tabindex="7">
 								</div>
 							</div>
 						</div>
 						<div class="form-item">
-							<div class="item-label">Account #</div>
+							<div class="item-label">Account No#</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_account" id="user_account" type="text" value="00017102345" tabindex="8">
+									<input name="Account No#" id="user_account" type="text" value="" tabindex="8">
 								</div>
 							</div>
 						</div>
@@ -162,7 +162,7 @@
 							<div class="item-label">Routing #</div>
 							<div class="item-content">
 								<div class="form-input">
-									<input name="user_routing" id="user_routing" type="text" value="0234678" tabindex="9">
+									<input name="Routing #" id="user_routing" type="text" value="" tabindex="9">
 								</div>
 							</div>
 						</div>
