@@ -5,27 +5,27 @@ function mainApplication(){
 	thisObj.windowWidth = 0;
   	thisObj.windowHeight = 0;
 
-  thisObj.menuId = '';
+    thisObj.menuId = '';
 
-  //thisObj.URL = 'http://localhost:5000/chaincode';
+    //thisObj.URL = 'http://localhost:5000/chaincode';
 	//thisObj.URL = 'https://a7640456-e643-4225-9d72-e6c332443b1b_vp1-api.blockchain.ibm.com:443/chaincode';
-
-	// Please Uncomment any of the below combinations if the above doesn't work
-
-  	//thisObj.URL = 'http://localhost:5000/chaincode';
 
 	thisObj.init = function(){
 		console.log('INIT MAIN APPLICATION');
 		thisObj.setPrimaryEvents();
 
 		if($('body').attr('name')=='front'){
-
 			thisObj.getFrontList();
 		}
 
+		//v2.2
 		if($('body').hasClass('page-category')){
+			thisObj.setCategoryAttrs();
 			thisObj.getCategoryList();
 		}
+
+		//v2.2
+		thisObj.getCategories();
 
 		$(window).resize(function(){
 			thisObj.calculateSize();
@@ -114,6 +114,13 @@ function mainApplication(){
 
 	}
 
+	thisObj.setCategoryMenuEvents = function(){
+		$('.header-menu .action-load-category').click(function(){
+			var actionItem = $(this);
+			thisObj.loadCategory(actionItem);
+		});
+	}
+
 	thisObj.setFrontListEvents = function(){
 
 		$('.front-header .item .action-button[action-type="form"]').click(function(){
@@ -164,6 +171,49 @@ function mainApplication(){
 		$('.header-menu .menu-item').removeClass('active');
 	}
 
+	//v2.2
+	thisObj.getCategories = function(){
+
+		//MAKE API CALL HERE USING "categoryName" VARIABLE TO GET LIST OF ITEMS FOR CATEGORY PAGE.
+		//RETURN API DATA TO "populateCategoriesMenu" function below.
+		//REMOVE DEBUG LINE OF CODE BELOW
+		thisObj.populateCategoriesMenu({});
+
+	}
+
+	//v2.2
+	thisObj.populateCategoriesMenu = function(data){
+
+		//LEAVE THIS LINE
+		$('.header-menu .menu-item[menu-name="categories"] .item-content .sub-menu').html('');
+
+
+		//PARSE DATA RETURNED FROM API
+		//USE "populateMenuItem" FUNCTION BELOW TO ADD ITEMS TO LIST
+
+		//EXAMPLE START
+		//REPLACE THIS EXAMPLE WITH DATA PARSER WITH MULTIPLE "populateCategoryItem" CALLS FOR EACH INDIVIDUAL ITEM
+		//populateMenuItem(MENU NAME, ITEM LABEL, ITEM NAME)
+		thisObj.populateCategoryMenuItem('categories','MODERN','modern');
+		thisObj.populateCategoryMenuItem('categories','LANDSCAPE','landscape');
+		//EAMPLE END
+
+
+		//LEAVE LINE BELOW TO ACTIVATE MENU ITEMS
+		thisObj.setCategoryMenuEvents();
+	}
+
+	//v2.2
+	thisObj.populateCategoryMenuItem = function(menuName,itemLabel,itemName){
+
+		var masterHTML = '<div class="menu-item action-load-category" category-name="'+itemName+'" id="'+itemName+'"><div class="item-label">'+itemLabel+'</div></div>';
+
+		$('.header-menu .menu-item[menu-name="'+menuName+'"] .item-content .sub-menu').append(masterHTML);
+
+		console.log('MENU ADD: ' + $('.header-menu .menu-item[menu-name="'+menuName+'"] .item-content .sub-menu').attr('class'));
+
+	}
+
 
 	//PAGES
 
@@ -173,9 +223,16 @@ function mainApplication(){
 		if(args!=undefined&&args!=null){
 			pageArgs = args;
 		}
-		//console.log(">>>>>>>>>>>>>>>>>>>>> loadPage :")
 		thisObj.menuId = actionPage.attr('id');
 		window.open(pageName+'.html'+pageArgs,"_self");
+	}
+
+	//CATEGORIES
+	//V2.2
+	thisObj.loadCategory = function(actionCategory){
+		var categoryName = actionCategory.attr('category-name');
+		var pageArgs = '?category='+categoryName;
+		window.open('category.html'+pageArgs,"_self");
 	}
 
 	//LISTS
@@ -216,6 +273,14 @@ function mainApplication(){
 
 
 	//CATEGORY PAGE
+	//v2.2
+	thisObj.setCategoryAttrs = function(){
+
+		var bodyCategory = formApp.urlParam('category');
+
+		$('body').attr('category',bodyCategory);
+		$('body').attr('name','category-'+bodyCategory);
+	}
 
 	thisObj.getCategoryList = function(){
 
@@ -260,32 +325,64 @@ function mainApplication(){
 
 	//FRONT VIEW
 
+	//V2.2
 	thisObj.getFrontList = function(){
+
 		//MAKE API CALL HERE TO GET LIST OF ITEMS FOR FRONT PAGE VIEW.
 		//RETURN API DATA TO "populateFrontList" function below.
-		//REMOVE DEBUG LINE OF CODE BELOW
-		thisObj.populateFrontList();
 
+		//REMOVE DEBUG LINES OF CODE BELOW
+		//USE LINE BELOW TO TEST EMPTY RESULT SET
+		thisObj.populateFrontList([]);
+		//USE LINE BELOW TO TEST FULL RESULT SET
+		//thisObj.populateFrontList([{},{}]);
 	}
 
-	thisObj.populateFrontList = function(){
+	//V2.2
+	thisObj.populateFrontList = function(data){
 
 		//LEAVE THIS LINE
 		$('.front-header .item-view').html('');
+        thisObj.getItemsList("All", true);
 
-		//PARSE DATA RETURNED FROM API
-		//USE "populateFrontItem" FUNCTION BELOW TO ADD ITEMS TO LIST
+		//ADAM CHANGES
+		//CHECK DATASET LENGTH HERE
+		/*var dataLength = data.length;
+		console.log('FRONT DATA LENGTH: ' + dataLength);
 
-		//EXAMPLE START
-		//REPLACE THIS EXAMPLE WITH DATA PARSER WITH MULTIPLE "populateFrontItem" CALLS FOR EACH INDIVIDUAL ITEM
-		//populateFrontItem(ITEM TITLE, ITEM ID, ITEM IMAGE URL)
-		thisObj.getItemsList("All", true);
-		/*thisObj.populateFrontItem('Hendrik Van Cleve III: The Tower of Babel','1000','img/item-001.jpg');*/
-		//EXAMPLE END
+		//IF DATASET IS EMPTY LEAVE SPLASH IMAGE IN PLACE
+		if(dataLength==0){
+			$('.front-splash').show();
+			$('.front-header').hide();
+		} else {
+
+			//ELSE ---->
+
+			//LEAVE THESE LINES
+			$('.front-header').show();
+			$('.front-splash').hide();
+			$('.front-header .item-view').html('');
+
+			//PARSE DATA RETURNED FROM API
+			//USE "populateFrontItem" FUNCTION BELOW TO ADD ITEMS TO LIST
+
+			//EXAMPLE START
+			//REPLACE THIS EXAMPLE WITH DATA PARSER WITH MULTIPLE "populateFrontItem" CALLS FOR EACH INDIVIDUAL ITEM
+			//populateFrontItem(ITEM TITLE, ITEM ID, ITEM IMAGE URL)
+			thisObj.populateFrontItem('Hendrik Van Cleve III: The Tower of Babel','001','img/item-001.jpg');
+			thisObj.populateFrontItem('Antwerp School Circa 1580: The Battle of Algiers','002','img/item-002.jpg');
+			thisObj.populateFrontItem('School of Parma Circa 1620: The Holy Family With Saint John the Baptist','003','img/item-003.jpg');
+			thisObj.populateFrontItem('Acques Linard: Bowl of Grapes','004','img/item-004.jpg');
+			thisObj.populateFrontItem('Jean Restout: Abraham And the Three Angels','005','img/item-005.jpg');
+			thisObj.populateFrontItem('Antonio Calza: Cavalry Charge','006','img/item-006.jpg');
+			thisObj.populateFrontItem('Jean-Baptiste Martin: The Passage of the Rhine','007','img/item-007.jpg');
+			thisObj.populateFrontItem('Pietro Antonio Rotari: Portrait of a Woman In White Clothing','008','img/item-008.jpg');
+			//EXAMPLE END
 
 
-		//LEAVE THIS LINE AFTER DATA PARSING CODE HAS CALLED ALL "populateFrontItem" FUNCTIONS
-		//thisObj.setFrontListEvents();
+			//LEAVE THIS LINE AFTER DATA PARSING CODE HAS CALLED ALL "populateFrontItem" FUNCTIONS
+			thisObj.setFrontListEvents();
+		}*/
 
 	}
 
@@ -306,6 +403,18 @@ function mainApplication(){
   //written by Ratnakar
   thisObj.iterateItems = function(data, isHomePage){
 		var obj = JSON.parse(data);
+		if (Boolean(isHomePage)){
+			if (obj.length == 0) {
+			//Show splash scren when no data there
+			$('.front-splash').show();
+			$('.front-header').hide();
+		} else {
+			//Disable splash screen and show assets
+			$('.front-header').show();
+			$('.front-splash').hide();
+			$('.front-header .item-view').html('');
+		}
+		}
 		for (var i=0;i<obj.length;i++){
 		  if (Boolean(isHomePage)){
 				thisObj.populateFrontItem(obj[i].ItemDesc,obj[i].ItemID,obj[i].ItemPicFN)
@@ -327,7 +436,7 @@ function mainApplication(){
 			//work around to get the image
 			imgURL = '../imgs/'+imgURL;
 			//var masterHTML = '<div class="item" item-id="'+itemID+'"><div class="item-header"><div class="item-image" style="background-image:url('+imgURL+');"></div></div><div class="item-content"><div class="item-details"><div class="item-title item-detail"><div class="detail-label"></div><div class="detail-content">'+itemTitle+'</div></div><div class="item-date item-detail"><div class="detail-label">Details</div><div class="detail-content">'+itemDetail+'</div></div><div class="item-bid item-detail"><div class="detail-label">Media</div><div class="detail-content">'+itemMedia+'</div></div><div class="item-bids item-detail"><div class="detail-label">Price</div><div class="detail-content">'+itemBasePrice+'</div></div></div></div><div class="item-footer"><div class="item-actions"><div class="action-button" form-name="item-bid" action-type="form"><div class="button-label">Bid</div></div><div class="action-button" form-name="item-detail" action-type="detail"><div class="button-label">Details</div></div></div></div></div>';
-      var masterHTML = '<div class="item" item-id="'+itemID+'"><div class="item-header"><div class="item-image" style="background-image:url('+imgURL+');"></div></div><div class="item-content"><div class="item-details"><div class="item-title item-detail"><div class="detail-label"></div><div class="detail-content">'+itemTitle+'</div></div><div class="item-date item-detail"><div class="detail-label">Details</div><div class="detail-content">'+itemDetail+'</div></div><div class="item-bid item-detail"><div class="detail-label">Media</div><div class="detail-content">'+itemMedia+'</div></div><div class="item-bids item-detail"><div class="detail-label">Price</div><div class="detail-content">'+itemBasePrice+'</div></div></div></div><div class="item-footer"><div class="item-actions"><div class="action-button" form-name="item-detail" action-type="detail"><div class="button-label">Details</div></div></div></div></div>';
+      var masterHTML = '<div class="item" item-id="'+itemID+'"><div class="item-header"><div class="item-image" style="background-image:url('+imgURL+');"></div></div><div class="item-content"><div class="item-details"><div class="item-title item-detail"><div class="detail-label"></div><div class="detail-content">'+itemTitle+'</div></div><div class="item-date item-detail"><div class="detail-label">Details</div><div class="detail-content">'+itemDetail+'</div></div><div class="item-bid item-detail"><div class="detail-label">Media</div><div class="detail-content">'+itemMedia+'</div></div><div class="item-bids item-detail"><div class="detail-label">Price</div><div class="detail-content">$'+itemBasePrice+'</div></div></div></div><div class="item-footer"><div class="item-actions"><div class="action-button" form-name="item-detail" action-type="detail"><div class="button-label">Details</div></div></div></div></div>';
 			$('.category-content .item-view').append(masterHTML);
 
 		}

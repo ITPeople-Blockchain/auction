@@ -33,8 +33,8 @@
 			<div class="menu-item action-load-form" form-name="user-register">
 				<div class="item-label">Create Account</div>
 			</div>
-			<div class="menu-item">
-				<div class="item-label primary-event" menu-name="actions">Actions</div>
+			<div class="menu-item" menu-name="actions">
+				<div class="item-label primary-event">Actions</div>
 				<div class="item-content">
 					<div class="sub-menu">
 						<div class="menu-item action-load-form" form-name="item-register">
@@ -49,11 +49,14 @@
 						<div class="menu-item action-load-list" list-name="list-auctions">
 							<div class="item-label">Auctions</div>
 						</div>
+						<div class="menu-item action-load-form" form-name="item-transfer">
+							<div class="item-label">Transfer Item</div>
+						</div>
 					</div>
 				</div>
 			</div>
-			<div class="menu-item">
-				<div class="item-label primary-event" menu-name="categories">Categories</div>
+			<div class="menu-item" menu-name="categories">
+				<div class="item-label primary-event">Categories</div>
 				<div class="item-content">
 					<div class="sub-menu">
 						<div class="menu-item action-load-page" page-name="category-paintings" id="modern">
@@ -94,7 +97,7 @@
 	CloseDate      string // Date and time when Auction will close (To be Updated by Trigger Auction)
 
 -->
-<div class="site-main">
+<div class="site-notifications"></div><div class="site-main">
 	<div class="main-content">
 		<div class="form-container" id="item-auction">
 			<div class="form-header">

@@ -108,7 +108,7 @@ body {
 	background-repeat: no-repeat;
 }
 
-.site-header .item-label[menu-name="actions"]{
+.site-header .menu-item[menu-name="actions"] .item-label{
 	padding-left: 32px;
 	background-image: url('img/icon-actions.svg');
 	background-size: 25px 25px;
@@ -116,12 +116,18 @@ body {
 	background-repeat: no-repeat;
 }
 
-.site-header .item-label[menu-name="categories"]{
+.site-header .menu-item[menu-name="categories"] .item-label{
 	padding-left: 31px;
 	background-image: url('img/icon-categories.svg');
 	background-size: 23px 23px;
 	background-position: 0 50%;
 	background-repeat: no-repeat;
+}
+
+.site-header .menu-item[menu-name="actions"] .sub-menu .item-label,
+.site-header .menu-item[menu-name="categories"] .sub-menu .item-label{
+	padding-left: 0;
+	background: none;
 }
 
 

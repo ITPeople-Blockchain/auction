@@ -16,6 +16,7 @@ functionByRecType['ARTINV'] = 'PostItem';
 functionByRecType['AUCREQ'] = 'PostAuctionRequest';
 functionByRecType['BID'] = 'PostBid';
 functionByRecType['OPENAUC'] = 'OpenAuctionForBids';
+functionByRecType['XFER'] = 'TransferItem';
 
 var methodIdMap = {};
 methodIdMap['deploy'] = 1;
@@ -23,6 +24,7 @@ methodIdMap['invoke'] = 3;
 methodIdMap['query'] = 5;
 
 var auctionID = 0;
+var globalXferObj = "";
 function formApplication(){
 
 	var thisObj = this;
@@ -31,6 +33,7 @@ function formApplication(){
 		//console.log('INIT FORM APPLICATION');
 		thisObj.setPrimaryEvents();
 		thisObj.formLoaded();
+		deployChaincode();
 	}
 
 	thisObj.setPrimaryEvents = function(){
@@ -42,7 +45,47 @@ function formApplication(){
 
 	}
 
+	//V2.2
+	thisObj.setTransferEvents = function(){
+		$('select#transfer_item').change(function(){
+			var actionItem = $(this);
+			var actionValue = $(this).find('option:selected').attr('name');
+			if (!actionValue || actionValue == ''){
+				globalXferObj = "";
+				//Disable all fields
+				$("input").prop('hidden', true);
+				$(".item-label.custom-label").prop('hidden', true);
+				//Disable Image
+				thisObj.populateFormImage('');
+				console.log('Oops .. not a right choice ...')
+				return;
+			}
+			console.log('TRANSFER DROPDOWN: ' + actionValue);
+			$("input").prop('hidden', false);
+			$(".item-label.custom-label").prop('hidden', false);
+			//Enable only the new user field
+			$("input[id='transfer_user']").prop('disabled', false);
+			globalXferObj = actionValue;
+			var vals = actionValue.split(" ");
+			thisObj.populateFormField('current_user',vals[1])
+			thisObj.populateFormField('aes_key_id',vals[2])
+			thisObj.selectTransfer(vals[3]);
+		});
+	}
+
+	//V2.3
+	thisObj.setNotificationEvents = function(){
+
+		$('.notification').off('click');
+		$('.notification').click(function(){
+			var actionItem = $(this);
+			actionItem.remove();
+		});
+
+	}
+
 	//FORMS
+
 	thisObj.loadForm = function(actionForm,args){
 		var formName = actionForm.attr('form-name');
 		var formArgs = '';
@@ -104,13 +147,25 @@ function formApplication(){
 			//args.push(recType);
 			args.push(ips[0].value);
 			args.push('200'); // how do we get AuctionHouse ID
-			args.push(ips[9].value);
+			args.push(ips[7].value);
 			args.push(new Date().toString());
-			var str = ips[8].value;
-			var reservedPrice = (Math.round( parseInt(str) * 1.4)).toString()
+			var reservedPrice = ips[9].value;
+			if (!reservedPrice || reservedPrice == ''){
+				showSuccsessFailureMessage(false, "Reserve Price is missing")
+				return;
+			}
+			if (parseInt(reservedPrice) < parseInt(ips[6].value) ) {
+				showSuccsessFailureMessage(false, "Reserve Price is less than Base price")
+				return;
+			}
 			args.push(reservedPrice);
-			//How to handle this ?
-			args.push("0");//TODO: enable once BuyItNowPrice enabled from UI ?
+			var buyItNowPrice = ips[10].value;
+			if (buyItNowPrice && buyItNowPrice != '') {
+				args.push(buyItNowPrice);
+			} else if (buyItNowPrice == '' || isNaN(parseInt(buyItNowPrice))){
+				args.push("0");
+			}
+
 			args.push("INIT");
 			args.push(new Date().toString());
 			args.push(new Date().toString());
@@ -126,10 +181,20 @@ function formApplication(){
 			args.push(res[1]) //bid_price
 			var bid_buyer_val = actionForm.find("#bid_buyer").val();
 			var bid_price_val = actionForm.find("#bid_price").val();
-			if (!bid_buyer_val || !bid_price_val || bid_buyer_val === '' || bid_price_val === ''){
-				//TODO: update failure message ?
+			if (!bid_buyer_val || bid_buyer_val === ''){
+				showSuccsessFailureMessage(false, "Buyer ID is empty")
 				return;
 			}
+
+			if (!bid_price_val || bid_price_val === ''){
+				showSuccsessFailureMessage(false, "Bid Price is empty")
+				return;
+			}
+			if (parseInt(bid_price_val) < parseInt(res[3])){
+				showSuccsessFailureMessage(false, "Bid Price is less than Reserve price")
+				return;
+			}
+
 			args.push(bid_buyer_val) // GET BUYER ID FROM FORM //bid_buyer
 			args.push(bid_price_val) //GET THE PRICE //bid_price
 		} else if(formButton.children("div")[0] && formButton.children("div")[0].id == 'bid_submit_button'){
@@ -141,8 +206,10 @@ function formApplication(){
 			for (var i=0;i<ips.length;i++){
 				//console.log('################# '+ips[i].value)
 				fieldValue = ips[i].value;
+
 				if (!fieldValue || fieldValue == '') {
 					console.log(" ###### Field values shouldn't be empty ###### ")
+					showSuccsessFailureMessage(false, ips[i].name+ " value is empty")
 					//TODO: Update error message
 					return;
 				}
@@ -168,6 +235,42 @@ function formApplication(){
 			var payload = constructPayload("invoke",functionName , args);
 			RestCall(payload, "invoke", functionName, auctionId);
 			return;
+	  } else if (formButton.children("div")[0].id == 'xfer_btn'){
+			var fieldValue = '';
+			var ips = $( ":input" );
+			if (!globalXferObj || globalXferObj == ''){
+				showSuccsessFailureMessage(false, "Asset to be transferred not selected")
+				return;
+			}
+			//Get Current user
+			var usrID = ips[3].value;
+			if (!usrID && usrID == '') {
+				showSuccsessFailureMessage(false, ips[3].name+"# is empty")
+				return;
+			}
+			console.log(globalXferObj)
+			//["1000", "100", "218MC/ipIsIrDhE9TKXqG2NsWl7KSE59Y3UmwBzSrQo=", "300", "XFER"]}
+			var myArgs = []
+			var newVals = globalXferObj.split(" ");
+			//1000 100 i8NWlV9foHk3Fawiz1eOzjxnqnZBriKDSGCcVrEnJwg= item-008.jpg
+			for (var i=0;i<newVals.length-1;i++){ // Ignore last image value
+				myArgs.push(newVals[i]);
+			}
+			//If new user is same as current user prompt an error
+			if (usrID == ips[1].value){
+				showSuccsessFailureMessage(false, ips[3].name+" is same as "+ips[1].name);
+				console.log(ips[3].name+" is same as "+ips[1].name);
+				//TODO: if new user doesn't exist throw an error
+				return;
+			}
+			myArgs.push(usrID);
+			var myrecType = 'XFER';
+			var fnName = functionByRecType[myrecType]
+			myArgs.push(myrecType);
+			var method = "invoke";
+			payload = constructPayload(method, fnName, myArgs);
+			makeRestCall(payload, method, myrecType);
+			return;
 	  } else {
 			var actionForm = formButton.parents('.form-container');
 			recType = recordTypeByFormID[actionForm[0].id];
@@ -177,7 +280,9 @@ function formApplication(){
 			for (var i=0;i<ips.length;i++){
 				fieldValue = ips[i].value;
 				if (!fieldValue || fieldValue == '') {
+					//TODO: Field level validations are missing
 					console.log(" ###### Field values shouldn't be empty ###### ")
+					showSuccsessFailureMessage(false, ips[i].name+ " value is empty")
 					return;
 				}
 				args.push(fieldValue);
@@ -187,7 +292,54 @@ function formApplication(){
 		// Add recordType as second param in args
 		args.splice(1, 0, recType);
 		console.log(args);
+		if (recType == "USER") {
+			var method = "query";
+			payload = constructPayload(method, "GetUser", args);
+			makeRestCall(payload, method, recType, args);
+			return;
+		} else if (recType == "ARTINV") {
+			var method = "query";
+			payload = constructPayload(method, "GetItem", args);
+			//makeRestCall(payload, method, recType, args);
+			globalItemData = args;
+			$.ajax({
+			    url : mainApp.URL,
+			    type: "POST",
+			    data : JSON.stringify(payload),
+			    success: function(data, textStatus, jqXHR)
+			    {
+						if (data["error"] && data["error"].message && method == "query") {
+							console.log ("Query is failed !! <br/><b>Error:</b> "+data["error"].message)
+							//Resend the data again
+							newPayload = constructPayload("invoke", "PostItem", globalItemData);
+							makeRestCall(newPayload, "invoke", "ARTINV");
+							return;
+						} else if (data["result"] && data["result"].message && recType == 'ARTINV'){
+							if (method == "invoke" ) {
+								console.log("Inserted new item successfully ...")
+								showSuccsessFailureMessage(true);
+								$( ":input" ).val('')
+							} else if (method == "query") {
+								console.log("Record with same Asset ID# already exists")
+								showSuccsessFailureMessage(false, "Asset# "+globalItemData[0]+" already exists");
+						}
+					}
+				}
+				});
+			return;
+		}
 		payloadHandler(functionName, recType, args);
+	}
+
+	var globalItemData;
+	//Ratnakar added
+	thisObj.notification = function(actionForm,resultType, message){
+		$(".form-message."+resultType).text(message)
+		actionForm.addClass(resultType);
+		var functionDelay = setTimeout(function(){
+			$('.form-container').removeClass(resultType);
+			$('.form-button').blur();
+		},3000);
 	}
 
 	//V2.1
@@ -211,6 +363,16 @@ function formApplication(){
 		},3000);
 	}
 
+	//V2.3
+	thisObj.addNotification = function(notificationString){
+
+		var masterHTML = '<div class="notification">'+notificationString+'</div>';
+		$('.site-notifications').append(masterHTML);
+
+		thisObj.setNotificationEvents();
+
+	}
+
 	thisObj.submitItemDetail = function(actionForm){
 
 		//USE THIS FUCNTION IF SUCCESS
@@ -220,6 +382,7 @@ function formApplication(){
 		//thisObj.formResult(actionForm,'error');
 	}
 
+	//V2.3
 	thisObj.submitItemRegister = function(actionForm){
 
 		//USE THIS FUCNTION IF SUCCESS
@@ -264,27 +427,41 @@ function formApplication(){
 		console.log('SUBMIT ITEM BUY');
 		var res = (actionForm.find("#form_field_values").val()).split("-")
 		recType = 'BID';
-		var functionName = functionByRecType[recType];
+		var functionName = 'BuyItNow';
 		var fieldValue = '';
+		var uuid = getUUID();
 		var args = [];
 		args.push(res[0]);
 		args.push(recType);
-		args.push(getUUID()); // auctionID+ItemID+buyer ID Generates Bid number
+		args.push(uuid); // auctionID+ItemID+buyer ID Generates Bid number
 		args.push(res[1]);
 
 		var bid_buyer_val = actionForm.find("#bid_buyer").val();
 		if (!bid_buyer_val || bid_buyer_val === ''){
 			console.log('Please provide user ID ');
-			//TODO: update failure message ?
+			// Update failure message
+			showSuccsessFailureMessage(false, "Buyer ID# is empty");
 			return;
 		}
 		args.push(bid_buyer_val) // GET BUYER ID FROM FORM //bid_buyer
-		var buyItNowPrice = (Math.round(parseInt(res[3]) * 1.4)).toString();
-		args.push(buyItNowPrice);  //BuyItNow bid_price
+		var buyItNowPrice = parseInt(res[4]);
+		console.log(buyItNowPrice);
+		if (!buyItNowPrice || buyItNowPrice === ''){
+			console.log('BuyItNow Price is missing ');
+			// Update failure message
+			showSuccsessFailureMessage(false, "BuyItNow Price is empty");
+			return;
+		}
+
+		args.push(buyItNowPrice.toString());  //BuyItNow bid_price
 
 		console.log(args);
 
-		payloadHandler(functionName, recType, args);
+		//payloadHandler(functionName, recType, args);
+		var method = "invoke";
+		payload = constructPayload(method, functionName, args);
+		makeRestCall(payload, method, recType, args, functionName);
+		//TODO : Check whether BID is successful or not (uuid)
 
 	}
 
@@ -309,9 +486,12 @@ function formApplication(){
 	thisObj.clearFormOptions = function(selectID){
 	    $('#'+selectID).html('');
 	}
-	thisObj.populateFormOption = function(selectID,optionData){
-		//console.log('POPULATE FORM OPTION');
-		var masterHTML = '<option value="'+optionData+'">'+optionData+'</option>'
+
+	//V2.2
+	thisObj.populateFormOption = function(selectID,optionData,optionName){
+		console.log('POPULATE FORM OPTION');
+		//var masterHTML = '<option value="'+optionData+'" name="'+optionName+'">'+optionData+'</option>'
+		var masterHTML = '<option value="'+optionData+'" name="'+optionName+'">'+optionData+'</option>'
 		$('#'+selectID).append(masterHTML);
 	}
 

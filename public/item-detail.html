@@ -33,8 +33,8 @@
 			<div class="menu-item action-load-form" form-name="user-register">
 				<div class="item-label">Create Account</div>
 			</div>
-			<div class="menu-item">
-				<div class="item-label primary-event" menu-name="actions">Actions</div>
+			<div class="menu-item" menu-name="actions">
+				<div class="item-label primary-event">Actions</div>
 				<div class="item-content">
 					<div class="sub-menu">
 						<div class="menu-item action-load-form" form-name="item-register">
@@ -49,11 +49,14 @@
 						<div class="menu-item action-load-list" list-name="list-auctions">
 							<div class="item-label">Auctions</div>
 						</div>
+						<div class="menu-item action-load-form" form-name="item-transfer">
+							<div class="item-label">Transfer Item</div>
+						</div>
 					</div>
 				</div>
 			</div>
-			<div class="menu-item">
-				<div class="item-label primary-event" menu-name="categories">Categories</div>
+			<div class="menu-item" menu-name="categories">
+				<div class="item-label primary-event">Categories</div>
 				<div class="item-content">
 					<div class="sub-menu">
 						<div class="menu-item action-load-page" page-name="category-paintings" id="modern">
@@ -82,7 +85,7 @@
 </div>
 
 
-<div class="site-main">
+<div class="site-notifications"></div><div class="site-main">
 	<div class="main-content">
 		<div class="form-container">
 			<div class="form-header">
@@ -95,15 +98,15 @@
 			<div class="form-content">
 				<div class="form-body">
 					<div class="body-column column-1 half">
-						<div class="form-item">
-							<div class="item-label">Auction Item #</div>
+						<div class="form-item noedit first">
+							<div class="item-label">Asset SL#</div>
 							<div class="item-content">
 								<div class="form-input">
 									<input disabled name="art_id" id="art_id" type="text" value="" tabindex="1">
 								</div>
 							</div>
 						</div>
-						<div class="form-item noedit first">
+						<div class="form-item noedit">
 							<div class="item-label">Description</div>
 							<div class="item-content">
 								<div class="form-input">
@@ -111,14 +114,14 @@
 								</div>
 							</div>
 						</div>
-						<div class="form-item noedit">
+						<!--div class="form-item noedit">
 							<div class="item-label">Other Details</div>
 							<div class="item-content">
 								<div class="form-input">
 									<input disabled name="art_artist" id="art_artist" type="text" value="" tabindex="2">
 								</div>
 							</div>
-						</div>
+						</div-->
 						<div class="form-item noedit">
 							<div class="item-label">Date of Creation</div>
 							<div class="item-content">
@@ -151,14 +154,14 @@
 								</div>
 							</div>
 						</div>
-						<div class="form-item noedit">
+						<!--div class="form-item noedit">
 							<div class="item-label">Size</div>
 							<div class="item-content">
 								<div class="form-input">
 									<input disabled name="art_size" id="art_size" type="text" value="" tabindex="9">
 								</div>
 							</div>
-						</div>
+						</div-->
 						<div class="form-item noedit">
 							<div class="item-label">Purchase Price in $</div>
 							<div class="item-content">
@@ -172,6 +175,30 @@
 							<div class="item-content">
 								<div class="form-input">
 									<input disabled name="art_owner" id="art_owner" type="text" value="" tabindex="5">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">Key</div>
+							<div class="item-content">
+								<div class="form-input">
+										<input disabled name="Certificate ID" id="aes_key" type="text" value="" tabindex="5">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">Reserve Price</div>
+							<div class="item-content">
+								<div class="form-input">
+									<input name="Reserve Price" id="res_price" type="text" value="" tabindex="5">
+								</div>
+							</div>
+						</div>
+						<div class="form-item noedit">
+							<div class="item-label">BuyItNow Price</div>
+							<div class="item-content">
+								<div class="form-input">
+										<input name="BuyItNow Price" id="aes_key" type="text" value="" tabindex="6">
 								</div>
 							</div>
 						</div>
