@@ -453,4 +453,4 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
 ##Runnning the Application using the Web Browser
 
-The chaincode functions can be accessed via the browser. To kick off the application, load the index.html file via the browser. We have tested the application by pre-loading some data via the CLI and using the browser to fire up a simple auction
+The chaincode functions can be accessed via the browser, Please refer [auction-app](https://github.com/ITPeople-Blockchain/auction-app) for more details.
