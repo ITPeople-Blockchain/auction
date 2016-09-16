@@ -127,9 +127,9 @@ Please review instructions on setting up the [Development Environment](https://g
 
 ###Terminal 1
 ```
- cd $GOPATH/src/github.com/hyperledger/fabric/peer
- go build
- ./peer node start --peer-chaincodedev
+ cd $GOPATH/src/github.com/hyperledger/fabric
+ make peer
+ peer node start --peer-chaincodedev
 ```
 
 ###Terminal 2
@@ -141,7 +141,6 @@ Please review instructions on setting up the [Development Environment](https://g
 ###Terminal 3
 ```
  cd $GOPATH/src/github.com/hyperledger/fabric/auction/art/scripts
- . ./setup.sh
 ```
 ###Run the following shell scripts
 
@@ -217,7 +216,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    The call takes 9 arguments: User ID, Record Type, Name, Type, Address, Phone, Email, Bank Name, Account#, Routing#
    
-   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["100", "USER", "Ashley Hart", "TRD",  "Morrisville Parkway, #216, Morrisville, NC 27560", "9198063535", "ashley@itpeople.com", "SUNTRUST", "00017102345", "0234678"]}'
+   peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["100", "USER", "Ashley Hart", "TRD",  "Morrisville Parkway, #216, Morrisville, NC 27560", "9198063535", "ashley@itpeople.com", "SUNTRUST", "00017102345", "0234678"]}'
 
 **PostItem**:
 
@@ -227,7 +226,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    The call takes 12 arguments: Item ID, Record Type, Description, Detail, Date of Origin, Original or Reprint, Subject, Media, Size, Image File, Price, Current Owner ID
    
-   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1400", "ARTINV", "Nature", "James Thomas", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "f6.png","1800", "100"]}'
+   peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1400", "ARTINV", "Nature", "James Thomas", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "f6.png","1800", "100"]}'
 
 **PostAuctionRequest**:
 
@@ -237,7 +236,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    This call takes 11 argumnets: Auction ID, Record Type, Item ID, Auction House ID, Owner ID, Date of Request, Reserve Price, Buy-It-Now Price, Status, Dummy Open Date, Dummy Close Date
    
-   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostAuctionRequest", "Args":["1113", "AUCREQ", "1000", "200", "400", "04012016", "15000", "16000", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]}'
+   peer chaincode invoke -l golang -n mycc -c '{"Function": "PostAuctionRequest", "Args":["1113", "AUCREQ", "1000", "200", "400", "04012016", "15000", "16000", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]}'
 
    The Auction Opendate and CloseDate are dummy dates and will be set when the auction is opened. The Auction ID must be unique and cannot be repeated. We assume that the client will generate a unique auction id prior to posting the request. The state of the Auction is "INIT" at this point.
 
@@ -249,7 +248,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    The call takes 3 arguments: Auction ID, Record Type, Duration in Minutes
    
-   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "OpenAuctionForBids", "Args":["1111", "OPENAUC", "3"]}'
+   peer chaincode invoke -l golang -n mycc -c '{"Function": "OpenAuctionForBids", "Args":["1111", "OPENAUC", "3"]}'
 
 **PostBid**:
 
@@ -259,7 +258,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    This call takes 6 arguments: Auction ID, Record Type, Bid Number, Item ID, Buyer ID, Buyer Offer Price
    
-   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "5", "1000", "400", "5000"]}'
+   peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "5", "1000", "400", "5000"]}'
 
 **PostTransaction**:
 
@@ -274,7 +273,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    This call takes 8 arguments: Auction ID, Record Type, Item ID, Transaction Type, Buyer ID, Transaction Time, Hammer Time, Hammer Price
    
-   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "POSTTRAN", "1000", "SALE","500", "2016-05-24 11:00:00","2016-05-23 14:25:00", "12000"]}'
+   peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "POSTTRAN", "1000", "SALE","500", "2016-05-24 11:00:00","2016-05-23 14:25:00", "12000"]}'
 
 **BuyItNow**:
 
@@ -284,7 +283,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    This call is similar to the PostBid, except the price is set to the Buy-It-Now price.
 
-   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "BuyItNow", "Args":["1111", "BID", "1", "1000", "300", "1800"]}'
+   peer chaincode invoke -l golang -n mycc -c '{"Function": "BuyItNow", "Args":["1111", "BID", "1", "1000", "300", "1800"]}'
 
 **TransferItem**:
 
@@ -294,7 +293,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    This call takes 5 arguments: Item ID, Current Owner ID, Owner Key, Transferee ID, Record Type
    
-   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "TransferItem", "Args": ["1000", "100", "218MC/ipIsIrDhE9TKXqG2NsWl7KSE59Y3UmwBzSrQo=", "300", "XFER"]}'
+   peer chaincode invoke -l golang -n mycc -c '{"Function": "TransferItem", "Args": ["1000", "100", "218MC/ipIsIrDhE9TKXqG2NsWl7KSE59Y3UmwBzSrQo=", "300", "XFER"]}'
 
 **CloseAuction**:
 
@@ -304,7 +303,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    This call takes two arguments: Auction ID, Record Type
    
-   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseAuction", "Args": ["1111","AUCREQ"]}'
+   peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseAuction", "Args": ["1111","AUCREQ"]}'
 
 **CloseOpenAuctions**:
 
@@ -314,7 +313,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    This call takes two arguments: 2016, Record Type
    
-   ./peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseOpenAuctions", "Args": ["2016", "CLAUC"]}'
+   peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseOpenAuctions", "Args": ["2016", "CLAUC"]}'
 
 ###Query APIs and Usage
 
@@ -324,7 +323,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItem", "Args": ["1000"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetItem", "Args": ["1000"]}'
  
 **GetUser**:
 
@@ -332,7 +331,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetUser", "Args": ["100"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetUser", "Args": ["100"]}'
    
 **GetAuctionRequest**:
 
@@ -340,7 +339,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetAuctionRequest", "Args": ["1111"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetAuctionRequest", "Args": ["1111"]}'
 
 **GetTransaction**:
 
@@ -348,7 +347,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetTransaction", "Args": ["1111", "1000"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetTransaction", "Args": ["1111", "1000"]}'
 
 **GetBid**:
 
@@ -356,7 +355,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetBid",  "Args": ["1111", "5"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetBid",  "Args": ["1111", "5"]}'
    
 **GetLastBid**:
 
@@ -364,7 +363,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid","Args": ["1111"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid","Args": ["1111"]}'
 
 **GetHighestBid**:
 
@@ -372,7 +371,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetHighestBid", "Args": ["1111"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetHighestBid", "Args": ["1111"]}'
    
 **GetNoOfBidsReceived**:
 
@@ -380,15 +379,15 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetNoOfBidsReceived", "Args": ["1111"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetNoOfBidsReceived", "Args": ["1111"]}'
 
 **GetListOfBids**:
    
-   Retrieves all the bids received against an auction. each row in the list represents a bid object.   
+   Retrieves all the bids received against an auction. each row in the list represents a bid object.
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfBids", "Args": ["1111"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfBids", "Args": ["1111"]}'
 
 **GetItemLog**:
 
@@ -396,7 +395,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemLog","Args": ["1000"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetItemLog","Args": ["1000"]}'
    
 **GetItemListByCat**:
 
@@ -404,7 +403,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "modern"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "modern"]}'
 
 **GetUserListByCat**:
 
@@ -412,7 +411,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "AH"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat","Args": ["2016", "AH"]}'
 
 **GetListOfInitAucs**:
 
@@ -420,7 +419,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfInitAucs","Args": ["2016"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfInitAucs","Args": ["2016"]}'
    
 **GetListOfOpenAucs**:
 
@@ -428,7 +427,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfOpenAucs", "Args": ["2016"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfOpenAucs", "Args": ["2016"]}'
    
 **ValidateItemOwnership**:
 
@@ -436,7 +435,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership",   "Args": ["1000", "500", "avQX6JfTnELAY4mkRhOr8P7vmz0H3aAIuFGsGiSD5UQ="]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership",   "Args": ["1000", "500", "avQX6JfTnELAY4mkRhOr8P7vmz0H3aAIuFGsGiSD5UQ="]}'
 
 **IsItemOnAuction**:
 
@@ -444,7 +443,7 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-      ./peer chaincode query -l golang -n mycc -c '{"Function": "IsItemOnAuction", "Args": ["1999", "VERIFY"]}'
+      peer chaincode query -l golang -n mycc -c '{"Function": "IsItemOnAuction", "Args": ["1999", "VERIFY"]}'
 
 ##Notes
 
