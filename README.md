@@ -144,7 +144,7 @@ Please review instructions on setting up the [Development Environment](https://g
 ```
 ###Run the following shell scripts
 
-The scripts are provided for the convenience of understanding how to use the application as well as testing in your specific cloned environment. The scripts execute all API calles in CLI mode. In CLI mode, the peer and the chaincode live within the same container. However, these scripts will not work well in NET mode. To test the application in NET mode, follow the instructions on using the UI to make the API calls.
+The scripts are provided for the convenience of understanding how to use the application as well as testing in your specific cloned environment. The scripts execute all API calls in CLI mode. In CLI mode, the peer and the chaincode live within the same container. However, these scripts will not work well in NET mode. To test the application in NET mode, follow the instructions on using the UI to make the API calls.
 
 #### PostUsers
 
