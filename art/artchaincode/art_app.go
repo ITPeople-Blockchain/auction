@@ -29,21 +29,11 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"encoding/json"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	//"github.com/op/go-logging"
-	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
-	"io"
-	"net/http"
+        "itpUtils"
 	"os"
 	"os/exec"
 	"runtime"
@@ -59,7 +49,7 @@ import (
 // which used a record type field. The array below holds a list of valid record types.
 // This could be stored on a blockchain table or an application
 //////////////////////////////////////////////////////////////////////////////////////////////////
-var recType = []string{"ARTINV", "USER", "BID", "AUCREQ", "POSTTRAN", "OPENAUC", "CLAUC", "XFER", "VERIFY"}
+var recType = []string{"ARTINV", "USER", "BID", "AUCREQ", "POSTTRAN", "OPENAUC", "CLAUC", "XFER"}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // The following array holds the list of tables that should be created
@@ -91,6 +81,7 @@ type ItemObject struct {
 	ItemImageType  string // should be used to regenerate the appropriate image type
 	ItemBasePrice  string // Reserve Price at Auction must be greater than this price
 	CurrentOwnerID string // This is validated for a user registered record
+        TimeStamp      string // This is the time stamp
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -127,6 +118,7 @@ type UserObject struct {
 	Bank      string
 	AccountNo string
 	RoutingNo string
+        Timestamp string
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -137,17 +129,18 @@ type UserObject struct {
 /////////////////////////////////////////////////////////////////////////////
 
 type AuctionRequest struct {
-	AuctionID      string
-	RecType        string // AUCREQ
-	ItemID         string
-	AuctionHouseID string // ID of the Auction House managing the auction
-	SellerID       string // ID Of Seller - to verified against the Item CurrentOwnerId
-	RequestDate    string // Date on which Auction Request was filed
-	ReservePrice   string // reserver price > previous purchase price
-	BuyItNowPrice  string // 0 (Zero) if not applicable else specify price
-	Status         string // INIT, OPEN, CLOSED (To be Updated by Trgger Auction)
-	OpenDate       string // Date on which auction will occur (To be Updated by Trigger Auction)
-	CloseDate      string // Date and time when Auction will close (To be Updated by Trigger Auction)
+	AuctionID       string
+	RecType         string // AUCREQ
+	ItemID          string
+	AuctionHouseID  string // ID of the Auction House managing the auction
+	SellerID        string // ID Of Seller - to verified against the Item CurrentOwnerId
+	RequestDate     string // Date on which Auction Request was filed
+	ReservePrice    string // reserver price > previous purchase price
+	BuyItNowPrice   string // 0 (Zero) if not applicable else specify price
+	Status          string // INIT, OPEN, CLOSED (To be Updated by Trgger Auction)
+	OpenDate        string // Date on which auction will occur (To be Updated by Trigger Auction)
+	CloseDate       string // Date and time when Auction will close (To be Updated by Trigger Auction)
+        TimeStamp       string // The transaction Date and Time
 }
 
 /////////////////////////////////////////////////////////////
@@ -161,15 +154,15 @@ type AuctionRequest struct {
 /////////////////////////////////////////////////////////////
 
 type ItemTransaction struct {
-	AuctionID   string
-	RecType     string // POSTTRAN
-	ItemID      string
-	TransType   string // Sale, Buy, Commission
-	UserId      string // Buyer or Seller ID
-	TransDate   string // Date of Settlement (Buyer or Seller)
-	HammerTime  string // Time of hammer strike - SOLD
-	HammerPrice string // Total Settlement price
-	Details     string // Details about the Transaction
+	AuctionID       string
+	RecType         string // POSTTRAN
+	ItemID          string
+	TransType       string // Sale, Buy, Commission
+	UserId          string // Buyer or Seller ID
+	TransDate       string // Date of Settlement (Buyer or Seller)
+	HammerTime      string // Time of hammer strike - SOLD
+	HammerPrice     string // Total Settlement price
+	Details         string // Details about the Transaction
 }
 
 ////////////////////////////////////////////////////////////////
@@ -229,8 +222,8 @@ func GetNumberOfKeys(tname string) int {
 // during an invoke
 //
 //////////////////////////////////////////////////////////////
-func InvokeFunction(fname string) func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	InvokeFunc := map[string]func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error){
+func InvokeFunction(fname string) func(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+	InvokeFunc := map[string]func(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error){
 		"PostItem":           PostItem,
 		"PostUser":           PostUser,
 		"PostAuctionRequest": PostAuctionRequest,
@@ -249,8 +242,8 @@ func InvokeFunction(fname string) func(stub shim.ChaincodeStubInterface, functio
 // Query Functions based on Function name
 //
 //////////////////////////////////////////////////////////////
-func QueryFunction(fname string) func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	QueryFunc := map[string]func(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error){
+func QueryFunction(fname string) func(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+	QueryFunc := map[string]func(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error){
 		"GetItem":               GetItem,
 		"GetUser":               GetUser,
 		"GetAuctionRequest":     GetAuctionRequest,
@@ -266,8 +259,6 @@ func QueryFunction(fname string) func(stub shim.ChaincodeStubInterface, function
 		"GetListOfInitAucs":     GetListOfInitAucs,
 		"GetListOfOpenAucs":     GetListOfOpenAucs,
 		"ValidateItemOwnership": ValidateItemOwnership,
-		"IsItemOnAuction":       IsItemOnAuction,
-		"GetVersion":            GetVersion,
 	}
 	return QueryFunc[fname]
 }
@@ -276,10 +267,8 @@ func QueryFunction(fname string) func(stub shim.ChaincodeStubInterface, function
 
 type SimpleChaincode struct {
 }
-
 var gopath string
 var ccPath string
-
 ////////////////////////////////////////////////////////////////////////////////
 // Chain Code Kick-off Main function
 ////////////////////////////////////////////////////////////////////////////////
@@ -287,19 +276,11 @@ func main() {
 
 	// maximize CPU usage for maximum performance
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	fmt.Println("Starting Item Auction Application chaincode BlueMix ver 0.25 Dated 2016-07-17 15.20.00 ")
+	fmt.Println("Starting Item Auction Application chaincode BlueMix ver 21 Dated 2016-07-02 09.45.00: ")
 
 	gopath = os.Getenv("GOPATH")
-	if len(os.Args) == 2 && strings.EqualFold(os.Args[1], "DEV") {
-		fmt.Println("----------------- STARTED IN DEV MODE -------------------- ")
-		//set chaincode path for DEV MODE
-		ccPath = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/auction/art/artchaincode/", gopath)
-	} else {
-		fmt.Println("----------------- STARTED IN NET MODE -------------------- ")
-		//set chaincode path for NET MODE
-		ccPath = fmt.Sprintf("%s/src/github.com/ITPeople-Blockchain/auction/art/artchaincode/", gopath)
-	}
-
+	ccPath = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/auction/art/artchaincode/", gopath)
+	//ccPath = fmt.Sprintf("%s/src/github.com/hyperledger/fabric/examples/chaincode/go/artfun/", gopath)
 	// Start the shim -- running the fabric
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
@@ -312,7 +293,7 @@ func main() {
 // SimpleChaincode - Init Chaincode implementation - The following sequence of transactions can be used to test the Chaincode
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	// TODO - Include all initialization to be complete before Invoke and Query
 	// Uses aucTables to delete tables if they exist and re-create them
@@ -326,15 +307,10 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 		if err != nil {
 			return nil, fmt.Errorf("Init(): DeleteTable of %s  Failed ", val)
 		}
-		err = InitLedger(stub, val)
+		err = itpUtils.InitLedger(stub, val)
 		if err != nil {
 			return nil, fmt.Errorf("Init(): InitLedger of %s  Failed ", val)
 		}
-	}
-	// Update the ledger with the Application version
-	err = stub.PutState("version", []byte(strconv.Itoa(23)))
-	if err != nil {
-		return nil, err
 	}
 
 	fmt.Println("Init() Initialization Complete  : ", args)
@@ -354,7 +330,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 // - The CloseAuction creates a transaction and invokes PostTransaction
 ////////////////////////////////////////////////////////////////
 
-func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	var err error
 	var buff []byte
 
@@ -389,7 +365,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItem", "Args": ["2000"]}'
 //////////////////////////////////////////////////////////////////////////////////////////
 
-func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	var err error
 	var buff []byte
 	fmt.Println("ID Extracted and Type = ", args[0])
@@ -416,46 +392,17 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Retrieve Auction applications version Information
-// This API is to check whether application has been deployed successfully or not
-// example:
-// ./peer chaincode query -l golang -n mycc -c '{"Function": "GetVersion", "Args": ["version"]}'
-//
-//////////////////////////////////////////////////////////////////////////////////////////
-func GetVersion(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	if len(args) < 1 {
-		fmt.Println("GetVersion() : Requires 1 argument 'version'")
-		return nil, errors.New("GetVersion() : Requires 1 argument 'version'")
-	}
-	// Get version from the ledger
-	version, err := stub.GetState(args[0])
-	if err != nil {
-		jsonResp := "{\"Error\":\"Failed to get state for version\"}"
-		return nil, errors.New(jsonResp)
-	}
-
-	if version == nil {
-		jsonResp := "{\"Error\":\" auction application version is invalid\"}"
-		return nil, errors.New(jsonResp)
-	}
-
-	jsonResp := "{\"version\":\"" + string(version) + "\"}"
-	fmt.Printf("Query Response:%s\n", jsonResp)
-	return version, nil
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////
 // Retrieve User Information
 // example:
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetUser", "Args": ["100"]}'
 //
 //////////////////////////////////////////////////////////////////////////////////////////
-func GetUser(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetUser(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	var err error
 
 	// Get the Object and Display it
-	Avalbytes, err := QueryLedger(stub, "UserTable", args)
+	Avalbytes, err := itpUtils.QueryLedger(stub, "UserTable", args)
 	if err != nil {
 		fmt.Println("GetUser() : Failed to Query Object ")
 		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
@@ -477,12 +424,12 @@ func GetUser(stub shim.ChaincodeStubInterface, function string, args []string) (
 // Retrieve a Item by Item ID
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItem", "Args": ["1000"]}'
 /////////////////////////////////////////////////////////////////////////////////////////
-func GetItem(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetItem(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	var err error
 
 	// Get the Objects and Display it
-	Avalbytes, err := QueryLedger(stub, "ItemTable", args)
+	Avalbytes, err := itpUtils.QueryLedger(stub, "ItemTable", args)
 	if err != nil {
 		fmt.Println("GetItem() : Failed to Query Object ")
 		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
@@ -496,12 +443,6 @@ func GetItem(stub shim.ChaincodeStubInterface, function string, args []string) (
 	}
 
 	fmt.Println("GetItem() : Response : Successfull ")
-
-	// Masking ItemImage binary data
-	itemObj, _ := JSONtoAR(Avalbytes)
-	itemObj.ItemImage = []byte{}
-	Avalbytes, _ = ARtoJSON(itemObj)
-
 	return Avalbytes, nil
 }
 
@@ -511,7 +452,7 @@ func GetItem(stub shim.ChaincodeStubInterface, function string, args []string) (
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership", "Args": ["1000", "100", "tGEBaZuKUBmwTjzNEyd+nr/fPUASuVJAZ1u7gha5fJg="]}'
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-func ValidateItemOwnership(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func ValidateItemOwnership(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	var err error
 
@@ -521,7 +462,7 @@ func ValidateItemOwnership(stub shim.ChaincodeStubInterface, function string, ar
 	}
 
 	// Get the Object Information
-	Avalbytes, err := QueryLedger(stub, "ItemTable", []string{args[0]})
+	Avalbytes, err := itpUtils.QueryLedger(stub, "ItemTable", []string{args[0]})
 	if err != nil {
 		fmt.Println("ValidateItemOwnership() : Failed to Query Object ")
 		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
@@ -567,12 +508,12 @@ func ValidateItemOwnership(stub shim.ChaincodeStubInterface, function string, ar
 // There are two other tables just for query purposes - AucInitTable, AucOpenTable
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-func GetAuctionRequest(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetAuctionRequest(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	var err error
 
 	// Get the Objects and Display it
-	Avalbytes, err := QueryLedger(stub, "AuctionTable", args)
+	Avalbytes, err := itpUtils.QueryLedger(stub, "AuctionTable", args)
 	if err != nil {
 		fmt.Println("GetAuctionRequest() : Failed to Query Object ")
 		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
@@ -595,7 +536,7 @@ func GetAuctionRequest(stub shim.ChaincodeStubInterface, function string, args [
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid", "Args": ["1111"], "1"}'
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-func GetBid(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetBid(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	var err error
 
@@ -608,7 +549,7 @@ func GetBid(stub shim.ChaincodeStubInterface, function string, args []string) ([
 	}
 
 	// Get the Objects and Display it
-	Avalbytes, err := QueryLedger(stub, "BidTable", args)
+	Avalbytes, err := itpUtils.QueryLedger(stub, "BidTable", args)
 	if err != nil {
 		fmt.Println("GetBid() : Failed to Query Object ")
 		jsonResp := "{\"Error\":\"Failed to get  Object Data for " + args[0] + "\"}"
@@ -631,12 +572,12 @@ func GetBid(stub shim.ChaincodeStubInterface, function string, args []string) ([
 //  ./peer chaincode query -l golang -n mycc -c '{"Function": "GetTransaction", "Args": ["1111"]}'
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-func GetTransaction(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetTransaction(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	//var err error
 
 	// Get the Objects and Display it
-	Avalbytes, err := QueryLedger(stub, "TransTable", args)
+	Avalbytes, err := itpUtils.QueryLedger(stub, "TransTable", args)
 	if Avalbytes == nil {
 		fmt.Println("GetTransaction() : Incomplete Query Object ")
 		jsonResp := "{\"Error\":\"Incomplete information about the key for " + args[0] + "\"}"
@@ -664,7 +605,7 @@ func GetTransaction(stub shim.ChaincodeStubInterface, function string, args []st
 // ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["100", "USER", "Ashley Hart", "TRD",  "Morrisville Parkway, #216, Morrisville, NC 27560", "9198063535", "ashley@itpeople.com", "SUNTRUST", "00017102345", "0234678"]}'
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func PostUser(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func PostUser(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	record, err := CreateUserObject(args[0:]) //
 	if err != nil {
@@ -679,7 +620,7 @@ func PostUser(stub shim.ChaincodeStubInterface, function string, args []string) 
 		// Update the ledger with the Buffer Data
 		// err = stub.PutState(args[0], buff)
 		keys := []string{args[0]}
-		err = UpdateLedger(stub, "UserTable", keys, buff)
+		err = itpUtils.UpdateLedger(stub, "UserTable", keys, buff)
 		if err != nil {
 			fmt.Println("PostUser() : write error while inserting record")
 			return nil, err
@@ -687,7 +628,7 @@ func PostUser(stub shim.ChaincodeStubInterface, function string, args []string) 
 
 		// Post Entry into UserCatTable - i.e. User Category Table
 		keys = []string{"2016", args[3], args[0]}
-		err = UpdateLedger(stub, "UserCatTable", keys, buff)
+		err = itpUtils.UpdateLedger(stub, "UserCatTable", keys, buff)
 		if err != nil {
 			fmt.Println("PostUser() : write error while inserting recordinto UserCatTable \n")
 			return nil, err
@@ -702,10 +643,10 @@ func CreateUserObject(args []string) (UserObject, error) {
 	var err error
 	var aUser UserObject
 
-	// Check there are 10 Arguments
-	if len(args) != 10 {
-		fmt.Println("CreateUserObject(): Incorrect number of arguments. Expecting 10 ")
-		return aUser, errors.New("CreateUserObject() : Incorrect number of arguments. Expecting 10 ")
+	// Check there are 11 Arguments
+	if len(args) != 11 {
+		fmt.Println("CreateUserObject(): Incorrect number of arguments. Expecting 11 ")
+		return aUser, errors.New("CreateUserObject() : Incorrect number of arguments. Expecting 11 ")
 	}
 
 	// Validate UserID is an integer
@@ -715,7 +656,7 @@ func CreateUserObject(args []string) (UserObject, error) {
 		return aUser, errors.New("CreateUserObject() : User ID should be an integer")
 	}
 
-	aUser = UserObject{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]}
+	aUser = UserObject{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]}
 	fmt.Println("CreateUserObject() : User Object : ", aUser)
 
 	return aUser, nil
@@ -726,10 +667,10 @@ func CreateUserObject(args []string) (UserObject, error) {
 // Since the Owner Changes hands, a record has to be written for each
 // Transaction with the updated Encryption Key of the new owner
 // Example
-//./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1000", "ARTINV", "Shadows by Asppen", "Asppen Messer", "20140202", "Original", "Landscape" , "Canvas", "15 x 15 in", "sample_7.png","$600", "100"]}'
+//./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1000", "ARTINV", "Shadows by Asppen", "Asppen Messer", "20140202", "Original", "Landscape" , "Canvas", "15 x 15 in", "sample_7.png","$600", "100", "2016-02-02 03:000:00"]}'
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func PostItem(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func PostItem(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	itemObject, err := CreateItemObject(args[0:])
 	if err != nil {
@@ -754,14 +695,14 @@ func PostItem(stub shim.ChaincodeStubInterface, function string, args []string) 
 		// Update the ledger with the Buffer Data
 		// err = stub.PutState(args[0], buff)
 		keys := []string{args[0]}
-		err = UpdateLedger(stub, "ItemTable", keys, buff)
+		err = itpUtils.UpdateLedger(stub, "ItemTable", keys, buff)
 		if err != nil {
 			fmt.Println("PostItem() : write error while inserting record\n")
 			return buff, err
 		}
 
 		// Put an entry into the Item History Table
-		_, err = PostItemLog(stub, itemObject, "INITIAL", "DEFAULT")
+		_, err = PostItemLog(stub, itemObject, "INITIAL", "DEFAULT", args[12])
 		if err != nil {
 			fmt.Println("PostItemLog() : write error while inserting record\n")
 			return nil, err
@@ -770,7 +711,7 @@ func PostItem(stub shim.ChaincodeStubInterface, function string, args []string) 
 		// Post Entry into ItemCatTable - i.e. Item Category Table
 		// The first key 2016 is a dummy (band aid) key to extract all values
 		keys = []string{"2016", args[6], args[0]}
-		err = UpdateLedger(stub, "ItemCatTable", keys, buff)
+		err = itpUtils.UpdateLedger(stub, "ItemCatTable", keys, buff)
 		if err != nil {
 			fmt.Println("PostItem() : Write error while inserting record into ItemCatTable \n")
 			return buff, err
@@ -788,10 +729,10 @@ func CreateItemObject(args []string) (ItemObject, error) {
 	var err error
 	var myItem ItemObject
 
-	// Check there are 12 Arguments provided as per the the struct - two are computed
-	if len(args) != 12 {
-		fmt.Println("CreateItemObject(): Incorrect number of arguments. Expecting 12 ")
-		return myItem, errors.New("CreateItemObject(): Incorrect number of arguments. Expecting 12 ")
+	// Check there are 13 Arguments provided as per the the struct - two are computed
+	if len(args) != 13 {
+		fmt.Println("CreateItemObject(): Incorrect number of arguments. Expecting 13 ")
+		return myItem, errors.New("CreateItemObject(): Incorrect number of arguments. Expecting 13 ")
 	}
 
 	// Validate ItemID is an integer
@@ -807,26 +748,26 @@ func CreateItemObject(args []string) (ItemObject, error) {
 
 	// Validate Picture File exists based on the name provided
 	// Looks for file in current directory of application and must be fixed for other locations
-	imagePath := ccPath + args[9]
+	imagePath := ccPath +args[9];
 	if _, err := os.Stat(imagePath); err == nil {
-		fmt.Println(imagePath, "  exists!")
+	  fmt.Println(imagePath, "  exists!")
 	} else {
-		fmt.Println("CreateItemObject(): Cannot find or load Picture File = %s :  %s\n", imagePath, err)
-		return myItem, errors.New("CreateItemObject(): ART Picture File not found " + imagePath)
+	  fmt.Println("CreateItemObject(): Cannot find or load Picture File = %s :  %s\n", imagePath, err)
+	  return myItem, errors.New("CreateItemObject(): ART Picture File not found " + imagePath)
 	}
 
 	// Get the Item Image and convert it to a byte array
-	imagebytes, fileType := imageToByteArray(imagePath)
+	imagebytes, fileType := itpUtils.ImageToByteArray(imagePath)
 
 	// Generate a new key and encrypt the image
 
-	AES_key, _ := GenAESKey()
-	AES_enc := Encrypt(AES_key, imagebytes)
+	AES_key, _ := itpUtils.GenAESKey()
+	AES_enc := itpUtils.Encrypt(AES_key, imagebytes)
 
 	// Append the AES Key, The Encrypted Image Byte Array and the file type
-	myItem = ItemObject{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], AES_enc, AES_key, fileType, args[10], args[11]}
+	myItem = ItemObject{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], AES_enc, AES_key, fileType, args[10], args[11], args[12]}
 
-	fmt.Println("CreateItemObject(): Item Object created: ID# ", myItem.ItemID, "\n AES Key: ", myItem.AES_Key)
+	fmt.Println("CreateItemObject(): Item Object created: ", myItem.ItemID, myItem.AES_Key)
 
 	// Code to Validate the Item Object)
 	// If User presents Crypto Key then key is used to validate the picture that is stored as part of the title
@@ -841,7 +782,7 @@ func CreateItemObject(args []string) (ItemObject, error) {
 // This function is internally invoked by PostTransaction and is not a Public API
 ///////////////////////////////////////////////////////////////////////////////////
 
-func UpdateItemObject(stub shim.ChaincodeStubInterface, ar []byte, hammerPrice string, buyer string) ([]byte, error) {
+func UpdateItemObject(stub *shim.ChaincodeStub, ar []byte, hammerPrice string, buyer string) ([]byte, error) {
 
 	var err error
 	myItem, err := JSONtoAR(ar)
@@ -853,11 +794,11 @@ func UpdateItemObject(stub shim.ChaincodeStubInterface, ar []byte, hammerPrice s
 	// Insert logic to  re-encrypt image by first fetching the current Key
 	CurrentAES_Key := myItem.AES_Key
 	// Decrypt Image and Save Image in a file
-	image := Decrypt(CurrentAES_Key, myItem.ItemImage)
+	image := itpUtils.Decrypt(CurrentAES_Key, myItem.ItemImage)
 
 	// Get a New Key & Encrypt Image with New Key
-	myItem.AES_Key, _ = GenAESKey()
-	myItem.ItemImage = Encrypt(myItem.AES_Key, image)
+	myItem.AES_Key, _ = itpUtils.GenAESKey()
+	myItem.ItemImage = itpUtils.Encrypt(myItem.AES_Key, image)
 
 	// Update the owner to the Buyer and update price to auction hammer price
 	myItem.ItemBasePrice = hammerPrice
@@ -865,7 +806,7 @@ func UpdateItemObject(stub shim.ChaincodeStubInterface, ar []byte, hammerPrice s
 
 	ar, err = ARtoJSON(myItem)
 	keys := []string{myItem.ItemID, myItem.CurrentOwnerID}
-	err = ReplaceLedgerEntry(stub, "ItemTable", keys, ar)
+	err = itpUtils.ReplaceLedgerEntry(stub, "ItemTable", keys, ar)
 	if err != nil {
 		fmt.Println("UpdateItemObject() : Failed ReplaceLedgerEntry in ItemTable into Blockchain ")
 		return nil, err
@@ -874,7 +815,7 @@ func UpdateItemObject(stub shim.ChaincodeStubInterface, ar []byte, hammerPrice s
 
 	// Update entry in Item Category Table as it holds the Item object as wekk
 	keys = []string{"2016", myItem.ItemSubject, myItem.ItemID}
-	err = ReplaceLedgerEntry(stub, "ItemCatTable", keys, ar)
+	err = itpUtils.ReplaceLedgerEntry(stub, "ItemCatTable", keys, ar)
 	if err != nil {
 		fmt.Println("UpdateItemObject() : Failed ReplaceLedgerEntry in ItemCategoryTable into Blockchain ")
 		return nil, err
@@ -889,20 +830,20 @@ func UpdateItemObject(stub shim.ChaincodeStubInterface, ar []byte, hammerPrice s
 // Transfer Item to new owner - no change in price  - In the example XFER is the recType
 // ./peer chaincode invoke -l golang -n mycc -c '{"Function": "TransferItem", "Args": ["1000", "100", "tGEBaZuKUBmwTjzNEyd+nr/fPUASuVJAZ1u7gha5fJg=", "300", "XFER"]}'
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-func TransferItem(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func TransferItem(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	var err error
 
-	if len(args) < 5 {
-		fmt.Println("TransferItem() : Requires 5 arguments Item#, Owner#, Key#, newOwnerID#, XFER \n")
-		return nil, errors.New("TransferItem() : Requires 5 arguments Item#, Owner#, Key#, newOwnerID#, XFER")
+	if len(args) < 6 {
+		fmt.Println("TransferItem() : Requires 6 arguments Item#, Owner#, Key#, newOwnerID#, XFER \n")
+		return nil, errors.New("TransferItem() : Requires 6 arguments Item#, Owner#, Key#, newOwnerID#, XFER")
 	}
 
 	// Let us make sure that the Item is not on Auction
 	err = VerifyIfItemIsOnAuction(stub, args[0])
-	if err != nil {
-		fmt.Println("TransferItem() : Failed Item is either initiated or opened for Auction ", args[0])
-		return nil, err
+        if err != nil {
+                fmt.Println("TransferItem() : Failed Item is either initiated or opened for Auction ", args[0])
+                return nil, err
 	}
 
 	// Validate New Owner's ID
@@ -928,18 +869,18 @@ func TransferItem(stub shim.ChaincodeStubInterface, function string, args []stri
 	// Insert logic to  re-encrypt image by first fetching the current Key
 	CurrentAES_Key := myItem.AES_Key
 	// Decrypt Image and Save Image in a file
-	image := Decrypt(CurrentAES_Key, myItem.ItemImage)
+	image := itpUtils.Decrypt(CurrentAES_Key, myItem.ItemImage)
 
 	// Get a New Key & Encrypt Image with New Key
-	myItem.AES_Key, _ = GenAESKey()
-	myItem.ItemImage = Encrypt(myItem.AES_Key, image)
+	myItem.AES_Key, _ = itpUtils.GenAESKey()
+	myItem.ItemImage = itpUtils.Encrypt(myItem.AES_Key, image)
 
 	// Update the owner to the new owner transfered to
 	myItem.CurrentOwnerID = args[3]
 
 	ar, err = ARtoJSON(myItem)
 	keys := []string{myItem.ItemID, myItem.CurrentOwnerID}
-	err = ReplaceLedgerEntry(stub, "ItemTable", keys, ar)
+	err = itpUtils.ReplaceLedgerEntry(stub, "ItemTable", keys, ar)
 	if err != nil {
 		fmt.Println("TransferAsset() : Failed ReplaceLedgerEntry in ItemTable into Blockchain ")
 		return nil, err
@@ -948,13 +889,13 @@ func TransferItem(stub shim.ChaincodeStubInterface, function string, args []stri
 
 	// Update entry in Item Category Table as it holds the Item object as well
 	keys = []string{"2016", myItem.ItemSubject, myItem.ItemID}
-	err = ReplaceLedgerEntry(stub, "ItemCatTable", keys, ar)
+	err = itpUtils.ReplaceLedgerEntry(stub, "ItemCatTable", keys, ar)
 	if err != nil {
 		fmt.Println("TransferAsset() : Failed ReplaceLedgerEntry in ItemCategoryTable into Blockchain ")
 		return nil, err
 	}
 
-	_, err = PostItemLog(stub, myItem, "Transfer", args[1])
+	_, err = PostItemLog(stub, myItem, "Transfer", args[1], args[5])
 	if err != nil {
 		fmt.Println("TransferItem() : PostItemLog() write error while inserting record\n")
 		return nil, err
@@ -970,82 +911,59 @@ func TransferItem(stub shim.ChaincodeStubInterface, function string, args []stri
 // The function return the Auction ID and the Status = OPEN or INIT
 ////////////////////////////////////////////////////////////////////////////////////
 
-func VerifyIfItemIsOnAuction(stub shim.ChaincodeStubInterface, itemID string) error {
-
+func VerifyIfItemIsOnAuction(stub *shim.ChaincodeStub, itemID string) (error) {
+	
 	rows, err := GetListOfOpenAucs(stub, "AucOpenTable", []string{"2016"})
-	if err != nil {
-		return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. Error retrieving values from AucOpenTable: %s", err)
-	}
+        if err != nil {
+                return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. Error retrieving values from AucOpenTable: %s", err)
+        }
 
-	tlist := make([]AuctionRequest, len(rows))
-	err = json.Unmarshal([]byte(rows), &tlist)
-	if err != nil {
-		fmt.Println("VerifyIfItemIsOnAuction: Unmarshal failed : ", err)
-		return fmt.Errorf("VerifyIfItemIsOnAuction: operation failed. Error un-marshaling JSON: %s", err)
-	}
+        tlist := make([]AuctionRequest, len(rows))
+        err = json.Unmarshal([]byte(rows), &tlist)
+        if err != nil {
+                fmt.Println("VerifyIfItemIsOnAuction: Unmarshal failed : ", err)
+                return  fmt.Errorf("VerifyIfItemIsOnAuction: operation failed. Error un-marshaling JSON: %s", err)
+        }
 
-	for i := 0; i < len(tlist); i++ {
-		ar := tlist[i]
+        for i := 0; i < len(tlist); i++ {
+                ar := tlist[i]
 
-		// Compare Auction IDs
-		if ar.ItemID == itemID {
-			fmt.Println("VerifyIfItemIsOnAuction() : Item Exists")
-			return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. %s", itemID)
-		}
-	}
+                // Compare Auction IDs
+                if ar.ItemID == itemID {
+                     fmt.Println("VerifyIfItemIsOnAuction() Failed : Ummarshall error")
+                     return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. %s", itemID)
+                }
+        }
 
-	// Now Check if an Auction Has been inititiated
+        // Now Check if an Auction Has been inititiated
 	// If so , it has to be removed from Auction for a Transfer
 
-	rows, err = GetListOfInitAucs(stub, "AucInitTable", []string{"2016"})
-	if err != nil {
-		return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. Error retrieving values from AucInitTable: %s", err)
-	}
+        rows, err = GetListOfInitAucs(stub, "AucInitTable", []string{"2016"})
+        if err != nil {
+                return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. Error retrieving values from AucInitTable: %s", err)
+        }
 
-	tlist = make([]AuctionRequest, len(rows))
-	err = json.Unmarshal([]byte(rows), &tlist)
-	if err != nil {
-		fmt.Println("VerifyIfItemIsOnAuction() Unmarshal failed : ", err)
-		return fmt.Errorf("VerifyIfItemIsOnAuction: operation failed. Error un-marshaling JSON: %s", err)
-	}
+        tlist = make([]AuctionRequest, len(rows))
+        err = json.Unmarshal([]byte(rows), &tlist)
+        if err != nil {
+                fmt.Println("VerifyIfItemIsOnAuction() Unmarshal failed : ", err)
+                return fmt.Errorf("VerifyIfItemIsOnAuction: operation failed. Error un-marshaling JSON: %s", err)
+        }
 
-	for i := 0; i < len(tlist); i++ {
-		ar := tlist[i]
-		if err != nil {
-			fmt.Println("VerifyIfItemIsOnAuction() Failed : Ummarshall error")
-			return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. %s", err)
-		}
+        for i := 0; i < len(tlist); i++ {
+                ar := tlist[i]
+                if err != nil {
+                        fmt.Println("VerifyIfItemIsOnAuction() Failed : Ummarshall error")
+                        return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed. %s", err)
+                }
 
-		// Compare Auction IDs
-		if ar.ItemID == itemID {
-			return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed.")
-		}
-	}
+                // Compare Auction IDs
+                if ar.ItemID == itemID {
+                        return fmt.Errorf("VerifyIfItemIsOnAuction() operation failed." )
+                }
+        }
 
-	return nil
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Checks if an Item is available on auction or not
-// Input ItemID # 1000
-// See Sample data
-// ./peer chaincode query -l golang -n mycc -c '{"Function": "IsItemOnAuction", "Args": ["1000", "VERIFY"]}'
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-func IsItemOnAuction(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	if len(args) < 2 {
-		fmt.Println("IsItemOnAuction() : Requires 2 arguments Item#, RecordType")
-		return nil, errors.New("IsItemOnAuction() : Requires 2 arguments Item#, RecordType")
-	}
-
-	itemExists := false
-	err := VerifyIfItemIsOnAuction(stub, args[0])
-	if err != nil {
-		fmt.Println("IsItemOnAuction() : Failed Item# ", args[0], " is either initiated or opened for Auction ")
-		itemExists = true
-	}
-	fmt.Println("Is Item# ", args[0], " on-auction : ", itemExists)
-	ie, _ := json.Marshal(itemExists)
-	return ie, nil
+        return nil
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1053,11 +971,12 @@ func IsItemOnAuction(stub shim.ChaincodeStubInterface, function string, args []s
 // Valid Status for ItemLog =  OnAuc, OnSale, NA, INITIAL
 // Valid AuctionedBy: This value is set to "DEFAULT" but when it is put on auction Auction House ID is assigned
 // PostItemLog IS NOT A PUBLIC API and is invoked every time some event happens in the Item's life
+// The currentDateTime must be provided by Client
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func PostItemLog(stub shim.ChaincodeStubInterface, item ItemObject, status string, ah string) ([]byte, error) {
+func PostItemLog(stub *shim.ChaincodeStub, item ItemObject, status string, ah string, currentDateTime string) ([]byte, error) {
 
-	iLog := ItemToItemLog(item)
+	iLog := ItemToItemLog(item, currentDateTime)
 	iLog.Status = status
 	iLog.AuctionedBy = ah
 
@@ -1067,8 +986,8 @@ func PostItemLog(stub shim.ChaincodeStubInterface, item ItemObject, status strin
 		return nil, errors.New("PostItemLog(): Failed Cannot create object buffer for write : " + item.ItemID)
 	} else {
 		// Update the ledger with the Buffer Data
-		keys := []string{iLog.ItemID, iLog.Status, iLog.AuctionedBy, time.Now().Format("2006-01-02 15:04:05")}
-		err = UpdateLedger(stub, "ItemHistoryTable", keys, buff)
+		keys := []string{iLog.ItemID, iLog.Status, iLog.AuctionedBy, currentDateTime}
+		err = itpUtils.UpdateLedger(stub, "ItemHistoryTable", keys, buff)
 		if err != nil {
 			fmt.Println("PostItemLog() : write error while inserting record\n")
 			return buff, err
@@ -1082,24 +1001,25 @@ func PostItemLog(stub shim.ChaincodeStubInterface, item ItemObject, status strin
 // The owner of an Item, when ready to put the item on an auction
 // will create an auction request  and specify a  auction house.
 //
-// ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostAuctionRequest", "Args":["1111", "AUCREQ", "1700", "200", "400", "04012016", "1200", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]}'
+// ./peer chaincode invoke -l golang -n mycc -c '{"Function": "PostAuctionRequest", "Args":["1111", "AUCREQ", "1700", "200", "400", "04012016", "1200", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC", "2016-05-23 11:00:00.3 +0000 UTC"]}'
 //
 // The start and end time of the auction are actually assigned when the auction is opened  by OpenAuctionForBids()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func PostAuctionRequest(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func PostAuctionRequest(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	ar, err := CreateAuctionRequest(args[0:])
 	if err != nil {
 		return nil, err
 	}
 
-	// Let us make sure that the Item is not on Auction
-	err = VerifyIfItemIsOnAuction(stub, ar.ItemID)
-	if err != nil {
-		fmt.Println("PostAuctionRequest() : Failed Item is either initiated or opened for Auction ", args[0])
-		return nil, err
-	}
+        // Let us make sure that the Item is not on Auction
+        err = VerifyIfItemIsOnAuction(stub, ar.ItemID)
+        if err != nil {
+                fmt.Println("PostAuctionRequest() : Failed Item is either initiated or opened for Auction ", args[0])
+                return nil, err
+        }
+
 
 	// Validate Auction House to check it is a registered User
 	aucHouse, err := ValidateMember(stub, ar.AuctionHouseID)
@@ -1125,7 +1045,7 @@ func PostAuctionRequest(stub shim.ChaincodeStubInterface, function string, args 
 		// Update the ledger with the Buffer Data
 		//err = stub.PutState(args[0], buff)
 		keys := []string{args[0]}
-		err = UpdateLedger(stub, "AuctionTable", keys, buff)
+		err = itpUtils.UpdateLedger(stub, "AuctionTable", keys, buff)
 		if err != nil {
 			fmt.Println("PostAuctionRequest() : write error while inserting record\n")
 			return buff, err
@@ -1134,7 +1054,7 @@ func PostAuctionRequest(stub shim.ChaincodeStubInterface, function string, args 
 		// Post an Item Log and the Auction House ID is included in the log
 		// Recall -- that by default that value is "DEFAULT"
 		io, err := JSONtoAR(itemObject)
-		_, err = PostItemLog(stub, io, "ReadyForAuc", ar.AuctionHouseID)
+		_, err = PostItemLog(stub, io, "ReadyForAuc", ar.AuctionHouseID, ar.TimeStamp)
 		if err != nil {
 			fmt.Println("PostItemLog() : write error while inserting record\n")
 			return buff, err
@@ -1145,7 +1065,7 @@ func PostAuctionRequest(stub shim.ChaincodeStubInterface, function string, args 
 		// The 2016 is a dummy key and has notr value other than to get all rows
 
 		keys = []string{"2016", args[0]}
-		err = UpdateLedger(stub, "AucInitTable", keys, buff)
+		err = itpUtils.UpdateLedger(stub, "AucInitTable", keys, buff)
 		if err != nil {
 			fmt.Println("PostAuctionRequest() : write error while inserting record into AucInitTable \n")
 			return buff, err
@@ -1160,11 +1080,11 @@ func CreateAuctionRequest(args []string) (AuctionRequest, error) {
 	var err error
 	var aucReg AuctionRequest
 
-	// Check there are 11 Arguments
+	// Check there are 12 Arguments
 	// See example -- The Open and Close Dates are Dummy, and will be set by open auction
 	// '{"Function": "PostAuctionRequest", "Args":["1111", "AUCREQ", "1000", "200", "100", "04012016", "1200", "1800",
-	//   "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]}'
-	if len(args) != 11 {
+	//   "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC", "2016-05-23 11:00:00.3 +0000 UTC"]}'
+	if len(args) != 12 {
 		fmt.Println("CreateAuctionRegistrationObject(): Incorrect number of arguments. Expecting 11 ")
 		return aucReg, errors.New("CreateAuctionRegistrationObject() : Incorrect number of arguments. Expecting 11 ")
 	}
@@ -1176,7 +1096,7 @@ func CreateAuctionRequest(args []string) (AuctionRequest, error) {
 		return aucReg, errors.New("CreateAuctionRequest() : User ID should be an integer")
 	}
 
-	aucReg = AuctionRequest{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]}
+	aucReg = AuctionRequest{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]}
 	fmt.Println("CreateAuctionObject() : Auction Registration : ", aucReg)
 
 	return aucReg, nil
@@ -1185,9 +1105,10 @@ func CreateAuctionRequest(args []string) (AuctionRequest, error) {
 //////////////////////////////////////////////////////////
 // Create an Item Transaction record to process Request
 // This is invoked by the CloseAuctionRequest
+// 
 //
 ////////////////////////////////////////////////////////////
-func PostTransaction(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func PostTransaction(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	if function != "PostTransaction" {
 		return nil, errors.New("PostTransaction(): Invalid function name. Expecting \"PostTransaction\"")
@@ -1237,7 +1158,7 @@ func PostTransaction(stub shim.ChaincodeStubInterface, function string, args []s
 	itemObject.ItemBasePrice = ar.HammerPrice
 	itemObject.CurrentOwnerID = ar.UserId
 
-	_, err = PostItemLog(stub, itemObject, "NA", "DEFAULT")
+	_, err = PostItemLog(stub, itemObject, "NA", "DEFAULT", args[9])
 	if err != nil {
 		fmt.Println("PostTransaction() : write error while inserting item log record\n")
 		return lastUpdatedItemOBCObject, err
@@ -1254,7 +1175,7 @@ func PostTransaction(stub shim.ChaincodeStubInterface, function string, args []s
 
 	// Update the ledger with the Buffer Data
 	keys := []string{args[0], args[3]}
-	err = UpdateLedger(stub, "TransTable", keys, buff)
+	err = itpUtils.UpdateLedger(stub, "TransTable", keys, buff)
 	if err != nil {
 		fmt.Println("PostTransaction() : write error while inserting record\n")
 		return buff, err
@@ -1294,7 +1215,7 @@ func CreateTransactionRequest(args []string) (ItemTransaction, error) {
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func PostBid(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func PostBid(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	bid, err := CreateBidObject(args[0:]) //
 	if err != nil {
@@ -1332,18 +1253,18 @@ func PostBid(stub shim.ChaincodeStubInterface, function string, args []string) (
 	///////////////////////////////////////////////////////////////////
 	// Reject Bid if the time bid was received is > Auction Close Time
 	///////////////////////////////////////////////////////////////////
-	if tCompare(bid.BidTime, aucR.CloseDate) == false {
-		fmt.Println("PostBid() Failed : BidTime past the Auction Close Time")
-		return nil, fmt.Errorf("PostBid() Failed : BidTime past the Auction Close Time %s, %s", bid.BidTime, aucR.CloseDate)
-	}
+        if tCompare(bid.BidTime, aucR.CloseDate) == false {
+               fmt.Println("PostBid() Failed : BidTime past the Auction Close Time")
+               return nil, fmt.Errorf("PostBid() Failed : BidTime past the Auction Close Time %s, %s", bid.BidTime, aucR.CloseDate)
+        }
 
 	//////////////////////////////////////////////////////////////////
 	// Reject Bid if Item ID on Bid does not match Item ID on Auction
 	//////////////////////////////////////////////////////////////////
-	if aucR.ItemID != bid.ItemID {
-		fmt.Println("PostBid() Failed : Item ID mismatch on bid. Bid Rejected")
-		return nil, errors.New("PostBid() : Item ID mismatch on Bid. Bid Rejected")
-	}
+        if aucR.ItemID != bid.ItemID {
+               fmt.Println("PostBid() Failed : Item ID mismatch on bid. Bid Rejected")
+               return nil, errors.New("PostBid() : Item ID mismatch on Bid. Bid Rejected")
+        }
 
 	//////////////////////////////////////////////////////////////////////
 	// Reject Bid if Bid Price is less than Reserve Price
@@ -1351,8 +1272,8 @@ func PostBid(stub shim.ChaincodeStubInterface, function string, args []string) (
 	//////////////////////////////////////////////////////////////////////
 	bp, err := strconv.Atoi(bid.BidPrice)
 	if err != nil {
-		fmt.Println("PostBid() Failed : Bid price should be an integer")
-		return nil, errors.New("PostBid() : Bid price should be an integer")
+               fmt.Println("PostBid() Failed : Bid price should be an integer")
+	       return nil, errors.New("PostBid() : Bid price should be an integer")
 	}
 
 	hp, err := strconv.Atoi(aucR.ReservePrice)
@@ -1377,7 +1298,7 @@ func PostBid(stub shim.ChaincodeStubInterface, function string, args []string) (
 		// Update the ledger with the Buffer Data
 		// err = stub.PutState(args[0], buff)
 		keys := []string{args[0], args[2]}
-		err = UpdateLedger(stub, "BidTable", keys, buff)
+		err = itpUtils.UpdateLedger(stub, "BidTable", keys, buff)
 		if err != nil {
 			fmt.Println("PostBidTable() : write error while inserting record\n")
 			return buff, err
@@ -1393,7 +1314,7 @@ func CreateBidObject(args []string) (Bid, error) {
 
 	// Check there are 11 Arguments
 	// See example
-	if len(args) != 6 {
+	if len(args) != 7 {
 		fmt.Println("CreateBidObject(): Incorrect number of arguments. Expecting 6 ")
 		return aBid, errors.New("CreateBidObject() : Incorrect number of arguments. Expecting 6 ")
 	}
@@ -1410,232 +1331,11 @@ func CreateBidObject(args []string) (Bid, error) {
 		return aBid, errors.New("CreateBidObject() : Bid ID should be an integer")
 	}
 
-	bidTime := time.Now().Format("2006-01-02 15:04:05")
-
-	aBid = Bid{args[0], args[1], args[2], args[3], args[4], args[5], bidTime}
+	// bidTime = args[6]  sent by the client
+	aBid = Bid{args[0], args[1], args[2], args[3], args[4], args[5], args[6]}
 	fmt.Println("CreateBidObject() : Bid Object : ", aBid)
 
 	return aBid, nil
-}
-
-///////////////////////////////////////////////////////////
-// Convert Image to []bytes and viceversa
-// Detect Image Filetype
-// Image Function to read an image and create a byte array
-// Currently only PNG images are supported
-///////////////////////////////////////////////////////////
-func imageToByteArray(imageFile string) ([]byte, string) {
-
-	file, err := os.Open(imageFile)
-
-	if err != nil {
-		fmt.Println("imageToByteArray() : cannot OPEN image file ", err)
-		return nil, string("imageToByteArray() : cannot OPEN image file ")
-	}
-
-	defer file.Close()
-
-	fileInfo, _ := file.Stat()
-	var size int64 = fileInfo.Size()
-	bytes := make([]byte, size)
-
-	// read file into bytes
-	buff := bufio.NewReader(file)
-	_, err = buff.Read(bytes)
-
-	if err != nil {
-		fmt.Println("imageToByteArray() : cannot READ image file")
-		return nil, string("imageToByteArray() : cannot READ image file ")
-	}
-
-	filetype := http.DetectContentType(bytes)
-	fmt.Println("imageToByteArray() : ", filetype)
-	//filetype := GetImageType(bytes)
-
-	return bytes, filetype
-}
-
-//////////////////////////////////////////////////////
-// If Valid fileType, will have "image" as first word
-//////////////////////////////////////////////////////
-func GetImageType(buff []byte) string {
-	filetype := http.DetectContentType(buff)
-
-	switch filetype {
-	case "image/jpeg", "image/jpg":
-		return filetype
-
-	case "image/gif":
-		return filetype
-
-	case "image/png":
-		return filetype
-
-	case "application/pdf": // not image, but application !
-		filetype = "application/pdf"
-	default:
-		filetype = "Unknown"
-	}
-	return filetype
-}
-
-////////////////////////////////////////////////////////////
-// Converts a byteArray into an image and saves it
-// into an appropriate file
-// It is important to get the file type before saving the
-// file by call the GetImageType
-////////////////////////////////////////////////////////////
-func ByteArrayToImage(imgByte []byte, imageFile string) error {
-
-	// convert []byte to image for saving to file
-	img, _, _ := image.Decode(bytes.NewReader(imgByte))
-
-	fmt.Println("ProcessQueryResult ByteArrayToImage : proceeding to create image ")
-
-	//save the imgByte to file
-	out, err := os.Create(imageFile)
-
-	if err != nil {
-		fmt.Println("ByteArrayToImage() : cannot CREATE image file ", err)
-		return errors.New("ByteArrayToImage() : cannot CREATE image file ")
-	}
-	fmt.Println("ProcessRequestType ByteArrayToImage : proceeding to Encode image ")
-
-	//err = png.Encode(out, img)
-	filetype := http.DetectContentType(imgByte)
-
-	switch filetype {
-	case "image/jpeg", "image/jpg":
-		var opt jpeg.Options
-		opt.Quality = 100
-		err = jpeg.Encode(out, img, &opt)
-
-	case "image/gif":
-		var opt gif.Options
-		opt.NumColors = 256
-		err = gif.Encode(out, img, &opt)
-
-	case "image/png":
-		err = png.Encode(out, img)
-
-	default:
-		err = errors.New("Only PMNG, JPG and GIF Supported ")
-	}
-
-	if err != nil {
-		fmt.Println("ByteArrayToImage() : cannot ENCODE image file ", err)
-		return errors.New("ByteArrayToImage() : cannot ENCODE image file ")
-	}
-
-	// everything ok
-	fmt.Println("Image file  generated and saved to ", imageFile)
-	return nil
-}
-
-///////////////////////////////////////////////////////////////////////
-// Encryption and Decryption Section
-// Images will be Encrypted and stored and the key will be part of the
-// certificate that is provided to the Owner
-///////////////////////////////////////////////////////////////////////
-
-const (
-	AESKeyLength = 32 // AESKeyLength is the default AES key length
-	NonceSize    = 24 // NonceSize is the default NonceSize
-)
-
-///////////////////////////////////////////////////
-// GetRandomBytes returns len random looking bytes
-///////////////////////////////////////////////////
-func GetRandomBytes(len int) ([]byte, error) {
-	key := make([]byte, len)
-
-	_, err := rand.Read(key)
-	if err != nil {
-		return nil, err
-	}
-
-	return key, nil
-}
-
-////////////////////////////////////////////////////////////
-// GenAESKey returns a random AES key of length AESKeyLength
-// 3 Functions to support Encryption and Decryption
-// GENAESKey() - Generates AES symmetric key
-// Encrypt() Encrypts a [] byte
-// Decrypt() Decryts a [] byte
-////////////////////////////////////////////////////////////
-func GenAESKey() ([]byte, error) {
-	return GetRandomBytes(AESKeyLength)
-}
-
-func PKCS5Pad(src []byte) []byte {
-	padding := aes.BlockSize - len(src)%aes.BlockSize
-	pad := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(src, pad...)
-}
-
-func PKCS5Unpad(src []byte) []byte {
-	len := len(src)
-	unpad := int(src[len-1])
-	return src[:(len - unpad)]
-}
-
-func Decrypt(key []byte, ciphertext []byte) []byte {
-
-	// Create the AES cipher
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err)
-	}
-
-	// Before even testing the decryption,
-	// if the text is too small, then it is incorrect
-	if len(ciphertext) < aes.BlockSize {
-		panic("Text is too short")
-	}
-
-	// Get the 16 byte IV
-	iv := ciphertext[:aes.BlockSize]
-
-	// Remove the IV from the ciphertext
-	ciphertext = ciphertext[aes.BlockSize:]
-
-	// Return a decrypted stream
-	stream := cipher.NewCFBDecrypter(block, iv)
-
-	// Decrypt bytes from ciphertext
-	stream.XORKeyStream(ciphertext, ciphertext)
-
-	return ciphertext
-}
-
-func Encrypt(key []byte, ba []byte) []byte {
-
-	// Create the AES cipher
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err)
-	}
-
-	// Empty array of 16 + ba length
-	// Include the IV at the beginning
-	ciphertext := make([]byte, aes.BlockSize+len(ba))
-
-	// Slice of first 16 bytes
-	iv := ciphertext[:aes.BlockSize]
-
-	// Write 16 rand bytes to fill iv
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		panic(err)
-	}
-
-	// Return an encrypted stream
-	stream := cipher.NewCFBEncrypter(block, iv)
-
-	// Encrypt bytes from ba to ciphertext
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], ba)
-
-	return ciphertext
 }
 
 //////////////////////////////////////////////////////////
@@ -1672,23 +1372,23 @@ func GetKeyValue(Avalbytes []byte, key string) string {
 //////////////////////////////////////////////////////////
 func tCompare(t1 string, t2 string) bool {
 
-	layout := "2006-01-02 15:04:05"
-	bidTime, err := time.Parse(layout, t1)
-	if err != nil {
-		fmt.Println("tCompare() Failed : time Conversion error on t1")
-		return false
-	}
+        layout := "2006-01-02 15:04:05"
+        bidTime, err := time.Parse(layout, t1)
+        if err != nil {
+               fmt.Println("tCompare() Failed : time Conversion error on t1")
+               return false
+        }
 
-	aucCloseTime, err := time.Parse(layout, t2)
-	if err != nil {
-		fmt.Println("tCompare() Failed : time Conversion error on t2")
-		return false
-	}
+        aucCloseTime, err := time.Parse(layout, t2)
+        if err != nil {
+               fmt.Println("tCompare() Failed : time Conversion error on t2")
+               return false
+        }
 
 	if bidTime.Before(aucCloseTime) {
-		return true
+	   return true
 	}
-
+	
 	return false
 }
 
@@ -1740,7 +1440,7 @@ func JSONtoItemLog(ithis []byte) (ItemLog, error) {
 	item := ItemLog{}
 	err := json.Unmarshal(ithis, &item)
 	if err != nil {
-		fmt.Println("JSONtoItemLog error: ", err)
+		fmt.Println("JSONtoAucReq error: ", err)
 		return item, err
 	}
 	return item, err
@@ -1774,27 +1474,27 @@ func JSONtoAucReq(areq []byte) (AuctionRequest, error) {
 }
 
 //////////////////////////////////////////////////////////
-// Converts BID Object to JSON String
+// Converts an BID to a JSON String
 //////////////////////////////////////////////////////////
 func BidtoJSON(myHand Bid) ([]byte, error) {
 
 	ajson, err := json.Marshal(myHand)
 	if err != nil {
-		fmt.Println("BidtoJSON error: ", err)
+		fmt.Println(err)
 		return nil, err
 	}
 	return ajson, nil
 }
 
 //////////////////////////////////////////////////////////
-// Converts JSON String to BID Object
+// Converts an User Object to a JSON String
 //////////////////////////////////////////////////////////
 func JSONtoBid(areq []byte) (Bid, error) {
 
 	myHand := Bid{}
 	err := json.Unmarshal(areq, &myHand)
 	if err != nil {
-		fmt.Println("JSONtoBid error: ", err)
+		fmt.Println("JSONtoAucReq error: ", err)
 		return myHand, err
 	}
 	return myHand, err
@@ -1822,10 +1522,10 @@ func JSONtoUser(user []byte) (UserObject, error) {
 	ur := UserObject{}
 	err := json.Unmarshal(user, &ur)
 	if err != nil {
-		fmt.Println("JSONtoUser error: ", err)
+		fmt.Println("UsertoJSON error: ", err)
 		return ur, err
 	}
-	fmt.Println("JSONtoUser created: ", ur)
+	fmt.Println("UsertoJSON created: ", ur)
 	return ur, err
 }
 
@@ -1874,7 +1574,7 @@ func validateID(id string) error {
 // Create an ItemLog from Item
 //////////////////////////////////////////////
 
-func ItemToItemLog(io ItemObject) ItemLog {
+func ItemToItemLog(io ItemObject, cdt string) ItemLog {
 
 	iLog := ItemLog{}
 	iLog.ItemID = io.ItemID
@@ -1883,7 +1583,7 @@ func ItemToItemLog(io ItemObject) ItemLog {
 	iLog.RecType = "ILOG"
 	iLog.ItemDesc = io.ItemDesc
 	iLog.CurrentOwner = io.CurrentOwnerID
-	iLog.Date = time.Now().Format("2006-01-02 15:04:05")
+	iLog.Date = cdt
 
 	return iLog
 }
@@ -1900,7 +1600,8 @@ func BidtoTransaction(bid Bid) ItemTransaction {
 	t.ItemID = bid.ItemID
 	t.TransType = "SALE"
 	t.UserId = bid.BuyerID
-	t.TransDate = time.Now().Format("2006-01-02 15:04:05")
+	// Ideally SystemChain Code must provide a TimeStamp Function
+	t.TransDate = bid.BidTime
 	t.HammerTime = bid.BidTime
 	t.HammerPrice = bid.BidPrice
 	t.Details = "The Highest Bidder does not always win"
@@ -1912,12 +1613,12 @@ func BidtoTransaction(bid Bid) ItemTransaction {
 // Validate if the User Information Exists
 // in the block-chain
 ////////////////////////////////////////////////////////////////////////////
-func ValidateMember(stub shim.ChaincodeStubInterface, owner string) ([]byte, error) {
+func ValidateMember(stub *shim.ChaincodeStub, owner string) ([]byte, error) {
 
 	// Get the Item Objects and Display it
 	// Avalbytes, err := stub.GetState(owner)
 	args := []string{owner, "USER"}
-	Avalbytes, err := QueryLedger(stub, "UserTable", args)
+	Avalbytes, err := itpUtils.QueryLedger(stub, "UserTable", args)
 
 	if err != nil {
 		fmt.Println("ValidateMember() : Failed - Cannot find valid owner record for ART  ", owner)
@@ -1939,11 +1640,11 @@ func ValidateMember(stub shim.ChaincodeStubInterface, owner string) ([]byte, err
 // Validate if the User Information Exists
 // in the block-chain
 ////////////////////////////////////////////////////////////////////////////
-func ValidateItemSubmission(stub shim.ChaincodeStubInterface, artId string) ([]byte, error) {
+func ValidateItemSubmission(stub *shim.ChaincodeStub, artId string) ([]byte, error) {
 
 	// Get the Item Objects and Display it
 	args := []string{artId, "ARTINV"}
-	Avalbytes, err := QueryLedger(stub, "ItemTable", args)
+	Avalbytes, err := itpUtils.QueryLedger(stub, "ItemTable", args)
 	if err != nil {
 		fmt.Println("ValidateItemSubmission() : Failed - Cannot find valid owner record for ART  ", artId)
 		jsonResp := "{\"Error\":\"Failed to get Owner Object Data for " + artId + "\"}"
@@ -1960,188 +1661,6 @@ func ValidateItemSubmission(stub shim.ChaincodeStubInterface, artId string) ([]b
 	return Avalbytes, nil
 }
 
-////////////////////////////////////////////////////////////////////////////
-// Open a Ledgers if one does not exist
-// These ledgers will be used to write /  read data
-// Use names are listed in aucTables {}
-// THIS FUNCTION REPLACES ALL THE INIT Functions below
-//  - InitUserReg()
-//  - InitAucReg()
-//  - InitBidReg()
-//  - InitItemReg()
-//  - InitItemMaster()
-//  - InitTransReg()
-//  - InitAuctionTriggerReg()
-//  - etc. etc.
-////////////////////////////////////////////////////////////////////////////
-func InitLedger(stub shim.ChaincodeStubInterface, tableName string) error {
-
-	// Generic Table Creation Function - requires Table Name and Table Key Entry
-	// Create Table - Get number of Keys the tables supports
-	// This version assumes all Keys are String and the Data is Bytes
-	// This Function can replace all other InitLedger function in this app such as InitItemLedger()
-
-	nKeys := GetNumberOfKeys(tableName)
-	if nKeys < 1 {
-		fmt.Println("Atleast 1 Key must be provided \n")
-		fmt.Println("Auction_Application: Failed creating Table ", tableName)
-		return errors.New("Auction_Application: Failed creating Table " + tableName)
-	}
-
-	var columnDefsForTbl []*shim.ColumnDefinition
-
-	for i := 0; i < nKeys; i++ {
-		columnDef := shim.ColumnDefinition{Name: "keyName" + strconv.Itoa(i), Type: shim.ColumnDefinition_STRING, Key: true}
-		columnDefsForTbl = append(columnDefsForTbl, &columnDef)
-	}
-
-	columnLastTblDef := shim.ColumnDefinition{Name: "Details", Type: shim.ColumnDefinition_BYTES, Key: false}
-	columnDefsForTbl = append(columnDefsForTbl, &columnLastTblDef)
-
-	// Create the Table (Nil is returned if the Table exists or if the table is created successfully
-	err := stub.CreateTable(tableName, columnDefsForTbl)
-
-	if err != nil {
-		fmt.Println("Auction_Application: Failed creating Table ", tableName)
-		return errors.New("Auction_Application: Failed creating Table " + tableName)
-	}
-
-	return err
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Open a User Registration Table if one does not exist
-// Register users into this table
-////////////////////////////////////////////////////////////////////////////
-func UpdateLedger(stub shim.ChaincodeStubInterface, tableName string, keys []string, args []byte) error {
-
-	nKeys := GetNumberOfKeys(tableName)
-	if nKeys < 1 {
-		fmt.Println("Atleast 1 Key must be provided \n")
-	}
-
-	var columns []*shim.Column
-
-	for i := 0; i < nKeys; i++ {
-		col := shim.Column{Value: &shim.Column_String_{String_: keys[i]}}
-		columns = append(columns, &col)
-	}
-
-	lastCol := shim.Column{Value: &shim.Column_Bytes{Bytes: []byte(args)}}
-	columns = append(columns, &lastCol)
-
-	row := shim.Row{columns}
-	ok, err := stub.InsertRow(tableName, row)
-	if err != nil {
-		return fmt.Errorf("UpdateLedger: InsertRow into "+tableName+" Table operation failed. %s", err)
-	}
-	if !ok {
-		return errors.New("UpdateLedger: InsertRow into " + tableName + " Table failed. Row with given key " + keys[0] + " already exists")
-	}
-
-	fmt.Println("UpdateLedger: InsertRow into ", tableName, " Table operation Successful. ")
-	return nil
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Open a User Registration Table if one does not exist
-// Register users into this table
-////////////////////////////////////////////////////////////////////////////
-func DeleteFromLedger(stub shim.ChaincodeStubInterface, tableName string, keys []string) error {
-	var columns []shim.Column
-
-	//nKeys := GetNumberOfKeys(tableName)
-	nCol := len(keys)
-	if nCol < 1 {
-		fmt.Println("Atleast 1 Key must be provided \n")
-		return errors.New("DeleteFromLedger failed. Must include at least key values")
-	}
-
-	for i := 0; i < nCol; i++ {
-		colNext := shim.Column{Value: &shim.Column_String_{String_: keys[i]}}
-		columns = append(columns, colNext)
-	}
-
-	err := stub.DeleteRow(tableName, columns)
-	if err != nil {
-		return fmt.Errorf("DeleteFromLedger operation failed. %s", err)
-	}
-
-	fmt.Println("DeleteFromLedger: DeleteRow from ", tableName, " Table operation Successful. ")
-	return nil
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Replaces the Entry in the Ledger
-//
-////////////////////////////////////////////////////////////////////////////
-func ReplaceLedgerEntry(stub shim.ChaincodeStubInterface, tableName string, keys []string, args []byte) error {
-
-	nKeys := GetNumberOfKeys(tableName)
-	if nKeys < 1 {
-		fmt.Println("Atleast 1 Key must be provided \n")
-	}
-
-	var columns []*shim.Column
-
-	for i := 0; i < nKeys; i++ {
-		col := shim.Column{Value: &shim.Column_String_{String_: keys[i]}}
-		columns = append(columns, &col)
-	}
-
-	lastCol := shim.Column{Value: &shim.Column_Bytes{Bytes: []byte(args)}}
-	columns = append(columns, &lastCol)
-
-	row := shim.Row{columns}
-	ok, err := stub.ReplaceRow(tableName, row)
-	if err != nil {
-		return fmt.Errorf("ReplaceLedgerEntry: Replace Row into "+tableName+" Table operation failed. %s", err)
-	}
-	if !ok {
-		return errors.New("ReplaceLedgerEntry: Replace Row into " + tableName + " Table failed. Row with given key " + keys[0] + " already exists")
-	}
-
-	fmt.Println("ReplaceLedgerEntry: Replace Row in ", tableName, " Table operation Successful. ")
-	return nil
-}
-
-////////////////////////////////////////////////////////////////////////////
-// Query a User Object by Table Name and Key
-////////////////////////////////////////////////////////////////////////////
-func QueryLedger(stub shim.ChaincodeStubInterface, tableName string, args []string) ([]byte, error) {
-
-	var columns []shim.Column
-	nCol := GetNumberOfKeys(tableName)
-	for i := 0; i < nCol; i++ {
-		colNext := shim.Column{Value: &shim.Column_String_{String_: args[i]}}
-		columns = append(columns, colNext)
-	}
-
-	row, err := stub.GetRow(tableName, columns)
-	fmt.Println("Length or number of rows retrieved ", len(row.Columns))
-
-	if len(row.Columns) == 0 {
-		jsonResp := "{\"Error\":\"Failed retrieving data " + args[0] + ". \"}"
-		fmt.Println("Error retrieving data record for Key = ", args[0], "Error : ", jsonResp)
-		return nil, errors.New(jsonResp)
-	}
-
-	//fmt.Println("User Query Response:", row)
-	//jsonResp := "{\"Owner\":\"" + string(row.Columns[nCol].GetBytes()) + "\"}"
-	//fmt.Println("User Query Response:%s\n", jsonResp)
-	Avalbytes := row.Columns[nCol].GetBytes()
-
-	// Perform Any additional processing of data
-	fmt.Println("QueryLedger() : Successful - Proceeding to ProcessRequestType ")
-	err = ProcessQueryResult(stub, Avalbytes, args)
-	if err != nil {
-		fmt.Println("QueryLedger() : Cannot create object  : ", args[1])
-		jsonResp := "{\"QueryLedger() Error\":\" Cannot create Object for key " + args[0] + "\"}"
-		return nil, errors.New(jsonResp)
-	}
-	return Avalbytes, nil
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Get List of Bids for an Auction
 // in the block-chain --
@@ -2149,9 +1668,9 @@ func QueryLedger(stub shim.ChaincodeStubInterface, tableName string, args []stri
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid", "Args": ["1111"]}'
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetHighestBid", "Args": ["1111"]}'
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-func GetListOfBids(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetListOfBids(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
-	rows, err := GetList(stub, "BidTable", args)
+	rows, err := itpUtils.GetList(stub, "BidTable", args)
 	if err != nil {
 		return nil, fmt.Errorf("GetListOfBids operation failed. Error marshaling JSON: %s", err)
 	}
@@ -2182,9 +1701,9 @@ func GetListOfBids(stub shim.ChaincodeStubInterface, function string, args []str
 // This is a fixed Query to be issued as below
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfInitAucs", "Args": ["2016"]}'
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-func GetListOfInitAucs(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetListOfInitAucs(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
-	rows, err := GetList(stub, "AucInitTable", args)
+	rows, err := itpUtils.GetList(stub, "AucInitTable", args)
 	if err != nil {
 		return nil, fmt.Errorf("GetListOfInitAucs operation failed. Error marshaling JSON: %s", err)
 	}
@@ -2215,9 +1734,9 @@ func GetListOfInitAucs(stub shim.ChaincodeStubInterface, function string, args [
 // This is a fixed Query to be issued as below
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetListOfOpenAucs", "Args": ["2016"]}'
 ////////////////////////////////////////////////////////////////////////////
-func GetListOfOpenAucs(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetListOfOpenAucs(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
-	rows, err := GetList(stub, "AucOpenTable", args)
+	rows, err := itpUtils.GetList(stub, "AucOpenTable", args)
 	if err != nil {
 		return nil, fmt.Errorf("GetListOfOpenAucs operation failed. Error marshaling JSON: %s", err)
 	}
@@ -2247,7 +1766,7 @@ func GetListOfOpenAucs(stub shim.ChaincodeStubInterface, function string, args [
 // in the block-chain .. Pass the Item ID
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemLog", "Args": ["1000"]}'
 ////////////////////////////////////////////////////////////////////////////
-func GetItemLog(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetItemLog(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	// Check there are 1 Arguments provided as per the the struct - two are computed
 	// See example
@@ -2257,7 +1776,7 @@ func GetItemLog(stub shim.ChaincodeStubInterface, function string, args []string
 		return nil, errors.New("CreateItemObject(): Incorrect number of arguments. Expecting 12 ")
 	}
 
-	rows, err := GetList(stub, "ItemHistoryTable", args)
+	rows, err := itpUtils.GetList(stub, "ItemHistoryTable", args)
 	if err != nil {
 		return nil, fmt.Errorf("GetItemLog() operation failed. Error marshaling JSON: %s", err)
 	}
@@ -2289,7 +1808,7 @@ func GetItemLog(stub shim.ChaincodeStubInterface, function string, args []string
 // See Sample data
 // ./peer chaincode query -l golang -n mycc -c '{"Function": "GetItemListByCat", "Args": ["2016", "Modern"]}'
 ////////////////////////////////////////////////////////////////////////////
-func GetItemListByCat(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetItemListByCat(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	// Check there are 1 Arguments provided as per the the struct - two are computed
 	// See example
@@ -2299,7 +1818,7 @@ func GetItemListByCat(stub shim.ChaincodeStubInterface, function string, args []
 		return nil, errors.New("CreateItemObject(): Incorrect number of arguments. Expecting 1 ")
 	}
 
-	rows, err := GetList(stub, "ItemCatTable", args)
+	rows, err := itpUtils.GetList(stub, "ItemCatTable", args)
 	if err != nil {
 		return nil, fmt.Errorf("GetItemListByCat() operation failed. Error GetList: %s", err)
 	}
@@ -2314,8 +1833,6 @@ func GetItemListByCat(stub shim.ChaincodeStubInterface, function string, args []
 			fmt.Println("() Failed : Ummarshall error")
 			return nil, fmt.Errorf("GetItemListByCat() operation failed. %s", err)
 		}
-		//TODO: Masking Image binary data, Need a clean solution ?
-		io.ItemImage = []byte{}
 		tlist[i] = io
 	}
 
@@ -2330,7 +1847,7 @@ func GetItemListByCat(stub shim.ChaincodeStubInterface, function string, args []
 // Get a List of Users by Category
 // in the block-chain
 ////////////////////////////////////////////////////////////////////////////
-func GetUserListByCat(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetUserListByCat(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	// Check there are 1 Arguments provided as per the the struct - two are computed
 	// See example
@@ -2340,7 +1857,7 @@ func GetUserListByCat(stub shim.ChaincodeStubInterface, function string, args []
 		return nil, errors.New("CreateUserObject(): Incorrect number of arguments. Expecting 1 ")
 	}
 
-	rows, err := GetList(stub, "UserCatTable", args)
+	rows, err := itpUtils.GetList(stub, "UserCatTable", args)
 	if err != nil {
 		return nil, fmt.Errorf("GetUserListByCat() operation failed. Error marshaling JSON: %s", err)
 	}
@@ -2366,58 +1883,13 @@ func GetUserListByCat(stub shim.ChaincodeStubInterface, function string, args []
 }
 
 ////////////////////////////////////////////////////////////////////////////
-// Get a List of Rows based on query criteria from the OBC
-//
-////////////////////////////////////////////////////////////////////////////
-func GetList(stub shim.ChaincodeStubInterface, tableName string, args []string) ([]shim.Row, error) {
-	var columns []shim.Column
-
-	nKeys := GetNumberOfKeys(tableName)
-	nCol := len(args)
-	if nCol < 1 {
-		fmt.Println("Atleast 1 Key must be provided \n")
-		return nil, errors.New("GetList failed. Must include at least key values")
-	}
-
-	for i := 0; i < nCol; i++ {
-		colNext := shim.Column{Value: &shim.Column_String_{String_: args[i]}}
-		columns = append(columns, colNext)
-	}
-
-	rowChannel, err := stub.GetRows(tableName, columns)
-	if err != nil {
-		return nil, fmt.Errorf("GetList operation failed. %s", err)
-	}
-	var rows []shim.Row
-	for {
-		select {
-		case row, ok := <-rowChannel:
-			if !ok {
-				rowChannel = nil
-			} else {
-				rows = append(rows, row)
-				//If required enable for debugging
-				//fmt.Println(row)
-			}
-		}
-		if rowChannel == nil {
-			break
-		}
-	}
-
-	fmt.Println("Number of Keys retrieved : ", nKeys)
-	fmt.Println("Number of rows retrieved : ", len(rows))
-	return rows, nil
-}
-
-////////////////////////////////////////////////////////////////////////////
 // Get The Highest Bid Received so far for an Auction
 // in the block-chain
 ////////////////////////////////////////////////////////////////////////////
-func GetLastBid(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetLastBid(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	tn := "BidTable"
-	rows, err := GetList(stub, tn, args)
+	rows, err := itpUtils.GetList(stub, tn, args)
 	if err != nil {
 		return nil, fmt.Errorf("GetLastBid operation failed. %s", err)
 	}
@@ -2453,10 +1925,10 @@ func GetLastBid(stub shim.ChaincodeStubInterface, function string, args []string
 // Get The Highest Bid Received so far for an Auction
 // in the block-chain
 ////////////////////////////////////////////////////////////////////////////
-func GetNoOfBidsReceived(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetNoOfBidsReceived(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	tn := "BidTable"
-	rows, err := GetList(stub, tn, args)
+	rows, err := itpUtils.GetList(stub, tn, args)
 	if err != nil {
 		return nil, fmt.Errorf("GetLastBid operation failed. %s", err)
 	}
@@ -2468,10 +1940,10 @@ func GetNoOfBidsReceived(stub shim.ChaincodeStubInterface, function string, args
 // Get the Highest Bid in the List
 //
 ////////////////////////////////////////////////////////////////////////////
-func GetHighestBid(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func GetHighestBid(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	tn := "BidTable"
-	rows, err := GetList(stub, tn, args)
+	rows, err := itpUtils.GetList(stub, tn, args)
 	if err != nil {
 		return nil, fmt.Errorf("GetLastBid operation failed. %s", err)
 	}
@@ -2559,7 +2031,7 @@ func CheckRequestType(rt string) bool {
 // var recType = []string{"ARTINV", "USER", "BID", "AUCREQ", "POSTTRAN", "OPENAUC", "CLAUC"}
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-func ProcessQueryResult(stub shim.ChaincodeStubInterface, Avalbytes []byte, args []string) error {
+func ProcessQueryResult(stub *shim.ChaincodeStub, Avalbytes []byte, args []string) error {
 
 	// Identify Record Type by scanning the args for one of the recTypes
 	// This is kind of a post-processor once the query fetches the results
@@ -2584,13 +2056,13 @@ func ProcessQueryResult(stub shim.ChaincodeStubInterface, Avalbytes []byte, args
 			return err
 		}
 		// Decrypt Image and Save Image in a file
-		image := Decrypt(ar.AES_Key, ar.ItemImage)
+		image := itpUtils.Decrypt(ar.AES_Key, ar.ItemImage)
 		if err != nil {
 			fmt.Println("ProcessRequestType() : Image decrytion failed ")
 			return err
 		}
 		fmt.Println("ProcessRequestType() : Image conversion from byte[] to file successfull ")
-		err = ByteArrayToImage(image, ccPath+"copy."+ar.ItemPicFN)
+		err = itpUtils.ByteArrayToImage(image, ccPath + "copy."+ar.ItemPicFN)
 		if err != nil {
 
 			fmt.Println("ProcessRequestType() : Image conversion from byte[] to file failed ")
@@ -2607,7 +2079,19 @@ func ProcessQueryResult(stub shim.ChaincodeStubInterface, Avalbytes []byte, args
 		return err
 
 	case "AUCREQ":
+		ar, err := JSONtoAucReq(Avalbytes) //
+		if err != nil {
+			return err
+		}
+		fmt.Println("ProcessRequestType() : ", ar)
+		return err
 	case "OPENAUC":
+		ar, err := JSONtoAucReq(Avalbytes) //
+		if err != nil {
+			return err
+		}
+		fmt.Println("ProcessRequestType() : ", ar)
+		return err
 	case "CLAUC":
 		ar, err := JSONtoAucReq(Avalbytes) //
 		if err != nil {
@@ -2633,8 +2117,6 @@ func ProcessQueryResult(stub shim.ChaincodeStubInterface, Avalbytes []byte, args
 		return nil
 	case "XFER":
 		return nil
-	case "VERIFY":
-		return nil
 	default:
 
 		return errors.New("Unknown")
@@ -2645,14 +2127,14 @@ func ProcessQueryResult(stub shim.ChaincodeStubInterface, Avalbytes []byte, args
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Trigger the Auction
-// Structure of args auctionReqID, RecType, Duration in Minutes ( 3 = 3 minutes)
-// ./peer chaincode invoke -l golang -n mycc -c '{"Function": "OpenAuctionForBids", "Args":["1111", "OPENAUC", "3"]}'
+// Structure of args auctionReqID, RecType, AucStartDateTime, Duration in Minutes ( 3 = 3 minutes)
+// ./peer chaincode invoke -l golang -n mycc -c '{"Function": "OpenAuctionForBids", "Args":["1111", "OPENAUC", "3", "2006-01-02 15:04:05"]}'
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func OpenAuctionForBids(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func OpenAuctionForBids(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	// Fetch Auction Object and check its Status
-	Avalbytes, err := QueryLedger(stub, "AuctionTable", args)
+	Avalbytes, err := itpUtils.QueryLedger(stub, "AuctionTable", args)
 	if err != nil {
 		fmt.Println("OpenAuctionForBids(): Auction Object Retrieval Failed ")
 		return nil, errors.New("OpenAuctionForBids(): Auction Object Retrieval Failed ")
@@ -2678,8 +2160,10 @@ func OpenAuctionForBids(stub shim.ChaincodeStubInterface, function string, args 
 		return nil, errors.New("OpenAuctionForBids(): Auction Duration is an integer that represents minute! OpenAuctionForBids() Failed ")
 	}
 
-	aucStartDate := time.Now()
+        aucStartDate, err := time.Parse("2006-01-02 15:04:05", args[3])
 	aucEndDate := aucStartDate.Add(time.Duration(aucDuration) * time.Minute)
+
+	// We  don't use go routines anymore to time the auction
 	//sleepTime := time.Duration(aucDuration * 60 * 1000 * 1000 * 1000)
 
 	//  Update Auction Object
@@ -2697,29 +2181,19 @@ func OpenAuctionForBids(stub shim.ChaincodeStubInterface, function string, args 
 	// This was designed primarily to help the UI
 
 	keys := []string{"2016", aucR.AuctionID}
-	err = DeleteFromLedger(stub, "AucInitTable", keys)
+	err = itpUtils.DeleteFromLedger(stub, "AucInitTable", keys)
 	if err != nil {
 		fmt.Println("OpenAuctionForBids(): DeleteFromLedger() Failed ")
 		return nil, errors.New("OpenAuctionForBids(): DeleteFromLedger() Failed ")
 	}
 
 	// Add the Auction to Open Bucket
-	err = UpdateLedger(stub, "AucOpenTable", keys, buff)
+	err = itpUtils.UpdateLedger(stub, "AucOpenTable", keys, buff)
 	if err != nil {
 		fmt.Println("OpenAuctionForBids() : write error while inserting record into AucInitTable \n")
 		return buff, err
 	}
 
-	// Initiate Timer for the duration of the Auction
-	// Bids are accepted as long as the timer is alive
-	/*go func(aucR AuctionRequest, sleeptime time.Duration) ([]byte, error) {
-		fmt.Println("OpenAuctionForBids(): Sleeping for ", sleeptime)
-		time.Sleep(sleeptime)
-
-		// Exec The following Command from the shell
-		ShellCmdToCloseAuction(aucR.AuctionID)
-		return nil, err
-	}(aucR, sleepTime)*/
 	return buff, err
 }
 
@@ -2776,45 +2250,46 @@ func exe_cmd(cmd string) error {
 //////////////////////////////////////////////////////////////////////////
 // Close Open Auctions
 // 1. Read OpenAucTable
-// 2. Compare now with expiry time with now
+// 2. Compare now with expiry time with now 
 // 3. If now is > expiry time call CloseAuction
+// ./peer chaincode invoke -l golang -n mycc -c '{"Function": "CloseOpenAuctions", "Args": ["2016", "CLAUC", currentDateTime]}'
 //////////////////////////////////////////////////////////////////////////
 
-func CloseOpenAuctions(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func CloseOpenAuctions(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
-	rows, err := GetListOfOpenAucs(stub, "AucOpenTable", []string{"2016"})
-	if err != nil {
-		return nil, fmt.Errorf("GetListOfOpenAucs operation failed. Error marshaling JSON: %s", err)
-	}
+        rows, err := GetListOfOpenAucs(stub, "AucOpenTable", []string{"2016"})
+        if err != nil {
+                return nil, fmt.Errorf("GetListOfOpenAucs operation failed. Error marshaling JSON: %s", err)
+        }
 
-	tlist := make([]AuctionRequest, len(rows))
+        tlist := make([]AuctionRequest, len(rows))
 	err = json.Unmarshal([]byte(rows), &tlist)
 	if err != nil {
 		fmt.Println("Unmarshal failed : ", err)
 	}
 
-	for i := 0; i < len(tlist); i++ {
-		ar := tlist[i]
-		if err != nil {
-			fmt.Println("CloseOpenAuctions() Failed : Ummarshall error")
-			return nil, fmt.Errorf("GetListOfOpenAucs() operation failed. %s", err)
+        for i := 0; i < len(tlist); i++ {
+                ar := tlist[i]
+                if err != nil {
+                        fmt.Println("CloseOpenAuctions() Failed : Ummarshall error")
+                        return nil, fmt.Errorf("GetListOfOpenAucs() operation failed. %s", err)
+                }
+
+                fmt.Println("CloseOpenAuctions() ", ar)
+
+		// Compare Auction Times where args[2] = the CurrentTime sent by the client
+        	if tCompare(args[2], ar.CloseDate) == false {
+
+                	// Request Closing Auction
+                	_, err := CloseAuction(stub,"CloseAuction", []string{ar.AuctionID})
+                	if err != nil {
+                       		 fmt.Println("CloseOpenAuctions() Failed : Ummarshall error")
+                       		 return nil, fmt.Errorf("GetListOfOpenAucs() operation failed. %s", err)
+                	}
 		}
+        }
 
-		fmt.Println("CloseOpenAuctions() ", ar)
-
-		// Compare Auction Times
-		if tCompare(time.Now().Format("2006-01-02 15:04:05"), ar.CloseDate) == false {
-
-			// Request Closing Auction
-			_, err := CloseAuction(stub, "CloseAuction", []string{ar.AuctionID})
-			if err != nil {
-				fmt.Println("CloseOpenAuctions() Failed : Ummarshall error")
-				return nil, fmt.Errorf("GetListOfOpenAucs() operation failed. %s", err)
-			}
-		}
-	}
-
-	return rows, nil
+        return rows, nil
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -2835,10 +2310,10 @@ func CloseOpenAuctions(stub shim.ChaincodeStubInterface, function string, args [
 //
 //////////////////////////////////////////////////////////////////////////
 
-func CloseAuction(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func CloseAuction(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	// Close The Auction -  Fetch Auction Object
-	Avalbytes, err := QueryLedger(stub, "AuctionTable", []string{args[0], "AUCREQ"})
+	Avalbytes, err := itpUtils.QueryLedger(stub, "AuctionTable", []string{args[0], "AUCREQ"})
 	if err != nil {
 		fmt.Println("CloseAuction(): Auction Object Retrieval Failed ")
 		return nil, errors.New("CloseAuction(): Auction Object Retrieval Failed ")
@@ -2862,7 +2337,7 @@ func CloseAuction(stub shim.ChaincodeStubInterface, function string, args []stri
 
 	// Remove the Auction from Open Bucket
 	keys := []string{"2016", aucR.AuctionID}
-	err = DeleteFromLedger(stub, "AucOpenTable", keys)
+	err = itpUtils.DeleteFromLedger(stub, "AucOpenTable", keys)
 	if err != nil {
 		fmt.Println("CloseAuction(): DeleteFromLedger(AucOpenTable) Failed ")
 		return nil, errors.New("CloseAuction(): DeleteFromLedger(AucOpenTable) Failed ")
@@ -2872,15 +2347,15 @@ func CloseAuction(stub shim.ChaincodeStubInterface, function string, args []stri
 
 	// Process Final Bid - Turn it into a Transaction
 	Avalbytes, err = GetHighestBid(stub, "GetHighestBid", []string{args[0]})
-	if Avalbytes == nil {
-		fmt.Println("CloseAuction(): No bids available, no change in Item Status - PostTransaction() Completed Successfully ")
-		return Avalbytes, nil
+        if Avalbytes == nil {
+                fmt.Println("CloseAuction(): No bids available, no change in Item Status - PostTransaction() Completed Successfully ")
+        	return Avalbytes, nil
 	}
 
-	if err != nil {
-		fmt.Println("CloseAuction(): No bids available, error encountered - PostTransaction() failed ")
-		return nil, err
-	}
+        if err != nil {
+                fmt.Println("CloseAuction(): No bids available, error encountered - PostTransaction() failed ")
+                return nil, err
+        }
 
 	bid, _ := JSONtoBid(Avalbytes)
 	fmt.Println("CloseAuction(): Proceeding to process the highest bid ", bid)
@@ -2908,46 +2383,32 @@ func CloseAuction(stub shim.ChaincodeStubInterface, function string, args []stri
 // at the UI level and this chain-code assumes application has validated that
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-func BuyItNow(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func BuyItNow(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	// Process Final Bid - Turn it into a Transaction
 	Avalbytes, err := GetHighestBid(stub, "GetHighestBid", []string{args[0]})
-	hBidFlag := true
-	if Avalbytes == nil {
-		fmt.Println("BuyItNow(): No bids available, no change in Item Status - PostTransaction() Completed Successfully ")
-		hBidFlag = false
-	}
-
+	bid, err := JSONtoBid(Avalbytes)
 	if err != nil {
-		fmt.Println("BuyItNow(): No bids available, error encountered - PostTransaction() failed ")
-		hBidFlag = false
+		return nil, errors.New("BuyItNow() : JSONtoBid Error")
 	}
 
-	//If there are some bids then do validations
-	if hBidFlag == true {
-		bid, err := JSONtoBid(Avalbytes)
-		if err != nil {
-			return nil, errors.New("BuyItNow() : JSONtoBid Error")
-		}
+	// Check if BuyItNow Price > Highest Bid so far
+	binP, err := strconv.Atoi(args[5])
+	if err != nil {
+		return nil, errors.New("BuyItNow() : Invalid BuyItNow Price")
+	}
 
-		// Check if BuyItNow Price > Highest Bid so far
-		binP, err := strconv.Atoi(args[5])
-		if err != nil {
-			return nil, errors.New("BuyItNow() : Invalid BuyItNow Price")
-		}
+	hbP, err := strconv.Atoi(bid.BidPrice)
+	if err != nil {
+		return nil, errors.New("BuyItNow() : Invalid Highest Bid Price")
+	}
 
-		hbP, err := strconv.Atoi(bid.BidPrice)
-		if err != nil {
-			return nil, errors.New("BuyItNow() : Invalid Highest Bid Price")
-		}
-
-		if hbP > binP {
-			return nil, errors.New("BuyItNow() : Highest Bid Price > BuyItNow Price - BuyItNow Rejected")
-		}
+	if hbP > binP {
+		return nil, errors.New("BuyItNow() : Highest Bid Price > BuyItNow Price - BuyItNow Rejected")
 	}
 
 	// Close The Auction -  Fetch Auction Object
-	Avalbytes, err = QueryLedger(stub, "AuctionTable", []string{args[0], "AUCREQ"})
+	Avalbytes, err = itpUtils.QueryLedger(stub, "AuctionTable", []string{args[0], "AUCREQ"})
 	if err != nil {
 		fmt.Println("BuyItNow(): Auction Object Retrieval Failed ")
 		return nil, errors.New("BuyItNow(): Auction Object Retrieval Failed ")
@@ -2971,7 +2432,7 @@ func BuyItNow(stub shim.ChaincodeStubInterface, function string, args []string) 
 
 	// Remove the Auction from Open Bucket
 	keys := []string{"2016", aucR.AuctionID}
-	err = DeleteFromLedger(stub, "AucOpenTable", keys)
+	err = itpUtils.DeleteFromLedger(stub, "AucOpenTable", keys)
 	if err != nil {
 		fmt.Println("BuyItNow(): DeleteFromLedger(AucOpenTable) Failed ")
 		return nil, errors.New("BuyItNow(): DeleteFromLedger(AucOpenTable) Failed ")
@@ -3015,7 +2476,7 @@ func BuyItNow(stub shim.ChaincodeStubInterface, function string, args []string) 
 // from INIT to OPEN to CLOSED
 //////////////////////////////////////////////////////////////////////////
 
-func UpdateAuctionStatus(stub shim.ChaincodeStubInterface, tableName string, ar AuctionRequest) ([]byte, error) {
+func UpdateAuctionStatus(stub *shim.ChaincodeStub, tableName string, ar AuctionRequest) ([]byte, error) {
 
 	buff, err := AucReqtoJSON(ar)
 	if err != nil {
@@ -3025,7 +2486,7 @@ func UpdateAuctionStatus(stub shim.ChaincodeStubInterface, tableName string, ar 
 
 	// Update the ledger with the Buffer Data
 	keys := []string{ar.AuctionID, ar.ItemID}
-	err = ReplaceLedgerEntry(stub, "AuctionTable", keys, buff)
+	err = itpUtils.ReplaceLedgerEntry(stub, "AuctionTable", keys, buff)
 	if err != nil {
 		fmt.Println("UpdateAuctionStatus() : write error while inserting record\n")
 		return buff, err
