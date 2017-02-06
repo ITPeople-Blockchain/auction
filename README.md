@@ -125,6 +125,8 @@ Please review instructions on setting up the [Development Environment](https://g
  git clone https://github.com/<username>/auction.git
 ```
 
+copy **itUtil.tar** (`cp itpUtils.tar ../vendor/`)in fabric vendor folder and extract from vendor folder `tar -xvf itpUtils.tar`
+
 ###Terminal 1
 ```
  cd $GOPATH/src/github.com/hyperledger/fabric
@@ -214,9 +216,9 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-   The call takes 9 arguments: User ID, Record Type, Name, Type, Address, Phone, Email, Bank Name, Account#, Routing#
+   The call takes 11 arguments: User ID, Record Type, Name, Type, Address, Phone, Email, Bank Name, Account#, Routing#, Timestamp
    
-   peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["100", "USER", "Ashley Hart", "TRD",  "Morrisville Parkway, #216, Morrisville, NC 27560", "9198063535", "ashley@itpeople.com", "SUNTRUST", "00017102345", "0234678"]}'
+   `peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["100", "USER", "Ashley Hart", "TRD",  "Morrisville Parkway, #216, Morrisville, NC 27560", "9198063535", "ashley@itpeople.com", "SUNTRUST", "00017102345", "0234678", "2016-10-01T16:38:29Z"]}'`
 
 **PostItem**:
 
@@ -224,9 +226,9 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-   The call takes 12 arguments: Item ID, Record Type, Description, Detail, Date of Origin, Original or Reprint, Subject, Media, Size, Image File, Price, Current Owner ID
+   The call takes 13 arguments: Item ID, Record Type, Description, Detail, Date of Origin, Original or Reprint, Subject, Media, Size, Image File, Price, Current Owner ID
    
-   peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1400", "ARTINV", "Nature", "James Thomas", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "f6.png","1800", "100"]}'
+   `peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1400", "ARTINV", "Nature", "James Thomas", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "art7.png","1800", "100","2016-10-01T16:38:29Z"]}'`
 
 **PostAuctionRequest**:
 
@@ -234,21 +236,21 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-   This call takes 11 argumnets: Auction ID, Record Type, Item ID, Auction House ID, Owner ID, Date of Request, Reserve Price, Buy-It-Now Price, Status, Dummy Open Date, Dummy Close Date
+   This call takes 12 arguments: Auction ID, Record Type, Item ID, Auction House ID, Owner ID, Date of Request, Reserve Price, Buy-It-Now Price, Status, Dummy Open Date, Dummy Close Date and Time
    
-   peer chaincode invoke -l golang -n mycc -c '{"Function": "PostAuctionRequest", "Args":["1113", "AUCREQ", "1000", "200", "400", "04012016", "15000", "16000", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC"]}'
+   `peer chaincode invoke -l golang -n mycc -c '{"Function": "PostAuctionRequest", "Args":["1113", "AUCREQ", "1000", "200", "400", "04012016", "15000", "16000", "INIT", "2016-05-20 11:00:00.3 +0000 UTC","2016-05-23 11:00:00.3 +0000 UTC","2016-10-01T16:38:29Z"]}'`
 
    The Auction Opendate and CloseDate are dummy dates and will be set when the auction is opened. The Auction ID must be unique and cannot be repeated. We assume that the client will generate a unique auction id prior to posting the request. The state of the Auction is "INIT" at this point.
 
 **OpenAuctionForBids**:
 
-   This function is assumed to be invoked by the role of "Auction House" which is one of the types of accounts registered using PostUser. It allows the auctioner to open an auction for bids. The auction request must be in "INIT" state to be "OPEN"ed. When the auction is opened for bids, both the open and close date and time are set. The following example opens the bid for 3 minutes. Auction open durations are currently provided in minutes to support testing.
+   This function is assumed to be invoked by the role of "Auction House" which is one of the types of accounts registered using PostUser. It allows the auctioner to open an auction for bids. The auction request must be in "INIT" state to be "OPEN"ed. When the auction is opened for bids, both the open and close date and time are set. The following example opens the bid for 3 minutes. Auction open duration are currently provided in minutes to support testing.
 
    **Usage (CLI mode)**
 
-   The call takes 3 arguments: Auction ID, Record Type, Duration in Minutes
+   The call takes 4 arguments: Auction ID, Record Type, Duration in Minutes
    
-   peer chaincode invoke -l golang -n mycc -c '{"Function": "OpenAuctionForBids", "Args":["1111", "OPENAUC", "3"]}'
+   `peer chaincode invoke -l golang -n mycc -c '{"Function": "OpenAuctionForBids", "Args":["1113", "OPENAUC", "3", "2016-10-01T16:38:29Z"]}'`
 
 **PostBid**:
 
@@ -256,9 +258,9 @@ After the timer expires, the Close auction should get invoked and the highest bi
 
    **Usage (CLI mode)**
 
-   This call takes 6 arguments: Auction ID, Record Type, Bid Number, Item ID, Buyer ID, Buyer Offer Price
+   This call takes 7 arguments: Auction ID, Record Type, Bid Number, Item ID, Buyer ID, Buyer Offer Price and Time
    
-   peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "5", "1000", "400", "5000"]}'
+   `peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "5", "1000", "400", "5000","2016-10-01T16:38:29Z"]}'`
 
 **PostTransaction**:
 
