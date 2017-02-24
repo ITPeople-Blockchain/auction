@@ -1,3 +1,3 @@
 # Please update data with correct item id, owner and key
-peer chaincode invoke -l golang -n mycc -c '{"Function": "TransferItem", "Args": ["1000", "100", "tGEBaZuKUBmwTjzNEyd+nr/fPUASuVJAZ1u7gha5fJg=", "300", "XFER"]}'
+peer chaincode invoke -l golang -n mycc -c '{"Function": "TransferItem", "Args": ["1000", "500", "71XSd43UldisE1kIURpjg+YU4U3WWwS2Q3QvFd7ccZY=", "300", "XFER","2017-01-24 11:00:00"]}'
 

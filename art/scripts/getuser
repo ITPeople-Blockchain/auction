@@ -1,0 +1,5 @@
+peer chaincode query -l golang -n mycc -c '{"Args": ["qGetUser", "100"]}'
+peer chaincode query -l golang -n mycc -c '{"Args": ["qGetUser", "200"]}'
+peer chaincode query -l golang -n mycc -c '{"Args": ["qGetUser", "300"]}'
+peer chaincode query -l golang -n mycc -c '{"Args": ["qGetUser", "400"]}'
+peer chaincode query -l golang -n mycc -c '{"Args": ["qGetUser", "500"]}'

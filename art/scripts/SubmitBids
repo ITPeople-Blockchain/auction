@@ -1,12 +1,22 @@
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "1", "1000", "300", "1200"]}'
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "2", "1000", "400", "3000"]}'
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "3", "1000", "400", "6000"]}'
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "4", "1000", "500", "7000"]}'
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "5", "1000", "400", "8000"]}'
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "6", "1000", "600", "8200"]}'
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "7", "1000", "700", "8400"]}'
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "8", "1000", "300", "8900"]}'
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "9", "1000", "400", "9000"]}'
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostBid", "Args":["1111", "BID", "10", "1000", "500", "12000"]}'
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iPostBid", "1111", "BID", "1", "1000", "300", "1200", "2017-02-13 09:19:01"]}'
+sleep 5
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iPostBid", "1111", "BID", "2", "1000", "400", "3000", "2017-02-13 09:19:02"]}'
+sleep 5
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iPostBid", "1111", "BID", "3", "1000", "400", "6000", "2017-02-13 09:19:03"]}'
+sleep 5
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iPostBid", "1111", "BID", "4", "1000", "500", "7000", "2017-02-13 09:19:04"]}'
+sleep 5
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iPostBid", "1111", "BID", "5", "1000", "400", "8000", "2017-02-13 09:19:05"]}'
+sleep 5
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iPostBid", "1111", "BID", "6", "1000", "600", "8200", "2017-02-13 09:19:06"]}'
+sleep 5
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iPostBid", "1111", "BID", "7", "1000", "700", "8400", "2017-02-13 09:19:07"]}'
+sleep 5
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iPostBid", "1111", "BID", "8", "1000", "300", "8900", "2017-02-13 09:19:08"]}'
+sleep 5
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iPostBid", "1111", "BID", "9", "1000", "400", "9000", "2017-02-13 09:19:09"]}'
+sleep 5
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iPostBid", "1111", "BID", "10", "1000", "500", "12000", "2017-02-12 09:20:00"]}'
+sleep 5
 
 

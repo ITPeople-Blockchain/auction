@@ -1,0 +1,1 @@
+peer chaincode invoke -l golang -n mycc -c '{"Args": ["iCloseOpenAuctions", "2016", "CLAUC", "2017-01-23 13:53:00.3 +0000 UTC"]}'

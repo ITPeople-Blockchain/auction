@@ -1,0 +1,3 @@
+peer chaincode query -l golang -n mycc -c '{"Args": ["qGetListOfBids", "1111"]}'
+peer chaincode query -l golang -n mycc -c '{"Args": ["qGetLastBid", "1111"]}'
+peer chaincode query -l golang -n mycc -c '{"Args": ["qGetHighestBid", "1111"]}'
