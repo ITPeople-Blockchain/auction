@@ -1,19 +1,20 @@
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1000", "ARTINV", "Shadows by Asppen", "Asppen Messer", "20140202", "Original", "landscape", "Canvas", "15 x 15 in", "art1.png","600", "100"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c '{"Args":["iPostItem", "1000", "ARTINV", "Shadows by Asppen", "Asppen Messer", "20140202", "Original", "landscape", "Canvas", "15 x 15 in", "art1.png","600", "100", "2017-01-23 14:04:05"]}'
 sleep 5
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1100", "ARTINV", "modern Wall Painting", "Scott Palmer", "20140202", "Reprint", "landscape", "Acrylic", "10 x 10 in", "art2.png","2600", "300"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c '{"Args":["iPostItem", "1100", "ARTINV", "modern Wall Painting", "Scott Palmer", "20140202", "Reprint", "landscape", "Acrylic", "10 x 10 in", "art2.png","2600", "300", "2017-01-23 14:04:05"]}'
 sleep 5
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1200", "ARTINV", "Splash of Color", "Jennifer Drew", "20160115", "Reprint", "modern", "Water Color", "15 x 15 in", "art3.png","1600", "100"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c '{"Args":["iPostItem", "1200", "ARTINV", "Splash of Color", "Jennifer Drew", "20160115", "Reprint", "modern", "Water Color", "15 x 15 in", "art3.png","1600", "100", "2017-01-23 14:04:05"]}'
 sleep 5
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1300", "ARTINV", "Female Water Color", "David Crest", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "art4.png","9600", "100"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c '{"Args":["iPostItem", "1300", "ARTINV", "Female Water Color", "David Crest", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "art4.png","9600", "100", "2017-01-23 14:04:05"]}'
 sleep 5
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1400", "ARTINV", "Nature", "James Thomas", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "item-001.jpg","1800", "100"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c '{"Args":["iPostItem", "1400", "ARTINV", "Nature", "James Thomas", "19900115", "Original", "modern", "Water Color", "12 x 17 in", "item-001.jpg","1800", "100", "2017-01-23 14:04:05"]}'
 sleep 5
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1500", "ARTINV", "Ladys Hair", "James Thomas", "19900115", "Original", "landscape", "Acrylic", "12 x 17 in", "item-002.jpg","1200", "300"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c '{"Args":["iPostItem", "1500", "ARTINV", "Ladys Hair", "James Thomas", "19900115", "Original", "landscape", "Acrylic", "12 x 17 in", "item-002.jpg","1200", "300", "2017-01-23 14:04:05"]}'
 sleep 5
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1600", "ARTINV", "Flowers", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "item-003.jpg","1000", "300"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c '{"Args":["iPostItem", "1600", "ARTINV", "Flowers", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "item-003.jpg","1000", "300", "2017-01-23 14:04:05"]}'
 sleep 5
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1700", "ARTINV", "Women at work", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "item-004.jpg","1500", "400"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c '{"Args":["iPostItem", "1700", "ARTINV", "Women at work", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "item-004.jpg","1500", "400", "2017-01-23 14:04:05"]}'
 sleep 5
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1800", "ARTINV", "People", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "people.gif","900", "400"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c '{"Args":["iPostItem", "1800", "ARTINV", "People", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "people.gif","900", "400", "2017-01-23 14:04:05"]}'
 sleep 5
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostItem", "Args":["1900", "ARTINV", "Mad fb", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "mad-fb.jpg","1100", "500"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c '{"Args":["iPostItem", "1900", "ARTINV", "Mad fb", "James Thomas", "19900115", "Original", "modern", "Acrylic", "12 x 17 in", "mad-fb.jpg","1100", "500", "2017-01-23 14:04:05"]}'
+sleep 5

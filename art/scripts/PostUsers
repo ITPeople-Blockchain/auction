@@ -1,17 +1,15 @@
-peer chaincode deploy -l golang -n mycc -c '{"Function": "init", "Args":["INITIALIZE"]}'
-sleep 3
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["100", "USER", "Ashley Hart", "TRD",  "Morrisville Parkway, #216, Morrisville, NC 27560", "9198063535", "ashley@itpeople.com", "SUNTRUST", "0001732345", "0234678"]}'
-sleep 3
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["200", "USER", "Sotheby", "AH",  "One Picadally Circus , #216, London, UK ", "9198063535", "admin@sotheby.com", "Standard Chartered", "0001732345", "0234678"]}'
-sleep 3
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["300", "USER", "Barry Smith", "TRD",  "155 Regency Parkway, #111, Cary, 27518 ", "9198063535", "barry@us.ibm.com", "RBC Centura", "0001732345", "0234678"]}'
-sleep 3
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["400", "USER", "Cindy Patterson", "TRD",  "155 Sunset Blvd, Beverly Hills, CA, USA ", "9058063535", "cpatterson@hotmail.com", "RBC Centura", "0001732345", "0234678"]}'
-sleep 3
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["500", "USER", "Tamara Haskins", "TRD",  "155 Sunset Blvd, Beverly Hills, CA, USA ", "9058063535", "tamara@yahoo.com", "RBC Centura", "0001732345", "0234678"]}'
-sleep 3
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["600", "USER", "NY Life", "INS",  "155 Broadway, New York, NY, USA ", "9058063535", "barry@nyl.com", "RBC Centura", "0001732345", "0234678"]}'
-sleep 3
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["700", "USER", "J B Hunt", "SHP",  "One Johnny Blvd, Rogers, AR, USA ", "9058063535", "jess@jbhunt.com", "RBC Centura", "0001732345", "0234678"]}'
-sleep 3
-peer chaincode invoke -l golang -n mycc -c '{"Function": "PostUser", "Args":["800", "USER", "R&R Trading", "AH",  "155 Sunset Blvd, Beverly Hills, CA, USA ", "9058063535", "larry@rr.com", "RBC Centura", "0001732345", "0234678"]}'
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c  '{"Args":["iPostUser","100", "USER", "Ashley Hart", "TRD",  "Morrisville Parkway, #216, Morrisville, NC 27560", "9198063535", "ashley@itpeople.com", "SUNTRUST", "0001732345", "0234678", "2017-01-02 15:04:05"]}'
+sleep 5
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c  '{"Args":["iPostUser","200", "USER", "Sotheby", "AH",  "One Picadally Circus , #216, London, UK ", "9198063535", "admin@sotheby.com", "Standard Chartered", "0001732345", "0234678", "2017-01-02 15:04:05"]}'
+sleep 5
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c  '{"Args":["iPostUser","300", "USER", "Barry Smith", "TRD",  "155 Regency Parkway, #111, Cary, 27518 ", "9198063535", "barry@us.ibm.com", "RBC Centura", "0001732345", "0234678", "2017-01-02 15:04:05"]}'
+sleep 5
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c  '{"Args":["iPostUser","400", "USER", "Cindy Patterson", "TRD",  "155 Sunset Blvd, Beverly Hills, CA, USA ", "9058063535", "cpatterson@hotmail.com", "RBC Centura", "0001732345", "0234678", "2017-01-02 15:04:05"]}'
+sleep 5
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c  '{"Args":["iPostUser","500", "USER", "Tamara Haskins", "TRD",  "155 Sunset Blvd, Beverly Hills, CA, USA ", "9058063535", "tamara@yahoo.com", "RBC Centura", "0001732345", "0234678", "2017-01-02 15:04:05"]}'
+sleep 5
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c  '{"Args":["iPostUser","600", "USER", "NY Life", "INS",  "155 Broadway, New York, NY, USA ", "9058063535", "barry@nyl.com", "RBC Centura", "0001732345", "0234678", "2017-01-02 15:04:05"]}'
+sleep 5
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c  '{"Args":["iPostUser","700", "USER", "J B Hunt", "SHP",  "One Johnny Blvd, Rogers, AR, USA ", "9058063535", "jess@jbhunt.com", "RBC Centura", "0001732345", "0234678", "2017-01-02 15:04:05"]}'
+sleep 5
+CORE_PEER_MSPCONFIGPATH=./msp/sampleconfig peer chaincode invoke  -n mycc -c  '{"Args":["iPostUser","800", "USER", "R&R Trading", "AH",  "155 Sunset Blvd, Beverly Hills, CA, USA ", "9058063535", "larry@rr.com", "RBC Centura", "0001732345", "0234678", "2017-01-02 15:04:05"]}'

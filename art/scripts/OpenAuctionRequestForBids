@@ -1,1 +1,2 @@
-peer chaincode invoke -l golang -n mycc -c '{"Function": "OpenAuctionForBids", "Args":["1111", "OPENAUC", "3"]}'
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iOpenAuctionForBids", "1111", "OPENAUC", "10", "2017-02-13 09:18:00"]}'
+peer chaincode invoke -l golang -n mycc -c '{"Args":["iOpenAuctionForBids", "1112", "OPENAUC", "10", "2017-02-13 09:18:00"]}'

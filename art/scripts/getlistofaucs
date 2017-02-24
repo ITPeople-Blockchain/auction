@@ -1,0 +1,2 @@
+peer chaincode query -l golang -n mycc -c '{"Args": ["qGetListOfInitAucs", "2016"]}'
+peer chaincode query -l golang -n mycc -c '{"Args": ["qGetListOfOpenAucs", "2016"]}'

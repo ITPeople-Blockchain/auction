@@ -1,0 +1,1 @@
+peer chaincode instantiate -C testchainid -n mycc -p github.com/hyperledger/fabric/auction/art/artchaincode -c '{"Args":["init"]}' -v 1.0

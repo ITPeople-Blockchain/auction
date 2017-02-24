@@ -1,3 +1,3 @@
 # Update the itemid, ownerid and key as appropriate
-peer chaincode query -l golang -n mycc -c '{"Function": "validateItemOwnership", "Args": ["1000", "100", "tGEBaZuKUBmwTjzNEyd+nr/fPUASuVJAZ1u7gha5fJg="]}'
-peer chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership", "Args": ["1900", "500", "Ac0o41Lg19fFcrT02Bo4gI1NM0c3QDtVmZM+ODqYsxY="]}'
+$PEER chaincode query -l golang -n mycc -c '{"Function": "validateItemOwnership", "Args": ["1000", "100", "tGEBaZuKUBmwTjzNEyd+nr/fPUASuVJAZ1u7gha5fJg="]}'
+$PEER chaincode query -l golang -n mycc -c '{"Function": "ValidateItemOwnership", "Args": ["1900", "500", "Ac0o41Lg19fFcrT02Bo4gI1NM0c3QDtVmZM+ODqYsxY="]}'
