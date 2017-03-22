@@ -5,6 +5,8 @@ Credits: Ratnakar Asara, Nishi Nidamarty, Ramesh Thoomu, Adam Gordon and Mohan V
 
 **Disclaimer:** The images used in this sample PoC application have been downloaded from publicly available images on the internet, and the copyright belongs to the respective owners. The usage here is strictly for non-commercial purposes as sample data. We recommend that users create their own sample data as appropriate. All names, addresses and accounts numbers used in the sample data are fictitous. The information provided in this README.md is subject to change.
 
+Auction Chaincode is migrated to fabric v1.0 and these changes being tested on **fabric commit#** 5b59e0652f9edf5bd12a6ff7fd2e9991495190fe
+
 ##Introduction
 
 This Hyperledger/Fabric is an implementation of blockchain technology, leveraging familiar and proven technologies. It is a modular architecture allowing pluggable implementations of various function. It features powerful container technology to host any mainstream language for smart contracts development. Chaincode (smart contracts) or blockchain applications run on the fabric. Chaincode is written in Go language 
@@ -85,33 +87,33 @@ The following Invoke and Query APIs are available from both CLI and REST, and ha
     func(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) 
 
 ### Invoke
-                * PostUser 
-                * PostItem
-                * PostAuctionRequest
-                * PostTransaction
-                * PostBid
-                * OpenAuctionForBids
-                * BuyItNow
-                * TransferItem
-                * CloseAuction
-                * CloseOpenAuctions
+                * iPostUser 
+                * iPostItem
+                * iPostAuctionRequest
+                * iPostTransaction
+                * iPostBid
+                * iOpenAuctionForBids
+                * iBuyItNow
+                * iTransferItem
+                * iCloseAuction
+                * iCloseOpenAuctions
 ### Query
-                * GetItem
-                * GetUser
-                * GetAuctionRequest
-                * GetTransaction
-                * GetBid
-                * GetLastBid
-                * GetHighestBid
-                * GetNoOfBidsReceived
-                * GetListOfBids
-                * GetItemLog
-                * GetItemListByCat
-                * GetUserListByCat
-                * GetListOfItemsOnAuc
-                * GetListOfOpenAucs
-                * ValidateItemOwnership
-                * IsItemOnAuction
+                * qGetItem
+                * qGetUser
+                * qGetAuctionRequest
+                * qGetTransaction
+                * qGetBid
+                * qGetLastBid
+                * qGetHighestBid
+                * qGetNoOfBidsReceived
+                * qGetListOfBids
+                * qGetItemLog
+                * qGetItemListByCat
+                * qGetUserListByCat
+                * qGetListOfItemsOnAuc
+                * qGetListOfOpenAucs
+                * qValidateItemOwnership
+                * qIsItemOnAuction
 
 ##Environment Setup
 
@@ -119,28 +121,40 @@ Please review instructions on setting up the [Development Environment](https://g
 
 ## Running the Application
 
-**Cloning the auction app**
+** Fork and clone the fabric**
 ```
+ git clone https://github.com/hyperledger/fabric.git
  cd $GOPATH/src/github.com/hyperledger/fabric
+ Fork Auction git repository from here https://github.com/ITPeople-Blockchain/auction.git and clone from your remote auction repository
  git clone https://github.com/<username>/auction.git
 ```
 
+Execute below command to clear production data 
+
+`rm -rf /var/hyperledger/*`
+
 ###Terminal 1
+
+Build peer and Orderer binaries and Start Orderer
+
 ```
  cd $GOPATH/src/github.com/hyperledger/fabric
- make peer
- peer node start --peer-chaincodedev
+ make native
+ orderer
 ```
 
 ###Terminal 2
+
+Start Peer
 ```
- cd $GOPATH/src/github.com/hyperledger/fabric/auction/art/artchaincode
- go build
- CORE_CHAINCODE_ID_NAME=mycc CORE_PEER_ADDRESS=0.0.0.0:30303 ./artchaincode dev
+ cd $GOPATH/src/github.com/hyperledger/fabric
+ peer node start -o 127.0.0.1:7050
 ```
 ###Terminal 3
 ```
  cd $GOPATH/src/github.com/hyperledger/fabric/auction/art/scripts
+ Run env.sh script to export CORE_PEER_MSPCONFIGPATH
+ `source env.sh`
 ```
 ###Run the following shell scripts
 
