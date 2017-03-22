@@ -1,0 +1,5 @@
+peer chaincode query -l golang -o 127.0.0.1:7050 -n mycc -c '{"Args": ["qGetUser", "100"]}'
+peer chaincode query -l golang -o 127.0.0.1:7050 -n mycc -c '{"Args": ["qGetUser", "200"]}'
+peer chaincode query -l golang -o 127.0.0.1:7050 -n mycc -c '{"Args": ["qGetUser", "300"]}'
+peer chaincode query -l golang -o 127.0.0.1:7050 -n mycc -c '{"Args": ["qGetUser", "400"]}'
+peer chaincode query -l golang -o 127.0.0.1:7050 -n mycc -c '{"Args": ["qGetUser", "500"]}'

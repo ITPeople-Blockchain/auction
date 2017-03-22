@@ -1,0 +1,1 @@
+peer chaincode query -l golang -o 127.0.0.1:7050 -n mycc -c '{"Args": ["qGetItem", "1000"]}'

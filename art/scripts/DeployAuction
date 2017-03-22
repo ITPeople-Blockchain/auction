@@ -1,0 +1,1 @@
+ peer chaincode deploy -n mycc -p github.com/hyperledger/fabric/auction/art/artchaincode -c '{"Args":["init", "A", "200","B", "200"]}'
