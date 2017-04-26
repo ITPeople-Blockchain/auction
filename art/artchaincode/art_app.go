@@ -585,7 +585,7 @@ func GetAuctionRequest(stub shim.ChaincodeStubInterface, function string, args [
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Retrieve a Bid based on two keys - AucID, BidNo
 // A Bid has two Keys - The Auction Request Number and Bid Number
-// ./peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid", "Args": ["1111"], "1"}'
+// ./peer chaincode query -l golang -n mycc -c '{"Function": "GetLastBid", "Args": ["1111", "1"]}'
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 func GetBid(stub shim.ChaincodeStubInterface, function string, args []string) pb.Response {
