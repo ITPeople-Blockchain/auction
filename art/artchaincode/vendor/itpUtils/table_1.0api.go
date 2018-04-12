@@ -364,11 +364,11 @@ func GetKeyList(stub shim.ChaincodeStubInterface, args []string) (shim.StateQuer
         for i = 0; resultsIterator.HasNext(); i++ {
 
                 // Retrieve the Key and Object
-                myCompositeKey, _ , err := resultsIterator.Next()
+                myCompositeKey, err := resultsIterator.Next()
                 if err != nil {
                         return nil, err
                 }
-                fmt.Println("GetList() : my Value : ", myCompositeKey)
+                fmt.Println("GetList() : my Value : ", myCompositeKey.Key)
 	}
         return resultsIterator, nil
 }
@@ -393,7 +393,7 @@ func GetQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString 
 
         bArrayMemberAlreadyWritten := false
         for resultsIterator.HasNext() {
-                queryResultKey, queryResultRecord, err := resultsIterator.Next()
+                queryResult, err := resultsIterator.Next()
                 if err != nil {
                         return nil, err
                 }
@@ -403,12 +403,12 @@ func GetQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString 
                 }
                 buffer.WriteString("{\"Key\":")
                 buffer.WriteString("\"")
-                buffer.WriteString(queryResultKey)
+                buffer.WriteString(queryResult.Key)
                 buffer.WriteString("\"")
 
                 buffer.WriteString(", \"Record\":")
                 // Record is a JSON object, so we write as-is
-                buffer.WriteString(string(queryResultRecord))
+                buffer.WriteString(string(queryResult.Value))
                 buffer.WriteString("}")
                 bArrayMemberAlreadyWritten = true
         }
